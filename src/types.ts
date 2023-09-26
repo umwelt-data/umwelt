@@ -29,9 +29,20 @@ export type UmweltDataSource = UrlData | InlineData;
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
-export type VisualPropName = 'x' | 'y' | 'color' | 'size' | 'opacity' | 'shape' | 'detail' | 'facet' | 'row' | 'column' | 'order' | 'x2' | 'y2';
-export type AudioPropName = 'pitch' | 'duration' | 'volume' | 'pan' | 'waveform';
+export const visualPropNames = ['x', 'y', 'color', 'shape', 'size', 'opacity', 'order', 'facet'];
+export const audioPropNames = ['pitch', 'duration', 'volume'];
+
+export type VisualPropName = (typeof visualPropNames)[number];
+export type AudioPropName = (typeof audioPropNames)[number];
 export type EncodingPropName = VisualPropName | AudioPropName;
+
+export function isVisualProp(propName: string): propName is VisualPropName {
+  return visualPropNames.includes(propName as VisualPropName);
+}
+
+export function isAudioProp(propName: string): propName is AudioPropName {
+  return audioPropNames.includes(propName as AudioPropName);
+}
 
 export type AudioAggregateOp = 'count' | 'mean' | 'median' | 'min' | 'max' | 'sum';
 
@@ -56,7 +67,6 @@ export interface FieldDef {
   active: boolean; // is this field active in the editor
   name: FieldName;
   type?: MeasureType;
-  encodings?: EncodingRef[];
   //
   scale?: ScaleDomain;
   timeUnit?: TimeUnit;

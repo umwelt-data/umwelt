@@ -1,5 +1,5 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { FieldDef, MeasureType } from '../../types';
+import { AudioPropName, EncodingPropName, FieldDef, MeasureType, VisualPropName, audioPropNames, visualPropNames } from '../../types';
 import { getDomain } from '../../util/domain';
 import dayjs from 'dayjs';
 import { isString } from 'vega';
@@ -13,6 +13,13 @@ export function FieldDefinition(props: FieldDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
   const { field } = props;
 
+  const commonPropNames = ['x', 'y', 'color', 'pitch'].reverse();
+  const propertyNames: EncodingPropName[] = [...visualPropNames, ...audioPropNames].sort((a, b) => {
+    const aIndex = commonPropNames.indexOf(a);
+    const bIndex = commonPropNames.indexOf(b);
+    return bIndex - aIndex;
+  });
+
   const assignableMtypes = (field: FieldDef) => {
     const mtypes = ['nominal', 'ordinal'];
     const domain = getDomain({ ...field, field: field.name }, spec.data);
@@ -23,6 +30,40 @@ export function FieldDefinition(props: FieldDefinitionProps) {
       mtypes.push('quantitative');
     }
     return mtypes;
+  };
+
+  const assignablePropertyNames = (): string[] => {
+    return propertyNames.filter((propName) => {
+      if (visualPropNames.includes(propName as VisualPropName)) {
+        return spec.visual.units.some((unit) => !unit.encoding[propName as VisualPropName]);
+      } else if (audioPropNames.includes(propName as AudioPropName)) {
+        return spec.audio.units.some((unit) => !unit.encoding[propName as AudioPropName]);
+      }
+      return false;
+    });
+  };
+
+  const assignableUnitsForProperty = (propName: string): string[] => {
+    if (visualPropNames.includes(propName as VisualPropName)) {
+      return spec.visual.units.filter((unit) => !unit.encoding[propName as VisualPropName]?.field).map((unit) => unit.name);
+    } else if (audioPropNames.includes(propName as AudioPropName)) {
+      return spec.audio.units.filter((unit) => !unit.encoding[propName as AudioPropName]?.field).map((unit) => unit.name);
+    }
+    return [];
+  };
+
+  const addEncoding = (field: FieldDef) => {
+    const validPropNames = assignablePropertyNames();
+    let propName: EncodingPropName;
+    if (field.type === 'quantitative') {
+      propName = ['y', 'x', 'pitch', 'volume', 'opacity', 'size', 'duration'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
+    } else if (field.type === 'temporal') {
+      propName = ['x', 'y', 'pitch', 'volume', 'opacity', 'size', 'duration'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
+    } else {
+      propName = ['color', 'shape'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
+    }
+    const unitName: string = assignableUnitsForProperty(propName)[0];
+    specActions.addEncoding(field.name, propName, unitName);
   };
 
   return (
@@ -44,7 +85,37 @@ export function FieldDefinition(props: FieldDefinitionProps) {
       </label>
       <div>
         <div>Encodings</div>
-        <div></div>
+        <div>
+          {specActions.getEncodingsForField(field.name).length < propertyNames.length ? (
+            <button aria-describedby={`label-${field.name}`} onClick={() => addEncoding(field)}>
+              Add encoding
+            </button>
+          ) : null}
+          {specActions.getEncodingsForField(field.name).map((encodingRef) => {
+            return (
+              <div>
+                <select aria-describedby={`label-${field.name}`} value={encodingRef.property} onChange={(e) => {}}>
+                  {!assignablePropertyNames().includes(encodingRef.property) ? <option value={encodingRef.property}>{encodingRef.property}</option> : null}
+                  {assignablePropertyNames().map((propName) => {
+                    return <option value={propName}>{propName}</option>;
+                  })}
+                </select>
+                {(visualPropNames.includes(encodingRef.property as any) && spec.visual.units.length > 1) || (audioPropNames.includes(encodingRef.property as any) && spec.audio.units.length > 1) ? (
+                  <select aria-describedby={`label-${field.name}`} value={encodingRef.unit} onChange={(e) => {}}>
+                    {!assignableUnitsForProperty(encodingRef.property).includes(encodingRef.unit) ? <option value={encodingRef.unit}>{encodingRef.unit}</option> : null}
+                    {assignableUnitsForProperty(encodingRef.property).map((unitName) => {
+                      return <option value={unitName}>{unitName}</option>;
+                    })}
+                  </select>
+                ) : null}
+                <button id={`field-${field.name}-${encodingRef.property}`} onClick={() => {}}>
+                  Go to {visualPropNames.includes(encodingRef.property as any) ? 'visual' : 'audio'} tab
+                </button>
+                <button onClick={() => {}}>Remove encoding</button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import styles from '../../App.module.css';
 
 export function Editor() {
   const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createSignal('data');
+  const [currentTab, setCurrentTab] = createSignal(spec.data && spec.fields.length ? 'fields' : 'data');
 
   const onFocus = (e: any) => {};
 
