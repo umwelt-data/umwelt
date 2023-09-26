@@ -2,8 +2,7 @@ import { Type } from 'vega-lite/src/type';
 import { UrlData, InlineData } from 'vega-lite/src/data';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
-// import { OlliNode, OlliValue } from 'olli';
-import { Spec } from 'vega';
+import { Spec, TimeUnit } from 'vega';
 import { TopLevelSpec } from 'vega-lite/src/spec';
 import { Sort } from 'vega-lite/src/sort';
 import { LogicalComposition } from 'vega-lite/src/logical';
@@ -12,10 +11,12 @@ import { FieldPredicate } from 'vega-lite/src/predicate';
 export type VlSpec = TopLevelSpec;
 export type VgSpec = Spec;
 
-export type OlliValue = any;
+export type UmweltValue = string | number | Date;
+export type UmweltDatum = { [field: string]: UmweltValue };
+export type UmweltDataset = UmweltDatum[];
 
 type ScaleDomain = {
-  domain?: OlliValue[];
+  domain?: UmweltValue[];
   zero?: boolean;
   nice?: boolean | number;
 }; //  | "type"
@@ -43,7 +44,7 @@ export interface FieldRef {
 }
 
 export interface ValueRef {
-  value: OlliValue;
+  value: UmweltValue;
 }
 
 export interface EncodingRef {
@@ -52,12 +53,13 @@ export interface EncodingRef {
 }
 
 export interface FieldDef {
+  active: boolean; // is this field active in the editor
   name: FieldName;
   type?: MeasureType;
   encodings?: EncodingRef[];
   //
   scale?: ScaleDomain;
-  timeUnit?: string;
+  timeUnit?: TimeUnit;
   aggregate?: NonArgAggregateOp;
   bin?: boolean;
   sort?: Sort<any>;
@@ -67,7 +69,7 @@ export interface VisualEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: string;
+  timeUnit?: TimeUnit;
   aggregate?: NonArgAggregateOp | typeof NONE;
   bin?: boolean;
   sort?: Sort<any>;
@@ -89,7 +91,7 @@ export interface AudioTraversalFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: string;
+  timeUnit?: TimeUnit;
   bin?: boolean;
   // aggregate: undefined;
 }
@@ -129,7 +131,7 @@ export interface AudioSpec {
 }
 
 export interface UmweltSpec {
-  data: OlliValue[];
+  data: UmweltDataset;
   fields: FieldDef[];
   key: FieldName[];
   visual: VisualSpec;
