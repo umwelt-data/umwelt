@@ -2,6 +2,9 @@ import { createContext, useContext, ParentProps } from 'solid-js';
 import { SetStoreFunction, createStore } from 'solid-js/store';
 import { MeasureType, UmweltSpec } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
+import { useParams, useSearchParams } from '@solidjs/router';
+import LZString from 'lz-string';
+import { validateSpec } from '../util/spec';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -30,7 +33,24 @@ export type UmweltSpecActions = {
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
 
 export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
-  const [spec, setSpec] = createStore(initialSpec);
+  let paramSpec: UmweltSpec | undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  if (searchParams.spec) {
+    try {
+      const maybeSpec = JSON.parse(LZString.decompressFromEncodedURIComponent(searchParams.spec));
+      if (validateSpec(maybeSpec)) {
+        paramSpec = maybeSpec;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  const [spec, setSpec] = createStore(paramSpec || initialSpec);
+
+  const updateSearchParams = () => {
+    setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(spec)) });
+  };
 
   const actions: UmweltSpecActions = {
     initializeData: (data: any[]) => {
@@ -64,6 +84,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           ]);
         }
       }
+      updateSearchParams();
     },
     setFieldActive: (field: string, active: boolean) => {
       setSpec(
@@ -71,6 +92,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, active } : fieldDef))
       );
       actions.detectKey();
+      updateSearchParams();
     },
     detectKey: async () => {
       const key = await detectKey(
@@ -78,17 +100,20 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         spec.data
       );
       setSpec('key', key);
+      updateSearchParams();
     },
     reorderKeyField: (field: string, newIndex: number) => {
       const key = spec.key.filter((k) => k !== field);
       key.splice(newIndex, 0, field);
       setSpec('key', key);
+      updateSearchParams();
     },
     setFieldType: (field: string, type: MeasureType) => {
       setSpec(
         'fields',
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, type } : fieldDef))
       );
+      updateSearchParams();
     },
   };
 
