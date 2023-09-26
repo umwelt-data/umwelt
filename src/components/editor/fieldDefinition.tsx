@@ -66,6 +66,13 @@ export function FieldDefinition(props: FieldDefinitionProps) {
     specActions.addEncoding(field.name, propName, unitName);
   };
 
+  const changeEncodingProp = (field: FieldDef, oldPropName: EncodingPropName, newPropName: EncodingPropName, unitName: string) => {
+    specActions.removeEncoding(field.name, oldPropName, unitName);
+    const validUnits = assignableUnitsForProperty(newPropName);
+    const newUnitName = validUnits.includes(unitName) ? unitName : validUnits[0];
+    specActions.addEncoding(field.name, newPropName, newUnitName);
+  };
+
   return (
     <div>
       <h4 id={`label-${field.name}`}>{field.name}</h4>
@@ -94,7 +101,13 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           {specActions.getEncodingsForField(field.name).map((encodingRef) => {
             return (
               <div>
-                <select aria-describedby={`label-${field.name}`} value={encodingRef.property} onChange={(e) => {}}>
+                <select
+                  aria-describedby={`label-${field.name}`}
+                  value={encodingRef.property}
+                  onChange={(e) => {
+                    changeEncodingProp(field, encodingRef.property, e.target.value, encodingRef.unit);
+                  }}
+                >
                   {!assignablePropertyNames().includes(encodingRef.property) ? <option value={encodingRef.property}>{encodingRef.property}</option> : null}
                   {assignablePropertyNames().map((propName) => {
                     return <option value={propName}>{propName}</option>;
@@ -111,7 +124,13 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                 <button id={`field-${field.name}-${encodingRef.property}`} onClick={() => {}}>
                   Go to {visualPropNames.includes(encodingRef.property as any) ? 'visual' : 'audio'} tab
                 </button>
-                <button onClick={() => {}}>Remove encoding</button>
+                <button
+                  onClick={() => {
+                    specActions.removeEncoding(field.name, encodingRef.property, encodingRef.unit);
+                  }}
+                >
+                  Remove encoding
+                </button>
               </div>
             );
           })}
