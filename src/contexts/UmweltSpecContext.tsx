@@ -1,4 +1,4 @@
-import { createContext, useContext, ParentProps } from 'solid-js';
+import { createContext, useContext, ParentProps, createSignal } from 'solid-js';
 import { SetStoreFunction, createStore } from 'solid-js/store';
 import { EncodingPropName, EncodingRef, MeasureType, UmweltSpec, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
@@ -12,6 +12,7 @@ export type UmweltSpecInternalActions = {
   updateSearchParams: () => void;
   detectKey: () => void;
   ensureAudioEncodingsHaveTraversal: () => void;
+  removeUnitIfEmpty: (unit: string) => void;
 };
 
 export type UmweltSpecActions = {
@@ -21,6 +22,10 @@ export type UmweltSpecActions = {
   setFieldType: (field: string, type: MeasureType) => void;
   addEncoding: (field: string, property: EncodingPropName, unit: string) => void;
   removeEncoding: (field: string, property: EncodingPropName, unit: string) => void;
+  addVisualUnit: () => void;
+  removeVisualUnit: (unit: string) => void;
+  addAudioUnit: () => void;
+  removeAudioUnit: (unit: string) => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -55,6 +60,8 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const [spec, setSpec] = createStore(getInitialSpec());
+  const [visualUnitCount, setVisualUnitCount] = createSignal<number>(1);
+  const [audioUnitCount, setAudioUnitCount] = createSignal<number>(1);
 
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
@@ -83,6 +90,28 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         })
       );
       internalActions.updateSearchParams();
+    },
+    removeUnitIfEmpty: (unit: string) => {
+      const maybeVisualUnit = spec.visual.units.find((u) => u.name === unit);
+      if (maybeVisualUnit && spec.visual.units.length > 1) {
+        if (maybeVisualUnit.encoding && Object.keys(maybeVisualUnit.encoding).length === 0) {
+          setSpec(
+            'visual',
+            'units',
+            spec.visual.units.filter((u) => u.name !== unit)
+          );
+        }
+      }
+      const maybeAudioUnit = spec.audio.units.find((u) => u.name === unit);
+      if (maybeAudioUnit && spec.audio.units.length > 1) {
+        if (maybeAudioUnit.encoding && Object.keys(maybeAudioUnit.encoding).length === 0) {
+          setSpec(
+            'audio',
+            'units',
+            spec.audio.units.filter((u) => u.name !== unit)
+          );
+        }
+      }
     },
   };
 
@@ -168,7 +197,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.updateSearchParams();
     },
     removeEncoding: (field: string, property: EncodingPropName, unit: string) => {
-      console.log(field, property, unit);
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
         setSpec(
           'visual',
@@ -179,6 +207,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'fields',
           spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => !(enc.property === property && enc.unit === unit)) } : fieldDef))
         );
+        internalActions.removeUnitIfEmpty(unit);
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
@@ -189,8 +218,39 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'fields',
           spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => !(enc.property === property && enc.unit === unit)) } : fieldDef))
         );
+        internalActions.removeUnitIfEmpty(unit);
       }
       internalActions.updateSearchParams();
+    },
+    addVisualUnit: () => {
+      setSpec('visual', 'units', [...spec.visual.units, { name: `vis_unit_${visualUnitCount()}`, mark: 'point', encoding: {} }]);
+      setVisualUnitCount(visualUnitCount() + 1);
+      internalActions.updateSearchParams();
+    },
+    removeVisualUnit: (unit: string) => {
+      if (spec.visual.units.length > 1) {
+        setSpec(
+          'visual',
+          'units',
+          spec.visual.units.filter((u) => u.name !== unit)
+        );
+        internalActions.updateSearchParams();
+      }
+    },
+    addAudioUnit: () => {
+      setSpec('audio', 'units', [...spec.audio.units, { name: `audio_unit_${audioUnitCount()}`, encoding: {}, traversal: [] }]);
+      setAudioUnitCount(audioUnitCount() + 1);
+      internalActions.updateSearchParams();
+    },
+    removeAudioUnit: (unit: string) => {
+      if (spec.audio.units.length > 1) {
+        setSpec(
+          'audio',
+          'units',
+          spec.audio.units.filter((u) => u.name !== unit)
+        );
+        internalActions.updateSearchParams();
+      }
     },
   };
 

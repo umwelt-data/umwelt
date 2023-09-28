@@ -1,19 +1,31 @@
 import { Accessor } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
+import { VisualUnit } from './visualUnit';
 
 export type VisualProps = {
   currentTab: Accessor<string>;
 };
 
 export function Visual(props: VisualProps) {
-  const [spec, setSpec] = useUmweltSpec();
+  const [spec, specActions] = useUmweltSpec();
 
   return (
     <div role="tabpanel" id="tabpanel-visual" aria-labelledby="tab-visual" hidden={props.currentTab() !== 'visual'}>
       <h2>Visual</h2>
-      <pre>
-        <code>{JSON.stringify(spec, null, 2)}</code>
-      </pre>
+      {spec.visual.units.map((unit) => {
+        return <VisualUnit unitSpec={unit} />;
+      })}
+      <div>
+        <button onClick={() => specActions.addVisualUnit()}>Add visual unit</button>
+      </div>
+      {spec.visual.units.length > 1 ? (
+        <div>
+          <label>
+            Composition
+            <select></select>
+          </label>
+        </div>
+      ) : null}
     </div>
   );
 }
