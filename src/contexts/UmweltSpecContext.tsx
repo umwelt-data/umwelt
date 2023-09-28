@@ -168,6 +168,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.updateSearchParams();
     },
     removeEncoding: (field: string, property: EncodingPropName, unit: string) => {
+      console.log(field, property, unit);
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
         setSpec(
           'visual',
@@ -176,7 +177,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         setSpec(
           'fields',
-          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => enc.property !== property) } : fieldDef))
+          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => !(enc.property === property && enc.unit === unit)) } : fieldDef))
         );
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
@@ -184,7 +185,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: Object.fromEntries(Object.entries(u.encoding).filter(([prop, _]) => prop !== property)) } : u))
         );
-        spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => enc.property !== property) } : fieldDef));
+        setSpec(
+          'fields',
+          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => !(enc.property === property && enc.unit === unit)) } : fieldDef))
+        );
       }
       internalActions.updateSearchParams();
     },
