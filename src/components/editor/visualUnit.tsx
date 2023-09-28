@@ -11,16 +11,14 @@ export function VisualUnit(props: VisualUnitProps) {
 
   return (
     <div>
-      <h4>
-        <input
-          value={props.unitSpec.name}
-          onChange={(e) => {
-            const { selectionStart, selectionEnd, selectionDirection } = e.currentTarget;
-            e.currentTarget.value = specActions.renameUnit(props.unitSpec.name, e.currentTarget.value);
-            e.currentTarget.setSelectionRange(selectionStart, selectionEnd, selectionDirection || 'none');
-          }}
-        ></input>
-      </h4>
+      <h4 id={`unit-${props.unitSpec.name}`}>{props.unitSpec.name}</h4>
+      <input
+        aria-labelledby={`unit-${props.unitSpec.name}`}
+        value={props.unitSpec.name}
+        onChange={(e) => {
+          specActions.renameUnit(props.unitSpec.name, e.currentTarget.value);
+        }}
+      ></input>
       <pre>
         <code>{JSON.stringify(props.unitSpec, null, 2)}</code>
       </pre>

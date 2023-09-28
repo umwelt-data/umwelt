@@ -26,7 +26,7 @@ export type UmweltSpecActions = {
   removeVisualUnit: (unit: string) => void;
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
-  renameUnit: (oldName: string, newName: string) => string;
+  renameUnit: (oldName: string, newName: string) => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -261,7 +261,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           spec.visual.units.map((u) => (u.name === oldName ? { ...u, name: newName } : u))
         );
         internalActions.updateSearchParams();
-        return newName;
       } else if (spec.audio.units.find((u) => u.name === oldName) && !spec.audio.units.find((u) => u.name === newName)) {
         setSpec(
           'audio',
@@ -269,9 +268,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           spec.audio.units.map((u) => (u.name === oldName ? { ...u, name: newName } : u))
         );
         internalActions.updateSearchParams();
-        return newName;
       }
-      return oldName;
     },
   };
 
