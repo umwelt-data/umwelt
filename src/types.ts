@@ -36,6 +36,9 @@ export type VisualPropName = (typeof visualPropNames)[number];
 export type AudioPropName = (typeof audioPropNames)[number];
 export type EncodingPropName = VisualPropName | AudioPropName;
 
+export const markTypes = ['point', 'line', 'bar', 'area'];
+export type MarkType = (typeof markTypes)[number];
+
 export function isVisualProp(propName: string): propName is VisualPropName {
   return visualPropNames.includes(propName as VisualPropName);
 }
