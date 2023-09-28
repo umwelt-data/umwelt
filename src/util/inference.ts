@@ -9,6 +9,7 @@ export function elaborateFields(fields: FieldDef[], data: UmweltDataset): FieldD
       name: fieldDef.name,
       type: fieldDef.type || typeInference(data, fieldDef.name),
       scale: fieldDef.scale,
+      encodings: fieldDef.encodings || [],
     };
     if (spec.type === 'temporal' && spec.name.toLowerCase() === 'year') {
       spec.timeUnit = 'year';

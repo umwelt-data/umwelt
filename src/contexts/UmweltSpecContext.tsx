@@ -19,7 +19,6 @@ export type UmweltSpecActions = {
   setFieldActive: (field: string, active: boolean) => void;
   reorderKeyField: (field: string, newIndex: number) => void;
   setFieldType: (field: string, type: MeasureType) => void;
-  getEncodingsForField: (field: string) => EncodingRef[];
   addEncoding: (field: string, property: EncodingPropName, unit: string) => void;
   removeEncoding: (field: string, property: EncodingPropName, unit: string) => void;
 };
@@ -95,6 +94,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           return {
             active: true,
             name,
+            encodings: [],
           };
         });
         if (!(spec.fields.length === baseFieldDefs.length && spec.fields.every((field) => baseFieldDefs.find((fieldDef) => fieldDef.name === field.name)))) {
@@ -142,31 +142,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       );
       internalActions.updateSearchParams();
     },
-    getEncodingsForField: (field: string): EncodingRef[] => {
-      return spec.visual.units
-        .flatMap((unit) => {
-          return Object.entries(unit.encoding)
-            .filter(([_, encoding]) => encoding?.field === field)
-            .map(([prop, _]) => {
-              return {
-                unit: unit.name,
-                property: prop as EncodingPropName,
-              };
-            });
-        })
-        .concat(
-          spec.audio.units.flatMap((unit) => {
-            return Object.entries(unit.encoding)
-              .filter(([_, encoding]) => encoding?.field === field)
-              .map(([prop, _]) => {
-                return {
-                  unit: unit.name,
-                  property: prop as EncodingPropName,
-                };
-              });
-          })
-        );
-    },
     addEncoding: (field: string, property: EncodingPropName, unit: string) => {
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
         setSpec(
@@ -174,11 +149,19 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
         );
+        setSpec(
+          'fields',
+          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
+        );
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
           'units',
           spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
+        );
+        setSpec(
+          'fields',
+          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
         );
         internalActions.ensureAudioEncodingsHaveTraversal();
       }
@@ -191,12 +174,17 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: Object.fromEntries(Object.entries(u.encoding).filter(([prop, _]) => prop !== property)) } : u))
         );
+        setSpec(
+          'fields',
+          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => enc.property !== property) } : fieldDef))
+        );
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
           'units',
           spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: Object.fromEntries(Object.entries(u.encoding).filter(([prop, _]) => prop !== property)) } : u))
         );
+        spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: fieldDef.encodings.filter((enc) => enc.property !== property) } : fieldDef));
       }
       internalActions.updateSearchParams();
     },

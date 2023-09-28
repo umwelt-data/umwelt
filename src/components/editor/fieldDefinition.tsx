@@ -93,12 +93,12 @@ export function FieldDefinition(props: FieldDefinitionProps) {
       <div>
         <div>Encodings</div>
         <div>
-          {specActions.getEncodingsForField(field.name).length < propertyNames.length ? (
+          {field.encodings.length < propertyNames.length ? (
             <button aria-describedby={`label-${field.name}`} onClick={() => addEncoding(field)}>
               Add encoding
             </button>
           ) : null}
-          {specActions.getEncodingsForField(field.name).map((encodingRef) => {
+          {field.encodings.map((encodingRef) => {
             return (
               <div>
                 <select

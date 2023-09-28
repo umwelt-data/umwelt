@@ -67,6 +67,7 @@ export interface FieldDef {
   active: boolean; // is this field active in the editor
   name: FieldName;
   type?: MeasureType;
+  encodings: EncodingRef[];
   //
   scale?: ScaleDomain;
   timeUnit?: TimeUnit;
