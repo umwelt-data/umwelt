@@ -67,11 +67,10 @@ export function VisualUnit(props: VisualUnitProps) {
             Add encoding
           </button>
         ) : null}
-        <button></button>
         <div>
           {Object.entries(props.unitSpec.encoding).map(([propName, encoding]) => {
             if (encoding) {
-              return <EncodingDefinition property={propName} encoding={encoding} />;
+              return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
             }
           })}
         </div>
