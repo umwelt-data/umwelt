@@ -1,6 +1,7 @@
 import { Accessor } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnit } from './visualUnit';
+import { viewCompositions } from '../../types';
 
 export type VisualProps = {
   currentTab: Accessor<string>;
@@ -22,7 +23,11 @@ export function Visual(props: VisualProps) {
         <div>
           <label>
             Composition
-            <select></select>
+            <select value={spec.visual.composition}>
+              {viewCompositions.map((composition) => {
+                return <option value={composition}>{composition}</option>;
+              })}
+            </select>
           </label>
         </div>
       ) : null}

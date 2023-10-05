@@ -1,5 +1,6 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { EncodingFieldDef, EncodingPropName } from '../../types';
+import { EncodingFieldDef, EncodingPropName, audioPropNames, visualPropNames } from '../../types';
+import { describeField } from '../../util/description';
 
 export type EncodingDefinitionProps = {
   unit: string;
@@ -12,9 +13,25 @@ export function EncodingDefinition(props: EncodingDefinitionProps) {
 
   return (
     <div>
-      <h4>{props.property}</h4>
-      <div>{JSON.stringify(props)}</div>
+      <h5>{props.property}</h5>
       <div>
+        <select
+          value={props.encoding.field}
+          onChange={(e) => {
+            specActions.removeEncoding(props.encoding.field, props.property, props.unit);
+            specActions.addEncoding(e.currentTarget.value, props.property, props.unit);
+          }}
+        >
+          {spec.fields
+            .filter((f) => f.active)
+            .map((field) => {
+              return (
+                <option value={field.name} selected={props.encoding.field === field.name}>
+                  {field.name}
+                </option>
+              );
+            })}
+        </select>
         <button
           onClick={() => {
             specActions.removeEncoding(props.encoding.field, props.property, props.unit);

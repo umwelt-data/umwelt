@@ -121,9 +121,9 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                     })}
                   </select>
                 ) : null}
-                <button id={`field-${field.name}-${encodingRef.property}`} onClick={() => {}}>
+                {/* <button id={`field-${field.name}-${encodingRef.property}`} onClick={() => {}}>
                   Go to {visualPropNames.includes(encodingRef.property as any) ? 'visual' : 'audio'} tab
-                </button>
+                </button> */}
                 <button
                   onClick={() => {
                     specActions.removeEncoding(field.name, encodingRef.property, encodingRef.unit);

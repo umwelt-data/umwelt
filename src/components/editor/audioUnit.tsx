@@ -1,25 +1,26 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { VisualUnitSpec, markTypes, visualPropNames } from '../../types';
+import { AudioUnitSpec, audioPropNames, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
+import { TraversalDefinition } from './traversalDefinition';
 
-export type VisualUnitProps = {
-  unitSpec: VisualUnitSpec;
+export type AudioUnitProps = {
+  unitSpec: AudioUnitSpec;
 };
 
-export function VisualUnit(props: VisualUnitProps) {
+export function AudioUnit(props: AudioUnitProps) {
   const [spec, specActions] = useUmweltSpec();
 
   const getEncodings = () => {
     return Object.entries(props.unitSpec.encoding).sort((a, b) => {
-      const aIndex = visualPropNames.indexOf(a[0]);
-      const bIndex = visualPropNames.indexOf(b[0]);
+      const aIndex = audioPropNames.indexOf(a[0]);
+      const bIndex = audioPropNames.indexOf(b[0]);
       return aIndex - bIndex;
     });
   };
 
   return (
     <div>
-      {spec.visual.units.length > 1 ? (
+      {spec.audio.units.length > 1 ? (
         <div>
           <h3 id={`unit-${props.unitSpec.name}`}>{props.unitSpec.name}</h3>
           <label>
@@ -34,16 +35,6 @@ export function VisualUnit(props: VisualUnitProps) {
         </div>
       ) : null}
       <div>
-        <label>
-          Mark
-          <select>
-            {markTypes.map((markType) => {
-              return <option value={markType}>{markType}</option>;
-            })}
-          </select>
-        </label>
-      </div>
-      <div>
         <h4>Encodings</h4>
         <div>
           {getEncodings().map(([propName, encoding]) => {
@@ -53,7 +44,15 @@ export function VisualUnit(props: VisualUnitProps) {
           })}
         </div>
       </div>
-      {spec.visual.units.length > 1 ? <button onClick={() => specActions.removeVisualUnit(props.unitSpec.name)}>Remove unit</button> : null}
+      <div>
+        <h4>Traversals</h4>
+        <div>
+          {props.unitSpec.traversal.map((traversal) => {
+            return <TraversalDefinition unit={props.unitSpec.name} traversal={traversal} />;
+          })}
+        </div>
+      </div>
+      {spec.audio.units.length > 1 ? <button onClick={() => specActions.removeAudioUnit(props.unitSpec.name)}>Remove unit</button> : null}
     </div>
   );
 }

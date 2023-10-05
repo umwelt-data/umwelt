@@ -83,7 +83,7 @@ export interface VisualEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit;
+  timeUnit?: TimeUnit | typeof NONE;
   aggregate?: NonArgAggregateOp | typeof NONE;
   bin?: boolean;
   sort?: Sort<any>;
@@ -105,7 +105,7 @@ export interface AudioTraversalFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit;
+  timeUnit?: TimeUnit | typeof NONE;
   bin?: boolean;
   // aggregate: undefined;
 }
@@ -132,7 +132,8 @@ export type AudioUnitSpec = {
   traversal: AudioTraversal;
 };
 
-export type ViewComposition = 'layer' | 'concat';
+export const viewCompositions = ['layer', 'concat'];
+export type ViewComposition = (typeof viewCompositions)[number];
 
 export interface VisualSpec {
   units: VisualUnitSpec[];
