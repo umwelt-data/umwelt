@@ -23,6 +23,9 @@ export function Visualization(props: VisualizationProps) {
       } catch (e) {
         console.error(e);
       }
+    } else {
+      (window as any).view.finalize();
+      document.getElementById('vl-container')!.innerHTML = '';
     }
   });
 
