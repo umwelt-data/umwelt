@@ -1,3 +1,4 @@
+import { Mark } from 'vega-lite/src/mark';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnitSpec, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
@@ -36,9 +37,18 @@ export function VisualUnit(props: VisualUnitProps) {
       <div>
         <label>
           Mark
-          <select>
+          <select
+            value={props.unitSpec.mark}
+            onChange={(e) => {
+              specActions.changeMark(props.unitSpec.name, e.currentTarget.value as Mark);
+            }}
+          >
             {markTypes.map((markType) => {
-              return <option value={markType}>{markType}</option>;
+              return (
+                <option value={markType} selected={markType === props.unitSpec.mark}>
+                  {markType}
+                </option>
+              );
             })}
           </select>
         </label>

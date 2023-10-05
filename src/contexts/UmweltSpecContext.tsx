@@ -5,6 +5,7 @@ import { detectKey, elaborateFields } from '../util/inference';
 import { useParams, useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
 import { validateSpec } from '../util/spec';
+import { Mark } from 'vega-lite/src/mark';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -22,6 +23,7 @@ export type UmweltSpecActions = {
   setFieldType: (field: string, type: MeasureType) => void;
   addEncoding: (field: string, property: EncodingPropName, unit: string) => void;
   removeEncoding: (field: string, property: EncodingPropName, unit: string) => void;
+  changeMark: (unit: string, mark: Mark) => void;
   addVisualUnit: () => void;
   removeVisualUnit: (unit: string) => void;
   addAudioUnit: () => void;
@@ -221,6 +223,14 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         internalActions.removeUnitIfEmpty(unit);
       }
+      internalActions.updateSearchParams();
+    },
+    changeMark: (unit: string, mark: Mark) => {
+      setSpec(
+        'visual',
+        'units',
+        spec.visual.units.map((u) => (u.name === unit ? { ...u, mark } : u))
+      );
       internalActions.updateSearchParams();
     },
     addVisualUnit: () => {
