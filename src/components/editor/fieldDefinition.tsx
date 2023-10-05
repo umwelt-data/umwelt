@@ -86,7 +86,11 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           }}
         >
           {assignableMtypes(field).map((mtype) => {
-            return <option value={mtype}>{mtype}</option>;
+            return (
+              <option value={mtype} selected={mtype === field.type}>
+                {mtype}
+              </option>
+            );
           })}
         </select>
       </label>
@@ -110,14 +114,29 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                 >
                   {!assignablePropertyNames().includes(encodingRef.property) ? <option value={encodingRef.property}>{encodingRef.property}</option> : null}
                   {assignablePropertyNames().map((propName) => {
-                    return <option value={propName}>{propName}</option>;
+                    return (
+                      <option value={propName} selected={propName === encodingRef.property}>
+                        {propName}
+                      </option>
+                    );
                   })}
                 </select>
                 {(visualPropNames.includes(encodingRef.property as any) && spec.visual.units.length > 1) || (audioPropNames.includes(encodingRef.property as any) && spec.audio.units.length > 1) ? (
-                  <select aria-describedby={`label-${field.name}`} value={encodingRef.unit} onChange={(e) => {}}>
+                  <select
+                    aria-describedby={`label-${field.name}`}
+                    value={encodingRef.unit}
+                    onChange={(e) => {
+                      specActions.addEncoding(field.name, encodingRef.property, e.currentTarget.value);
+                      specActions.removeEncoding(field.name, encodingRef.property, encodingRef.unit);
+                    }}
+                  >
                     {!assignableUnitsForProperty(encodingRef.property).includes(encodingRef.unit) ? <option value={encodingRef.unit}>{encodingRef.unit}</option> : null}
                     {assignableUnitsForProperty(encodingRef.property).map((unitName) => {
-                      return <option value={unitName}>{unitName}</option>;
+                      return (
+                        <option value={unitName} selected={unitName === encodingRef.unit}>
+                          {unitName}
+                        </option>
+                      );
                     })}
                   </select>
                 ) : null}

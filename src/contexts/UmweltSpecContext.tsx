@@ -61,8 +61,8 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const [spec, setSpec] = createStore(getInitialSpec());
-  const [visualUnitCount, setVisualUnitCount] = createSignal<number>(1);
-  const [audioUnitCount, setAudioUnitCount] = createSignal<number>(1);
+  const [visualUnitCount, setVisualUnitCount] = createSignal<number>(0);
+  const [audioUnitCount, setAudioUnitCount] = createSignal<number>(0);
 
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
@@ -224,8 +224,12 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.updateSearchParams();
     },
     addVisualUnit: () => {
-      setSpec('visual', 'units', [...spec.visual.units, { name: `vis_unit_${visualUnitCount()}`, mark: 'point', encoding: {} }]);
-      setVisualUnitCount(visualUnitCount() + 1);
+      let name = `vis_unit_${visualUnitCount()}`;
+      while (spec.visual.units.find((u) => u.name === name)) {
+        setVisualUnitCount(visualUnitCount() + 1);
+        name = `vis_unit_${visualUnitCount()}`;
+      }
+      setSpec('visual', 'units', [...spec.visual.units, { name, mark: 'point', encoding: {} }]);
       internalActions.updateSearchParams();
     },
     removeVisualUnit: (unit: string) => {
@@ -239,8 +243,12 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       }
     },
     addAudioUnit: () => {
-      setSpec('audio', 'units', [...spec.audio.units, { name: `audio_unit_${audioUnitCount()}`, encoding: {}, traversal: [] }]);
-      setAudioUnitCount(audioUnitCount() + 1);
+      let name = `audio_unit_${audioUnitCount()}`;
+      while (spec.audio.units.find((u) => u.name === name)) {
+        setAudioUnitCount(audioUnitCount() + 1);
+        name = `audio_unit_${audioUnitCount()}`;
+      }
+      setSpec('audio', 'units', [...spec.audio.units, { name, encoding: {}, traversal: [] }]);
       internalActions.updateSearchParams();
     },
     removeAudioUnit: (unit: string) => {
