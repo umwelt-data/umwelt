@@ -24,7 +24,7 @@ export function Visualization(props: VisualizationProps) {
         console.error(e);
       }
     } else {
-      (window as any).view.finalize();
+      (window as any).view?.finalize();
       document.getElementById('vl-container')!.innerHTML = '';
     }
   });

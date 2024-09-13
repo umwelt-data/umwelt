@@ -1,6 +1,8 @@
 import { Accessor, createEffect, createSignal } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
+import Papa from 'papaparse';
+import { isString } from 'vega';
 
 export type DataProps = {
   currentTab: Accessor<string>;
@@ -29,12 +31,23 @@ export function Data(props: DataProps) {
       reader.onload = function (loadedEvent: ProgressEvent<FileReader>) {
         // result contains loaded file.
         const contents = loadedEvent.target?.result;
-        if (contents) {
+        if (contents && isString(contents)) {
           try {
-            const data = JSON.parse(contents as string);
+            const data = JSON.parse(contents);
             specActions.initializeData(data);
           } catch (e) {
-            console.error('uploaded file was not successfully parsed as json');
+            // try to parse as csv
+            Papa.parse(contents, {
+              header: true,
+              dynamicTyping: true,
+              skipEmptyLines: true,
+              complete: (results, file) => {
+                if (results.errors.length) {
+                  console.error('Errors while parsing csv:', results.errors);
+                }
+                specActions.initializeData(results.data);
+              },
+            });
           }
         }
       };
@@ -66,7 +79,28 @@ export function Data(props: DataProps) {
       <p>or</p>
       <div>
         <label>
-          Upload JSON file <br />
+          Upload JSON or CSV file
+          <details>
+            <summary>Accepted file formats</summary>
+            <p>A JSON file should be an array of objects where each object represents a row of data. Example:</p>
+            <pre>
+              <code>
+                {JSON.stringify(
+                  [
+                    { name: 'Alice', age: 34 },
+                    { name: 'Bob', age: 56 },
+                  ],
+                  null,
+                  2
+                )}
+              </code>
+            </pre>
+            <p>A CSV file should have a header row with column names. Example:</p>
+            <pre>
+              <code>{`name,age\nAlice,34\nBob,56`}</code>
+            </pre>
+          </details>
+          <br />
           <input type="file" onChange={(e) => onUploadDataFile(e)}></input>
         </label>
       </div>
