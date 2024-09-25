@@ -7,9 +7,11 @@ import { Audio } from './audio';
 
 import styles from '../../App.module.css';
 
+type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
+
 export function Editor() {
   const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createSignal(spec.data && spec.fields.length ? 'fields' : 'data');
+  const [currentTab, setCurrentTab] = createSignal<EditorTab>(spec.data && spec.fields.length ? 'fields' : 'data');
 
   const onFocus = (e: any) => {};
 

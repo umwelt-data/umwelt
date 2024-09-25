@@ -1,109 +1,114 @@
 import { Accessor, createEffect, createSignal } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
-import Papa from 'papaparse';
-import { isString } from 'vega';
+import { UmweltDataset } from '../../types';
+import { createStoredSignal } from '../../util/solid';
+import { UploadData } from './uploadData';
 
 export type DataProps = {
   currentTab: Accessor<string>;
 };
 
+interface UploadedFile {
+  filename: string;
+  data: UmweltDataset;
+}
+
+const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
+const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
+
 export function Data(props: DataProps) {
   const [_, specActions] = useUmweltSpec();
 
-  const [dataUrl, setDataUrl] = createSignal('https://raw.githubusercontent.com/vega/vega-datasets/master/data/stocks.csv');
-  createEffect(() => {
-    getData(dataUrl()).then((data) => {
+  const [recentFiles, setRecentFiles] = createStoredSignal<UploadedFile[]>('recentFiles', []);
+  const [selectedDataset, setSelectedDataset] = createSignal<string>();
+
+  const updateRecentFiles = (filename: string, data: UmweltDataset) => {
+    const nextRecentFiles = [...recentFiles()];
+    // if file already exists, remove it
+    const index = nextRecentFiles.findIndex((file) => file.filename === filename);
+    if (index > -1) {
+      nextRecentFiles.splice(index, 1);
+    }
+    // add file to the beginning
+    nextRecentFiles.unshift({ filename, data });
+    if (nextRecentFiles.length > 5) {
+      // keep only 5 most recent files
+      nextRecentFiles.pop();
+    }
+    setRecentFiles(nextRecentFiles);
+  };
+
+  const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
+
+  const setDataFromUrl = (url: string) => {
+    getData(url).then((data) => {
       if (data && data.length) {
         specActions.initializeData(data);
       }
     });
+  };
+
+  // default to most recently uploaded file, or first example if no files uploaded
+  createEffect(() => {
+    if (recentFiles().length) {
+      const mostRecent = recentFiles()[0];
+      setSelectedDataset(mostRecent.filename);
+    } else {
+      setSelectedDataset(vegaDataUrl(vegaDatasets[0]));
+    }
   });
 
-  const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
-
-  const onUploadDataFile = (e: Event & { currentTarget: HTMLInputElement; target: HTMLInputElement }) => {
-    const fileList = e.target.files;
-    if (fileList?.length) {
-      const file = fileList[0];
-      const reader = new FileReader();
-
-      reader.onload = function (loadedEvent: ProgressEvent<FileReader>) {
-        // result contains loaded file.
-        const contents = loadedEvent.target?.result;
-        if (contents && isString(contents)) {
-          try {
-            const data = JSON.parse(contents);
-            specActions.initializeData(data);
-          } catch (e) {
-            // try to parse as csv
-            Papa.parse(contents, {
-              header: true,
-              dynamicTyping: true,
-              skipEmptyLines: true,
-              complete: (results, file) => {
-                if (results.errors.length) {
-                  console.error('Errors while parsing csv:', results.errors);
-                }
-                specActions.initializeData(results.data);
-              },
-            });
-          }
+  createEffect(() => {
+    const dataset = selectedDataset();
+    if (dataset) {
+      if (dataset.startsWith(VEGA_DATA_URL_PREFIX)) {
+        setDataFromUrl(dataset);
+      } else {
+        const file = recentFiles().find((file) => file.filename === dataset);
+        if (file) {
+          specActions.initializeData(file.data);
         }
-      };
-
-      reader.readAsText(file);
+      }
     }
+  });
+
+  const printCurrentDataset = () => {
+    const filename = selectedDataset();
+    if (filename && filename.startsWith(VEGA_DATA_URL_PREFIX)) {
+      return filename.substring(VEGA_DATA_URL_PREFIX.length);
+    }
+    return filename;
   };
 
   return (
     <div role="tabpanel" id="tabpanel-data" aria-labelledby="tab-data" hidden={props.currentTab() !== 'data'}>
       <h2>Data</h2>
-
-      <div>
-        <label>
-          Choose example dataset
-          <br />
-          <select
-            onChange={(e) => {
-              const url = e.currentTarget.value;
-              setDataUrl(url);
-            }}
-          >
-            {vegaDatasets.map((url) => {
-              return <option value={`https://raw.githubusercontent.com/vega/vega-datasets/master/data/${url}`}>{url}</option>;
-            })}
-          </select>
-        </label>
-      </div>
-      <p>or</p>
-      <div>
-        <label>
-          Upload JSON or CSV file
-          <details>
-            <summary>Accepted file formats</summary>
-            <p>A JSON file should be an array of objects where each object represents a row of data. Example:</p>
-            <pre>
-              <code>
-                {JSON.stringify(
-                  [
-                    { name: 'Alice', age: 34 },
-                    { name: 'Bob', age: 56 },
-                  ],
-                  null,
-                  2
-                )}
-              </code>
-            </pre>
-            <p>A CSV file should have a header row with column names. Example:</p>
-            <pre>
-              <code>{`name,age\nAlice,34\nBob,56`}</code>
-            </pre>
-          </details>
-          <br />
-          <input type="file" onChange={(e) => onUploadDataFile(e)}></input>
-        </label>
-      </div>
+      Current dataset: {printCurrentDataset()}
+      <p>Choose a dataset from the list below, or upload a new dataset.</p>
+      <UploadData updateRecentFiles={updateRecentFiles} />
+      <h3>Recently uploaded files</h3>
+      {recentFiles().length > 0
+        ? recentFiles().map((file) => {
+            return (
+              <label>
+                <input type="radio" name="choose_dataset" checked={selectedDataset() === file.filename} onChange={(e) => setSelectedDataset(e.target.value)} value={file.filename} />
+                {file.filename}
+              </label>
+            );
+          })
+        : 'No files uploaded.'}
+      <h3>Example datasets</h3>
+      {vegaDatasets.map((filename) => {
+        return (
+          <div>
+            <label>
+              <input type="radio" name="choose_dataset" checked={selectedDataset() === vegaDataUrl(filename)} onChange={(e) => setSelectedDataset(e.target.value)} value={vegaDataUrl(filename)} />
+              {filename}
+            </label>
+          </div>
+        );
+      })}
     </div>
   );
 }
