@@ -91,10 +91,10 @@ export interface AudioEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  // timeUnit?: string;
+  timeUnit?: string;
   aggregate?: NonArgAggregateOp;
   sort?: Sort<any>;
-  // bin: undefined;
+  bin?: undefined;
 }
 
 export type EncodingFieldDef = VisualEncodingFieldDef | AudioEncodingFieldDef;
@@ -105,7 +105,7 @@ export interface AudioTraversalFieldDef {
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: TimeUnit;
   bin?: boolean;
-  // aggregate: undefined;
+  aggregate?: undefined;
 }
 
 export type VisualEncoding = {

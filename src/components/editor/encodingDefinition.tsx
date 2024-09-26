@@ -1,6 +1,7 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { EncodingFieldDef, EncodingPropName, audioPropNames, visualPropNames } from '../../types';
 import { describeField } from '../../util/description';
+import { FieldTransforms } from './fieldTransforms';
 
 export type EncodingDefinitionProps = {
   unit: string;
@@ -8,25 +9,29 @@ export type EncodingDefinitionProps = {
   encoding: EncodingFieldDef;
 };
 
-export function EncodingDefinition(props: EncodingDefinitionProps) {
+export function EncodingDefinition({ unit, property, encoding }: EncodingDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
+
+  const fieldDef = spec.fields.find((f) => f.name === encoding.field);
+
+  if (!fieldDef) return;
 
   return (
     <div>
-      <h5>{props.property}</h5>
+      <h5>{property}</h5>
       <div>
         <select
-          value={props.encoding.field}
+          value={encoding.field}
           onChange={(e) => {
-            specActions.removeEncoding(props.encoding.field, props.property, props.unit);
-            specActions.addEncoding(e.currentTarget.value, props.property, props.unit);
+            specActions.removeEncoding(encoding.field, property, unit);
+            specActions.addEncoding(e.currentTarget.value, property, unit);
           }}
         >
           {spec.fields
             .filter((f) => f.active)
             .map((field) => {
               return (
-                <option value={field.name} selected={props.encoding.field === field.name}>
+                <option value={field.name} selected={encoding.field === field.name}>
                   {field.name}
                 </option>
               );
@@ -34,11 +39,12 @@ export function EncodingDefinition(props: EncodingDefinitionProps) {
         </select>
         <button
           onClick={() => {
-            specActions.removeEncoding(props.encoding.field, props.property, props.unit);
+            specActions.removeEncoding(encoding.field, property, unit);
           }}
         >
           Remove encoding
         </button>
+        <FieldTransforms field={fieldDef} encoding={{ unit, property }} />
       </div>
     </div>
   );

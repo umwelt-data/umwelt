@@ -122,9 +122,10 @@ export function Data(props: DataProps) {
             return (
               <div>
                 <label>
-                  <input type="radio" name="choose_dataset" checked={JSON.stringify(file.data) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={file.filename} />
+                  <input type="radio" name="recent_files" checked={JSON.stringify(file.data) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={file.filename} />
                   {file.filename}
                 </label>
+                <button onClick={() => setRecentFiles(recentFiles().filter((f) => f.filename !== file.filename))}>Remove {file.filename}</button>
               </div>
             );
           })
@@ -134,7 +135,7 @@ export function Data(props: DataProps) {
         return (
           <div>
             <label>
-              <input type="radio" name="choose_dataset" checked={JSON.stringify(vegaDatasetsCache()[filename]) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
+              <input type="radio" name="example_datasets" checked={JSON.stringify(vegaDatasetsCache()[filename]) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
               {filename}
             </label>
           </div>

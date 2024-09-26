@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createSignal } from 'solid-js';
 import { SetStoreFunction, createStore } from 'solid-js/store';
-import { EncodingPropName, EncodingRef, MeasureType, UmweltSpec, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useParams, useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
@@ -34,6 +34,9 @@ export type UmweltSpecActions = {
   setFieldAggregate: (field: string, aggregate: NonArgAggregateOp | 'undefined') => void;
   setFieldBin: (field: string, bin: boolean) => void;
   setFieldTimeUnit: (field: string, timeUnit: TimeUnit | 'undefined') => void;
+  setEncodingAggregate: (unit: string, property: EncodingPropName, aggregate: NonArgAggregateOp | 'undefined') => void;
+  setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => void;
+  setEncodingTimeUnit: (unit: string, property: EncodingPropName, timeUnit: TimeUnit | 'undefined') => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -316,6 +319,41 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, timeUnit } : fieldDef))
       );
       internalActions.updateSearchParams();
+    },
+    setEncodingAggregate: (unit: string, property: EncodingPropName, inputAggregate: NonArgAggregateOp | 'undefined') => {
+      const aggregate = inputAggregate === 'undefined' ? undefined : inputAggregate;
+      if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
+        setSpec(
+          'visual',
+          'units',
+          spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), aggregate } } } : u))
+        );
+      } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
+        setSpec(
+          'audio',
+          'units',
+          spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as AudioEncodingFieldDef), aggregate } } } : u))
+        );
+      }
+    },
+    setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => {
+      if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
+        setSpec(
+          'visual',
+          'units',
+          spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), bin } } } : u))
+        );
+      }
+    },
+    setEncodingTimeUnit: (unit: string, property: EncodingPropName, inputTimeUnit: TimeUnit | 'undefined') => {
+      const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
+      if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
+        setSpec(
+          'visual',
+          'units',
+          spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), timeUnit } } } : u))
+        );
+      }
     },
   };
 
