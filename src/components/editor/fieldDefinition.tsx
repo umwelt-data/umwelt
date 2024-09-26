@@ -4,6 +4,7 @@ import { getDomain } from '../../util/domain';
 import dayjs from 'dayjs';
 import { isString } from 'vega';
 import { isNumeric } from 'vega-lite';
+import { FieldTransforms } from './fieldTransforms';
 
 export type FieldDefinitionProps = {
   field: FieldDef;
@@ -155,6 +156,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           })}
         </div>
       </div>
+      <FieldTransforms field={field} />
     </div>
   );
 }

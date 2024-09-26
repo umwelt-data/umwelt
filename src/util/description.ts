@@ -1,37 +1,8 @@
 import moize from 'moize';
-import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, NONE } from '../types';
-
-export const dateToTimeUnit = moize((date: Date, timeUnit: string) => {
-  if (!timeUnit) {
-    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-  const opts: Intl.DateTimeFormatOptions = {};
-  if (timeUnit.includes('year')) {
-    opts['year'] = 'numeric';
-  }
-  if (timeUnit.includes('month')) {
-    opts['month'] = 'short';
-  }
-  if (timeUnit.includes('day')) {
-    opts['weekday'] = 'short';
-  }
-  if (timeUnit.includes('date')) {
-    opts['day'] = 'numeric';
-  }
-  if (timeUnit.includes('hours')) {
-    opts['hour'] = 'numeric';
-  }
-  if (timeUnit.includes('minutes')) {
-    opts['minute'] = 'numeric';
-  }
-  if (timeUnit.includes('seconds')) {
-    opts['second'] = 'numeric';
-  }
-  if (!Object.keys(opts).length) {
-    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-  return date.toLocaleString('en-US', opts);
-});
+import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, NONE, UmweltValue } from '../types';
+import { dateToTimeUnit } from './values';
+import { LogicalComposition } from 'vega-lite/src/logical';
+import { FieldPredicate } from 'vega-lite/src/predicate';
 
 export const fmtValue = moize((value, fieldDef): string => {
   if (Array.isArray(value)) {
@@ -47,6 +18,45 @@ export const fmtValue = moize((value, fieldDef): string => {
   }
   return String(value);
 });
+
+function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef[]) {
+  const fieldDef = fields.find((f) => f.name === predicate.field);
+  if (!fieldDef) return '';
+  const field = fieldDef.name;
+  if ('equal' in predicate) {
+    return `${fmtValue(predicate.equal as UmweltValue, fieldDef)}`;
+  }
+  if ('range' in predicate && Array.isArray(predicate.range)) {
+    return `${field} between ${fmtValue(predicate.range[0], fieldDef)} and ${fmtValue(predicate.range[1], fieldDef)}`;
+  }
+  if ('lt' in predicate) {
+    return `${field} less than ${fmtValue(predicate.lt as UmweltValue, fieldDef)}`;
+  }
+  if ('lte' in predicate) {
+    return `${field} less than or equal to ${fmtValue(predicate.lte as UmweltValue, fieldDef)}`;
+  }
+  if ('gt' in predicate) {
+    return `${field} greater than ${fmtValue(predicate.gt as UmweltValue, fieldDef)}`;
+  }
+  if ('gte' in predicate) {
+    return `${field} greater than or equal to ${fmtValue(predicate.gte as UmweltValue, fieldDef)}`;
+  }
+
+  return '';
+}
+
+export function predicateToDescription(predicate: LogicalComposition<FieldPredicate>, fields: FieldDef[]): string {
+  if ('and' in predicate) {
+    return predicate.and.map((p) => predicateToDescription(p, fields)).join(' and ');
+  }
+  if ('or' in predicate) {
+    return predicate.or.map((p) => predicateToDescription(p, fields)).join(' or ');
+  }
+  if ('not' in predicate) {
+    return `not ${predicateToDescription(predicate.not, fields)}`;
+  }
+  return fieldPredicateToDescription(predicate, fields);
+}
 
 export const describeField = moize((fieldDef: FieldDef, encFieldDef?: EncodingFieldDef | AudioTraversalFieldDef): string => {
   const inheritedFieldDef = encFieldDef ? { ...fieldDef, ...encFieldDef } : { field: fieldDef.name, ...fieldDef };

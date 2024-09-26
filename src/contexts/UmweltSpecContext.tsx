@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
 import { validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
+import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -29,6 +30,7 @@ export type UmweltSpecActions = {
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
   renameUnit: (oldName: string, newName: string) => void;
+  setFieldAggregate: (field: string, aggregate: NonArgAggregateOp) => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -287,6 +289,13 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         internalActions.updateSearchParams();
       }
+    },
+    setFieldAggregate: (field: string, aggregate: NonArgAggregateOp) => {
+      setSpec(
+        'fields',
+        spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, aggregate } : fieldDef))
+      );
+      internalActions.updateSearchParams();
     },
   };
 

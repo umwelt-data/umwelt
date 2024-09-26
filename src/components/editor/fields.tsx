@@ -3,14 +3,14 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { FieldDefinition } from './fieldDefinition';
 
 export type FieldsProps = {
-  currentTab: Accessor<string>;
+  currentTab: string;
 };
 
 export function Fields(props: FieldsProps) {
   const [spec, specActions] = useUmweltSpec();
 
   return (
-    <div role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" hidden={props.currentTab() !== 'fields'}>
+    <div role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" hidden={props.currentTab !== 'fields'}>
       <h2>Fields</h2>
       <div>
         <h3>Select fields</h3>
@@ -18,7 +18,6 @@ export function Fields(props: FieldsProps) {
           return (
             <div>
               <label>
-                {field.name}
                 <input
                   type="checkbox"
                   checked={field.active}
@@ -26,6 +25,7 @@ export function Fields(props: FieldsProps) {
                     specActions.setFieldActive(field.name, e.currentTarget.checked);
                   }}
                 />
+                {field.name}
               </label>
             </div>
           );

@@ -35,10 +35,10 @@ export function Editor() {
         </button>
       </div>
 
-      <Data currentTab={currentTab} />
-      <Fields currentTab={currentTab} />
-      <Visual currentTab={currentTab} />
-      <Audio currentTab={currentTab} />
+      <Data currentTab={currentTab()} />
+      <Fields currentTab={currentTab()} />
+      <Visual currentTab={currentTab()} />
+      <Audio currentTab={currentTab()} />
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import { isDate, toNumber, isArray, inrange } from 'vega';
 import { LogicalAnd, LogicalComposition } from 'vega-lite/src/logical';
-import { FieldPredicate, FieldEqualPredicate, FieldLTPredicate, FieldGTPredicate, FieldLTEPredicate, FieldGTEPredicate, FieldRangePredicate, FieldOneOfPredicate, FieldValidPredicate } from 'vega-lite/src/predicate';
+import { FieldPredicate, FieldEqualPredicate } from 'vega-lite/src/predicate';
 import { EncodingFieldDef, FieldDef, UmweltDataset, UmweltDatum, UmweltPredicate, UmweltValue } from '../types';
-import { fmtValue } from './values';
 
 export type VlSelectionTuple = { unit: string; fields: any; values: any };
 export type VlSelectionStore = VlSelectionTuple[];
@@ -205,45 +204,6 @@ export function datumToPredicate(datum: UmweltDatum, fields: (FieldDef | Encodin
       };
     }),
   };
-}
-
-export function predicateToDescription(predicate: LogicalComposition<FieldPredicate>, fields: FieldDef[]): string {
-  if ('and' in predicate) {
-    return predicate.and.map((p) => predicateToDescription(p, fields)).join(' and ');
-  }
-  if ('or' in predicate) {
-    return predicate.or.map((p) => predicateToDescription(p, fields)).join(' or ');
-  }
-  if ('not' in predicate) {
-    return `not ${predicateToDescription(predicate.not, fields)}`;
-  }
-  return fieldPredicateToDescription(predicate, fields);
-}
-
-function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef[]) {
-  const fieldDef = fields.find((f) => f.name === predicate.field);
-  if (!fieldDef) return '';
-  const field = fieldDef.name;
-  if ('equal' in predicate) {
-    return `${fmtValue(predicate.equal as UmweltValue, fieldDef)}`;
-  }
-  if ('range' in predicate && Array.isArray(predicate.range)) {
-    return `${field} between ${fmtValue(predicate.range[0], fieldDef)} and ${fmtValue(predicate.range[1], fieldDef)}`;
-  }
-  if ('lt' in predicate) {
-    return `${field} less than ${fmtValue(predicate.lt as UmweltValue, fieldDef)}`;
-  }
-  if ('lte' in predicate) {
-    return `${field} less than or equal to ${fmtValue(predicate.lte as UmweltValue, fieldDef)}`;
-  }
-  if ('gt' in predicate) {
-    return `${field} greater than ${fmtValue(predicate.gt as UmweltValue, fieldDef)}`;
-  }
-  if ('gte' in predicate) {
-    return `${field} greater than or equal to ${fmtValue(predicate.gte as UmweltValue, fieldDef)}`;
-  }
-
-  return '';
 }
 
 export function predicateToFields(predicate: UmweltPredicate): string[] {

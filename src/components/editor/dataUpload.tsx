@@ -1,17 +1,13 @@
-import { Accessor } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { createStoredSignal } from '../../util/solid';
 import Papa from 'papaparse';
 import { isString } from 'vega';
 import { UmweltDataset, UmweltDatum } from '../../types';
 
 interface UploadDataProps {
-  updateRecentFiles: (filename: string, data: UmweltDataset) => void;
+  loadDataFromUpload: (filename: string, data: UmweltDataset) => void;
 }
 
-export function UploadData({ updateRecentFiles }: UploadDataProps) {
-  const [_, specActions] = useUmweltSpec();
-
+export function UploadData({ loadDataFromUpload }: UploadDataProps) {
   const onUploadDataFile = (e: Event & { currentTarget: HTMLInputElement; target: HTMLInputElement }) => {
     const fileList = e.target.files;
     if (fileList?.length) {
@@ -24,8 +20,7 @@ export function UploadData({ updateRecentFiles }: UploadDataProps) {
         if (contents && isString(contents)) {
           try {
             const data = JSON.parse(contents);
-            specActions.initializeData(data);
-            updateRecentFiles(file.name, data);
+            loadDataFromUpload(file.name, data);
           } catch (e) {
             // try to parse as csv
             Papa.parse<UmweltDatum>(contents, {
@@ -36,8 +31,7 @@ export function UploadData({ updateRecentFiles }: UploadDataProps) {
                 if (results.errors.length) {
                   console.error('Errors while parsing csv:', results.errors);
                 } else {
-                  specActions.initializeData(results.data);
-                  updateRecentFiles(file.name, results.data);
+                  loadDataFromUpload(file.name, results.data);
                 }
               },
             });

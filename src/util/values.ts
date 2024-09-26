@@ -1,6 +1,6 @@
 import { isNumeric as vlIsNumeric } from 'vega-lite';
 import { TimeUnit, isString } from 'vega';
-import { EncodingFieldDef, FieldDef, UmweltValue } from '../types';
+import { FieldDef } from '../types';
 import moize from 'moize';
 
 export function serializeValue(value: any, fieldDef: FieldDef) {
@@ -65,21 +65,6 @@ export const dateToTimeUnit = moize((date: Date, timeUnit: TimeUnit) => {
     return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
   return date.toLocaleString('en-US', opts);
-});
-
-export const fmtValue = moize((value, fieldDef): string => {
-  if (Array.isArray(value)) {
-    return value.map((v) => fmtValue(v, fieldDef)).join(', ');
-  }
-  if (fieldDef.type === 'temporal' && !(value instanceof Date)) {
-    value = new Date(value);
-  }
-  if (value instanceof Date) {
-    return dateToTimeUnit(value, fieldDef.timeUnit);
-  } else if (typeof value !== 'string' && !isNaN(value) && value % 1 != 0) {
-    return Number(value).toFixed(2);
-  }
-  return String(value);
 });
 
 export const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
