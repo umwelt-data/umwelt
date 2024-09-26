@@ -3,15 +3,11 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnit } from './visualUnit';
 import { viewCompositions } from '../../types';
 
-export type VisualProps = {
-  currentTab: string;
-};
-
-export function Visual(props: VisualProps) {
+export function Visual() {
   const [spec, specActions] = useUmweltSpec();
 
   return (
-    <div role="tabpanel" id="tabpanel-visual" aria-labelledby="tab-visual" hidden={props.currentTab !== 'visual'}>
+    <div role="tabpanel" id="tabpanel-visual" aria-labelledby="tab-visual">
       <h2>Visual</h2>
       {spec.visual.units.map((unit) => {
         return <VisualUnit unitSpec={unit} />;

@@ -1,4 +1,4 @@
-import { Accessor, createEffect, createSignal } from 'solid-js';
+import { Accessor, createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
@@ -6,10 +6,6 @@ import { createStoredSignal } from '../../util/solid';
 import { UploadData } from './dataUpload';
 import { fmtValue } from '../../util/description';
 import { getFieldDef } from '../../util/spec';
-
-export type DataProps = {
-  currentTab: string;
-};
 
 interface DataFile {
   filename: string;
@@ -21,7 +17,7 @@ const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datase
 
 const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
 
-export function Data(props: DataProps) {
+export function Data() {
   const [spec, specActions] = useUmweltSpec();
 
   const [recentFiles, setRecentFiles] = createStoredSignal<DataFile[]>('recentFiles', []);
@@ -80,42 +76,41 @@ export function Data(props: DataProps) {
 
   const DataTable = () => {
     return (
-      <>
-        {!spec.data || !spec.data.length ? (
-          'No dataset loaded'
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                {Object.keys(spec.data[0]).map((key) => (
-                  <th>{key}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {spec.data.map((row) => (
+      <Show when={spec.data && spec.data.length} fallback={'No dataset loaded'}>
+        <table>
+          <thead>
+            <tr>
+              <For each={Object.keys(spec.data[0])}>{(key) => <th>{key}</th>}</For>
+            </tr>
+          </thead>
+          <tbody>
+            <For each={spec.data}>
+              {(row) => (
                 <tr>
-                  {Object.entries(row).map(([fieldName, value]) => (
-                    <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>
-                  ))}
+                  <For each={Object.entries(row)}>
+                    {([fieldName, value]) => {
+                      return <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>;
+                    }}
+                  </For>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </>
+              )}
+            </For>
+          </tbody>
+        </table>
+      </Show>
     );
   };
 
   return (
-    <div role="tabpanel" id="tabpanel-data" aria-labelledby="tab-data" hidden={props.currentTab !== 'data'}>
+    <div role="tabpanel" id="tabpanel-data" aria-labelledby="tab-data">
       <h2>Data</h2>
       <DataTable />
       <h3>Upload JSON or CSV file</h3>
       <UploadData loadDataFromUpload={loadDataFromUpload} />
       <h3>Recently uploaded files</h3>
-      {recentFiles().length > 0
-        ? recentFiles().map((file) => {
+      <Show when={recentFiles().length > 0} fallback={'No files uploaded.'}>
+        <For each={recentFiles()}>
+          {(file) => {
             return (
               <div>
                 <label>
@@ -125,19 +120,22 @@ export function Data(props: DataProps) {
                 <button onClick={() => setRecentFiles(recentFiles().filter((f) => f.filename !== file.filename))}>Remove {file.filename}</button>
               </div>
             );
-          })
-        : 'No files uploaded.'}
+          }}
+        </For>
+      </Show>
       <h3>Example datasets</h3>
-      {vegaDatasets.map((filename) => {
-        return (
-          <div>
-            <label>
-              <input type="radio" name="example_datasets" checked={JSON.stringify(vegaDatasetsCache()[filename]) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
-              {filename}
-            </label>
-          </div>
-        );
-      })}
+      <For each={vegaDatasets}>
+        {(filename) => {
+          return (
+            <div>
+              <label>
+                <input type="radio" name="example_datasets" checked={JSON.stringify(vegaDatasetsCache()[filename]) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
+                {filename}
+              </label>
+            </div>
+          );
+        }}
+      </For>
     </div>
   );
 }

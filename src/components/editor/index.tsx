@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, ValidComponent } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { Data } from './data';
 import { Fields } from './fields';
@@ -6,6 +6,7 @@ import { Visual } from './visual';
 import { Audio } from './audio';
 
 import styles from '../../App.module.css';
+import { Dynamic } from 'solid-js/web';
 
 type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
 
@@ -13,7 +14,14 @@ export function Editor() {
   const [spec, _] = useUmweltSpec();
   const [currentTab, setCurrentTab] = createSignal<EditorTab>(spec.data && spec.fields.length ? 'fields' : 'data');
 
-  const onFocus = (e: any) => {};
+  const onFocus = (e: FocusEvent) => {};
+
+  const tabs = {
+    data: <Data />,
+    fields: <Fields />,
+    visual: <Visual />,
+    audio: <Audio />,
+  };
 
   return (
     <div class={styles.Editor}>
@@ -35,10 +43,7 @@ export function Editor() {
         </button>
       </div>
 
-      <Data currentTab={currentTab()} />
-      <Fields currentTab={currentTab()} />
-      <Visual currentTab={currentTab()} />
-      <Audio currentTab={currentTab()} />
+      <Dynamic component={tabs[currentTab()] as ValidComponent} />
     </div>
   );
 }

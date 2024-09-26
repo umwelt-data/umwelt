@@ -1,17 +1,12 @@
-import { Accessor } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { viewCompositions } from '../../types';
 import { AudioUnit } from './audioUnit';
 
-export type AudioProps = {
-  currentTab: string;
-};
-
-export function Audio(props: AudioProps) {
+export function Audio() {
   const [spec, specActions] = useUmweltSpec();
 
   return (
-    <div role="tabpanel" id="tabpanel-audio" aria-labelledby="tab-audio" hidden={props.currentTab !== 'audio'}>
+    <div role="tabpanel" id="tabpanel-audio" aria-labelledby="tab-audio">
       <h2>Audio</h2>
       {spec.audio.units.map((unit) => {
         return <AudioUnit unitSpec={unit} />;

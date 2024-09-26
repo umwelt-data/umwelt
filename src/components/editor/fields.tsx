@@ -2,15 +2,11 @@ import { Accessor } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { FieldDefinition } from './fieldDefinition';
 
-export type FieldsProps = {
-  currentTab: string;
-};
-
-export function Fields(props: FieldsProps) {
+export function Fields() {
   const [spec, specActions] = useUmweltSpec();
 
   return (
-    <div role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" hidden={props.currentTab !== 'fields'}>
+    <div role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields">
       <h2>Fields</h2>
       <div>
         <h3>Select fields</h3>
