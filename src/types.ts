@@ -47,7 +47,9 @@ export function isAudioProp(propName: string): propName is AudioPropName {
   return audioPropNames.includes(propName as AudioPropName);
 }
 
-export type AudioAggregateOp = 'count' | 'mean' | 'median' | 'min' | 'max' | 'sum';
+// need an explicit NONE value for transforms for when the field definition has a transform
+// but the user wants to override it to NONE in the encoding definition
+export const NONE = 'NONE';
 
 type FieldName = string;
 
@@ -81,8 +83,8 @@ export interface VisualEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit;
-  aggregate?: NonArgAggregateOp;
+  timeUnit?: TimeUnit | typeof NONE;
+  aggregate?: NonArgAggregateOp | typeof NONE;
   bin?: boolean;
   sort?: Sort<any>;
 }
@@ -91,8 +93,8 @@ export interface AudioEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: string;
-  aggregate?: NonArgAggregateOp;
+  timeUnit?: TimeUnit | typeof NONE;
+  aggregate?: NonArgAggregateOp | typeof NONE;
   sort?: Sort<any>;
   bin?: undefined;
 }
@@ -103,7 +105,7 @@ export interface AudioTraversalFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit;
+  timeUnit?: TimeUnit | typeof NONE;
   bin?: boolean;
   aggregate?: undefined;
 }

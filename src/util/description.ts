@@ -1,5 +1,5 @@
 import moize from 'moize';
-import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, UmweltValue } from '../types';
+import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, NONE, UmweltValue } from '../types';
 import { dateToTimeUnit } from './values';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
@@ -60,5 +60,5 @@ export function predicateToDescription(predicate: LogicalComposition<FieldPredic
 
 export const describeField = moize((fieldDef: FieldDef, encFieldDef?: EncodingFieldDef | AudioTraversalFieldDef): string => {
   const inheritedFieldDef = encFieldDef ? { ...fieldDef, ...encFieldDef } : { field: fieldDef.name, ...fieldDef };
-  return (inheritedFieldDef.bin ? 'binned ' : '') + (inheritedFieldDef.aggregate ? `${inheritedFieldDef.aggregate} ` : '') + inheritedFieldDef.field + (inheritedFieldDef.timeUnit ? ` (${inheritedFieldDef.timeUnit})` : '');
+  return (inheritedFieldDef.bin ? 'binned ' : '') + (inheritedFieldDef.aggregate && inheritedFieldDef.aggregate !== NONE ? `${inheritedFieldDef.aggregate} ` : '') + inheritedFieldDef.field + (inheritedFieldDef.timeUnit && inheritedFieldDef.timeUnit !== NONE ? ` (${inheritedFieldDef.timeUnit})` : '');
 });

@@ -1,6 +1,6 @@
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, VisualPropName, visualPropNames } from '../../types';
+import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, NONE, VisualPropName, visualPropNames } from '../../types';
 import { TimeUnit } from 'vega';
 
 interface FieldTransformsProps {
@@ -60,14 +60,14 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     return undefined;
   };
 
-  const AggregateFieldOptions = () => {
+  const AggregateInput = () => {
     if (canAggregateField(spec.key, field)) {
       return (
         <div>
           <label>
             Aggregate
-            <select aria-describedby={fieldLabelId} value={encodingDef()?.aggregate ?? field.aggregate} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
-              <option value="undefined">None</option>
+            <select aria-describedby={fieldLabelId} value={encodingDef()?.aggregate ?? field.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
+              <option value={NONE}>None</option>
               {aggregateOps.map((aggregateOp) => {
                 return <option value={aggregateOp}>{aggregateOp}</option>;
               })}
@@ -78,7 +78,7 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     }
   };
 
-  const BinFieldOptions = () => {
+  const BinInput = () => {
     if (canBinField(field)) {
       return (
         <div>
@@ -91,14 +91,14 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     }
   };
 
-  const TimeUnitFieldOptions = () => {
+  const TimeUnitInput = () => {
     if (canTimeUnitField(field)) {
       return (
         <div>
           <label>
             Time unit
-            <select aria-describedby={fieldLabelId} value={encodingDef()?.timeUnit ?? field.timeUnit} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
-              <option value="undefined">None</option>
+            <select aria-describedby={fieldLabelId} value={encodingDef()?.timeUnit ?? field.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
+              <option value={NONE}>None</option>
               {timeUnits.map((timeUnit) => {
                 return <option value={timeUnit}>{timeUnit}</option>;
               })}
@@ -112,9 +112,9 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
   if (canAggregateField(spec.key, field) || canBinField(field) || canTimeUnitField(field)) {
     return (
       <>
-        <AggregateFieldOptions />
-        <BinFieldOptions />
-        <TimeUnitFieldOptions />
+        <AggregateInput />
+        <BinInput />
+        <TimeUnitInput />
       </>
     );
   }

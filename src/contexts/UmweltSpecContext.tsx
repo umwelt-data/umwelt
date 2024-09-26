@@ -111,6 +111,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
             'units',
             spec.visual.units.filter((u) => u.name !== unit)
           );
+          internalActions.updateSearchParams();
         }
       }
       const maybeAudioUnit = spec.audio.units.find((u) => u.name === unit);
@@ -121,6 +122,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
             'units',
             spec.audio.units.filter((u) => u.name !== unit)
           );
+          internalActions.updateSearchParams();
         }
       }
     },
@@ -193,7 +195,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'fields',
           spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
         );
-        console.log('addEncoding', spec.fields);
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
@@ -328,12 +329,14 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), aggregate } } } : u))
         );
+        internalActions.updateSearchParams();
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
           'units',
           spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as AudioEncodingFieldDef), aggregate } } } : u))
         );
+        internalActions.updateSearchParams();
       }
     },
     setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => {
@@ -343,6 +346,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), bin } } } : u))
         );
+        internalActions.updateSearchParams();
       }
     },
     setEncodingTimeUnit: (unit: string, property: EncodingPropName, inputTimeUnit: TimeUnit | 'undefined') => {
@@ -353,6 +357,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'units',
           spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), timeUnit } } } : u))
         );
+        internalActions.updateSearchParams();
       }
     },
   };
