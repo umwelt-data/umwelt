@@ -1,4 +1,4 @@
-import { Accessor } from 'solid-js';
+import { Accessor, For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnit } from './visualUnit';
 import { viewCompositions } from '../../types';
@@ -9,24 +9,21 @@ export function Visual() {
   return (
     <div role="tabpanel" id="tabpanel-visual" aria-labelledby="tab-visual">
       <h2>Visual</h2>
-      {spec.visual.units.map((unit) => {
-        return <VisualUnit unitSpec={unit} />;
-      })}
+
+      <For each={spec.visual.units}>{(unit) => <VisualUnit unitSpec={unit} />}</For>
       <div>
         <button onClick={() => specActions.addVisualUnit()}>Add visual unit</button>
       </div>
-      {spec.visual.units.length > 1 ? (
+      <Show when={spec.visual.units.length > 1}>
         <div>
           <label>
             Composition
             <select value={spec.visual.composition}>
-              {viewCompositions.map((composition) => {
-                return <option value={composition}>{composition}</option>;
-              })}
+              <For each={viewCompositions}>{(composition) => <option value={composition}>{composition}</option>}</For>
             </select>
           </label>
         </div>
-      ) : null}
+      </Show>
     </div>
   );
 }

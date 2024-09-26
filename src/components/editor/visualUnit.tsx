@@ -2,6 +2,7 @@ import { Mark } from 'vega-lite/src/mark';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnitSpec, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
+import { For, Show } from 'solid-js';
 
 export type VisualUnitProps = {
   unitSpec: VisualUnitSpec;
@@ -20,7 +21,7 @@ export function VisualUnit(props: VisualUnitProps) {
 
   return (
     <div>
-      {spec.visual.units.length > 1 ? (
+      <Show when={spec.visual.units.length > 1}>
         <div>
           <h3 id={`unit-${props.unitSpec.name}`}>{props.unitSpec.name}</h3>
           <label>
@@ -33,7 +34,7 @@ export function VisualUnit(props: VisualUnitProps) {
             ></input>
           </label>
         </div>
-      ) : null}
+      </Show>
       <div>
         <label>
           Mark
@@ -43,27 +44,32 @@ export function VisualUnit(props: VisualUnitProps) {
               specActions.changeMark(props.unitSpec.name, e.currentTarget.value as Mark);
             }}
           >
-            {markTypes.map((markType) => {
-              return (
+            <For each={markTypes}>
+              {(markType) => (
                 <option value={markType} selected={markType === props.unitSpec.mark}>
                   {markType}
                 </option>
-              );
-            })}
+              )}
+            </For>
           </select>
         </label>
       </div>
       <div>
         <h4>Encodings</h4>
         <div>
-          {getEncodings().map(([propName, encoding]) => {
-            if (encoding) {
-              return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
-            }
-          })}
+          <For each={getEncodings()}>
+            {([propName, encoding]) => {
+              if (encoding) {
+                return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
+              }
+              return null;
+            }}
+          </For>
         </div>
       </div>
-      {spec.visual.units.length > 1 ? <button onClick={() => specActions.removeVisualUnit(props.unitSpec.name)}>Remove unit</button> : null}
+      <Show when={spec.visual.units.length > 1}>
+        <button onClick={() => specActions.removeVisualUnit(props.unitSpec.name)}>Remove unit</button>
+      </Show>
     </div>
   );
 }

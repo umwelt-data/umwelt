@@ -1,3 +1,4 @@
+import { For } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { EncodingFieldDef, EncodingPropName, audioPropNames, visualPropNames } from '../../types';
 import { describeField } from '../../util/description';
@@ -23,15 +24,13 @@ export function EncodingDefinition({ unit, property, encoding }: EncodingDefinit
             specActions.addEncoding(e.currentTarget.value, property, unit);
           }}
         >
-          {spec.fields
-            .filter((f) => f.active)
-            .map((field) => {
-              return (
-                <option value={field.name} selected={encoding.field === field.name}>
-                  {field.name}
-                </option>
-              );
-            })}
+          <For each={spec.fields.filter((f) => f.active)}>
+            {(field) => (
+              <option value={field.name} selected={encoding.field === field.name}>
+                {field.name}
+              </option>
+            )}
+          </For>
         </select>
         <button
           onClick={() => {

@@ -87,11 +87,7 @@ export function Data() {
             <For each={spec.data}>
               {(row) => (
                 <tr>
-                  <For each={Object.entries(row)}>
-                    {([fieldName, value]) => {
-                      return <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>;
-                    }}
-                  </For>
+                  <For each={Object.entries(row)}>{([fieldName, value]) => <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>}</For>
                 </tr>
               )}
             </For>
@@ -110,17 +106,15 @@ export function Data() {
       <h3>Recently uploaded files</h3>
       <Show when={recentFiles().length > 0} fallback={'No files uploaded.'}>
         <For each={recentFiles()}>
-          {(file) => {
-            return (
-              <div>
-                <label>
-                  <input type="radio" name="recent_files" checked={JSON.stringify(file.data) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={file.filename} />
-                  {file.filename}
-                </label>
-                <button onClick={() => setRecentFiles(recentFiles().filter((f) => f.filename !== file.filename))}>Remove {file.filename}</button>
-              </div>
-            );
-          }}
+          {(file) => (
+            <div>
+              <label>
+                <input type="radio" name="recent_files" checked={JSON.stringify(file.data) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={file.filename} />
+                {file.filename}
+              </label>
+              <button onClick={() => setRecentFiles(recentFiles().filter((f) => f.filename !== file.filename))}>Remove {file.filename}</button>
+            </div>
+          )}
         </For>
       </Show>
       <h3>Example datasets</h3>

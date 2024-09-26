@@ -3,6 +3,7 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, NONE, VisualPropName, visualPropNames } from '../../types';
 import { TimeUnit } from 'vega';
 import { getFieldDef } from '../../util/spec';
+import { For, Show } from 'solid-js';
 
 interface FieldTransformsProps {
   fieldName: string;
@@ -68,52 +69,52 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
 
   const AggregateInput = () => {
     return (
-      <div>
-        {canAggregateField(spec.key, fieldDef()) ? (
+      <Show when={canAggregateField(spec.key, fieldDef())}>
+        <div>
           <label>
             Aggregate
             <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
-              {encoding ? <option value={undefined}>Inherit ({fieldDef()?.aggregate ?? NONE})</option> : null}
+              <Show when={encoding}>
+                <option value={undefined}>Inherit ({fieldDef()?.aggregate ?? NONE})</option>
+              </Show>
               <option value={NONE}>None</option>
-              {aggregateOps.map((aggregateOp) => {
-                return <option value={aggregateOp}>{aggregateOp}</option>;
-              })}
+              <For each={aggregateOps}>{(aggregateOp) => <option value={aggregateOp}>{aggregateOp}</option>}</For>
             </select>
           </label>
-        ) : null}
-      </div>
+        </div>
+      </Show>
     );
   };
 
   const BinInput = () => {
     return (
-      <div>
-        {canBinField(fieldDef()) ? (
+      <Show when={canBinField(fieldDef())}>
+        <div>
           <label>
             Bin
             <input aria-describedby={fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
           </label>
-        ) : null}
-      </div>
+        </div>
+      </Show>
     );
   };
 
   const TimeUnitInput = () => {
     return (
-      <div>
-        {canTimeUnitField(fieldDef()) ? (
+      <Show when={canTimeUnitField(fieldDef())}>
+        <div>
           <label>
             Time unit
             <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
-              {encoding ? <option value={undefined}>Inherit ({fieldDef()?.timeUnit ?? NONE})</option> : null}
+              <Show when={encoding}>
+                <option value={undefined}>Inherit ({fieldDef()?.timeUnit ?? NONE})</option>
+              </Show>
               <option value={NONE}>None</option>
-              {timeUnits.map((timeUnit) => {
-                return <option value={timeUnit}>{timeUnit}</option>;
-              })}
+              <For each={timeUnits}>{(timeUnit) => <option value={timeUnit}>{timeUnit}</option>}</For>
             </select>
           </label>
-        ) : null}
-      </div>
+        </div>
+      </Show>
     );
   };
 
