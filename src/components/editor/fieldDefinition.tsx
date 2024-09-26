@@ -74,13 +74,15 @@ export function FieldDefinition(props: FieldDefinitionProps) {
     specActions.addEncoding(field.name, newPropName, newUnitName);
   };
 
+  const fieldLabelId = `label-${field.name}`;
+
   return (
     <div>
-      <h4 id={`label-${field.name}`}>{field.name}</h4>
+      <h4 id={fieldLabelId}>{field.name}</h4>
       <label>
         Type
         <select
-          aria-describedby={`label-${field.name}`}
+          aria-describedby={fieldLabelId}
           value={field.type}
           onChange={(e) => {
             specActions.setFieldType(field.name, e.target.value as MeasureType);
@@ -99,7 +101,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
         <div>Encodings</div>
         <div>
           {field.encodings.length < propertyNames.length ? (
-            <button aria-describedby={`label-${field.name}`} onClick={() => addEncoding(field)}>
+            <button aria-describedby={fieldLabelId} onClick={() => addEncoding(field)}>
               Add encoding
             </button>
           ) : null}
@@ -107,7 +109,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
             return (
               <div>
                 <select
-                  aria-describedby={`label-${field.name}`}
+                  aria-describedby={fieldLabelId}
                   value={encodingRef.property}
                   onChange={(e) => {
                     changeEncodingProp(field, encodingRef.property, e.target.value, encodingRef.unit);
@@ -124,7 +126,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                 </select>
                 {(visualPropNames.includes(encodingRef.property as any) && spec.visual.units.length > 1) || (audioPropNames.includes(encodingRef.property as any) && spec.audio.units.length > 1) ? (
                   <select
-                    aria-describedby={`label-${field.name}`}
+                    aria-describedby={fieldLabelId}
                     value={encodingRef.unit}
                     onChange={(e) => {
                       specActions.addEncoding(field.name, encodingRef.property, e.currentTarget.value);
@@ -156,7 +158,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           })}
         </div>
       </div>
-      <FieldTransforms field={field} />
+      <FieldTransforms field={field} fieldLabelId={fieldLabelId} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { UmweltSpec, VlSpec, NONE, VisualEncodingFieldDef, UmweltDataset } from '../types';
+import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -53,7 +53,7 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
                 ...fieldDef,
                 ...encDef,
               };
-              encoding[channel] = Object.fromEntries(Object.entries(encoding[channel]!).filter(([k, v]) => v !== NONE)) as VisualEncodingFieldDef;
+              encoding[channel] = Object.fromEntries(Object.values(encoding[channel]!).filter((v) => v)) as VisualEncodingFieldDef;
               if (channel === 'facet') {
                 const domain = getDomain(encDef, data);
                 encoding[channel] = {

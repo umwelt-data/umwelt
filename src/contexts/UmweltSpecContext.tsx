@@ -7,6 +7,7 @@ import LZString from 'lz-string';
 import { validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
+import { TimeUnit } from 'vega';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -30,7 +31,9 @@ export type UmweltSpecActions = {
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
   renameUnit: (oldName: string, newName: string) => void;
-  setFieldAggregate: (field: string, aggregate: NonArgAggregateOp) => void;
+  setFieldAggregate: (field: string, aggregate: NonArgAggregateOp | 'undefined') => void;
+  setFieldBin: (field: string, bin: boolean) => void;
+  setFieldTimeUnit: (field: string, timeUnit: TimeUnit | 'undefined') => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -290,10 +293,26 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         internalActions.updateSearchParams();
       }
     },
-    setFieldAggregate: (field: string, aggregate: NonArgAggregateOp) => {
+    setFieldAggregate: (field: string, inputAggregate: NonArgAggregateOp | 'undefined') => {
+      const aggregate = inputAggregate === 'undefined' ? undefined : inputAggregate;
       setSpec(
         'fields',
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, aggregate } : fieldDef))
+      );
+      internalActions.updateSearchParams();
+    },
+    setFieldBin: (field: string, bin: boolean) => {
+      setSpec(
+        'fields',
+        spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, bin } : fieldDef))
+      );
+      internalActions.updateSearchParams();
+    },
+    setFieldTimeUnit: (field: string, inputTimeUnit: TimeUnit | 'undefined') => {
+      const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
+      setSpec(
+        'fields',
+        spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, timeUnit } : fieldDef))
       );
       internalActions.updateSearchParams();
     },

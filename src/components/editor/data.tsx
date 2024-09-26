@@ -77,21 +77,21 @@ export function Data(props: DataProps) {
     });
   };
 
-  const tableFromData = (data: UmweltDataset) => {
-    if (!data || !data.length) {
+  const DataTable = () => {
+    if (!spec.data || !spec.data.length) {
       return 'No dataset loaded';
     }
     return (
       <table>
         <thead>
           <tr>
-            {Object.keys(data[0]).map((key) => (
+            {Object.keys(spec.data[0]).map((key) => (
               <th>{key}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
+          {spec.data.map((row) => (
             <tr>
               {Object.entries(row).map(([fieldName, value]) => (
                 <td>
@@ -113,7 +113,8 @@ export function Data(props: DataProps) {
   return (
     <div role="tabpanel" id="tabpanel-data" aria-labelledby="tab-data" hidden={props.currentTab !== 'data'}>
       <h2>Data</h2>
-      {spec.data ? <div>{tableFromData(spec.data)}</div> : null}
+      <DataTable />
+      <h3>Upload JSON or CSV file</h3>
       <UploadData loadDataFromUpload={loadDataFromUpload} />
       <h3>Recently uploaded files</h3>
       {recentFiles().length > 0

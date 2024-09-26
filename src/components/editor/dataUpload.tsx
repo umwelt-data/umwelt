@@ -45,7 +45,6 @@ export function UploadData({ loadDataFromUpload }: UploadDataProps) {
 
   return (
     <>
-      <h3>Upload JSON or CSV file</h3>
       <details>
         <summary>Accepted file formats</summary>
         <p>A JSON file should be an array of objects where each object represents a row of data. Example:</p>

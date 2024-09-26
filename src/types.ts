@@ -49,8 +49,6 @@ export function isAudioProp(propName: string): propName is AudioPropName {
 
 export type AudioAggregateOp = 'count' | 'mean' | 'median' | 'min' | 'max' | 'sum';
 
-export const NONE = 'NONE';
-
 type FieldName = string;
 
 export interface FieldRef {
@@ -83,8 +81,8 @@ export interface VisualEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit | typeof NONE;
-  aggregate?: NonArgAggregateOp | typeof NONE;
+  timeUnit?: TimeUnit;
+  aggregate?: NonArgAggregateOp;
   bin?: boolean;
   sort?: Sort<any>;
 }
@@ -94,7 +92,7 @@ export interface AudioEncodingFieldDef {
   //
   scale?: ScaleDomain & ScaleRange;
   // timeUnit?: string;
-  aggregate?: NonArgAggregateOp | typeof NONE;
+  aggregate?: NonArgAggregateOp;
   sort?: Sort<any>;
   // bin: undefined;
 }
@@ -105,7 +103,7 @@ export interface AudioTraversalFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit | typeof NONE;
+  timeUnit?: TimeUnit;
   bin?: boolean;
   // aggregate: undefined;
 }
