@@ -78,35 +78,38 @@ export function Data(props: DataProps) {
   };
 
   const DataTable = () => {
-    if (!spec.data || !spec.data.length) {
-      return 'No dataset loaded';
-    }
     return (
-      <table>
-        <thead>
-          <tr>
-            {Object.keys(spec.data[0]).map((key) => (
-              <th>{key}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {spec.data.map((row) => (
-            <tr>
-              {Object.entries(row).map(([fieldName, value]) => (
-                <td>
-                  {spec.fields.find((f) => f.name === fieldName)
-                    ? fmtValue(
-                        value,
-                        spec.fields.find((f) => f.name === fieldName)
-                      )
-                    : String(value)}
-                </td>
+      <>
+        {!spec.data || !spec.data.length ? (
+          'No dataset loaded'
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                {Object.keys(spec.data[0]).map((key) => (
+                  <th>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {spec.data.map((row) => (
+                <tr>
+                  {Object.entries(row).map(([fieldName, value]) => (
+                    <td>
+                      {spec.fields.find((f) => f.name === fieldName)
+                        ? fmtValue(
+                            value,
+                            spec.fields.find((f) => f.name === fieldName)
+                          )
+                        : String(value)}
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </tbody>
+          </table>
+        )}
+      </>
     );
   };
 

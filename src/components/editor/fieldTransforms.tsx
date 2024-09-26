@@ -4,7 +4,7 @@ import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef,
 import { TimeUnit } from 'vega';
 
 interface FieldTransformsProps {
-  field: FieldDef;
+  fieldName: string;
   encoding?: EncodingRef;
   fieldLabelId?: string;
 }
@@ -12,16 +12,19 @@ interface FieldTransformsProps {
 const aggregateOps: NonArgAggregateOp[] = ['mean', 'median', 'min', 'max', 'sum', 'count'];
 const timeUnits = ['year', 'month', 'yearmonth', 'day', 'date', 'hours', 'minutes', 'seconds'];
 
-export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransformsProps) {
+export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTransformsProps) {
   const [spec, specActions] = useUmweltSpec();
 
-  const canAggregateField = (key: string[], field: FieldDef) => {
+  const canAggregateField = (key: string[], field?: FieldDef) => {
+    if (!field) return false;
     return !key.includes(field.name) && field.type === 'quantitative';
   };
-  const canBinField = (field: FieldDef) => {
+  const canBinField = (field?: FieldDef) => {
+    if (!field) return false;
     return field.type === 'quantitative' || field.type === 'temporal';
   };
-  const canTimeUnitField = (field: FieldDef) => {
+  const canTimeUnitField = (field?: FieldDef) => {
+    if (!field) return false;
     return field.type === 'temporal';
   };
 
@@ -29,7 +32,7 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     if (encoding) {
       specActions.setEncodingAggregate(encoding.unit, encoding.property, aggregate);
     } else {
-      specActions.setFieldAggregate(field.name, aggregate);
+      specActions.setFieldAggregate(fieldName, aggregate);
     }
   };
 
@@ -37,7 +40,7 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     if (encoding) {
       specActions.setEncodingBin(encoding.unit, encoding.property, bin);
     } else {
-      specActions.setFieldBin(field.name, bin);
+      specActions.setFieldBin(fieldName, bin);
     }
   };
 
@@ -45,7 +48,7 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     if (encoding) {
       specActions.setEncodingTimeUnit(encoding.unit, encoding.property, timeUnit);
     } else {
-      specActions.setFieldTimeUnit(field.name, timeUnit);
+      specActions.setFieldTimeUnit(fieldName, timeUnit);
     }
   };
 
@@ -60,64 +63,64 @@ export function FieldTransforms({ field, encoding, fieldLabelId }: FieldTransfor
     return undefined;
   };
 
+  const fieldDef = () => spec.fields.find((f) => f.name === fieldName);
+
   const AggregateInput = () => {
-    if (canAggregateField(spec.key, field)) {
-      return (
-        <div>
+    return (
+      <div>
+        {canAggregateField(spec.key, fieldDef()) ? (
           <label>
             Aggregate
-            <select aria-describedby={fieldLabelId} value={encodingDef()?.aggregate ?? field.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
+            <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
+              {encoding ? <option value={undefined}>Inherit ({fieldDef()?.aggregate ?? NONE})</option> : null}
               <option value={NONE}>None</option>
               {aggregateOps.map((aggregateOp) => {
                 return <option value={aggregateOp}>{aggregateOp}</option>;
               })}
             </select>
           </label>
-        </div>
-      );
-    }
+        ) : null}
+      </div>
+    );
   };
 
   const BinInput = () => {
-    if (canBinField(field)) {
-      return (
-        <div>
+    return (
+      <div>
+        {canBinField(fieldDef()) ? (
           <label>
             Bin
-            <input aria-describedby={fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? field.bin} onChange={(e) => setBin(e.target.checked)} />
+            <input aria-describedby={fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
           </label>
-        </div>
-      );
-    }
+        ) : null}
+      </div>
+    );
   };
 
   const TimeUnitInput = () => {
-    if (canTimeUnitField(field)) {
-      return (
-        <div>
+    return (
+      <div>
+        {canTimeUnitField(fieldDef()) ? (
           <label>
             Time unit
-            <select aria-describedby={fieldLabelId} value={encodingDef()?.timeUnit ?? field.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
+            <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
+              {encoding ? <option value={undefined}>Inherit ({fieldDef()?.timeUnit ?? NONE})</option> : null}
               <option value={NONE}>None</option>
               {timeUnits.map((timeUnit) => {
                 return <option value={timeUnit}>{timeUnit}</option>;
               })}
             </select>
           </label>
-        </div>
-      );
-    }
+        ) : null}
+      </div>
+    );
   };
 
-  if (canAggregateField(spec.key, field) || canBinField(field) || canTimeUnitField(field)) {
-    return (
-      <>
-        <AggregateInput />
-        <BinInput />
-        <TimeUnitInput />
-      </>
-    );
-  }
-
-  return null;
+  return (
+    <>
+      <AggregateInput />
+      <BinInput />
+      <TimeUnitInput />
+    </>
+  );
 }

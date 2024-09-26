@@ -158,7 +158,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           })}
         </div>
       </div>
-      <FieldTransforms field={field} fieldLabelId={fieldLabelId} />
+      <FieldTransforms fieldName={field.name} fieldLabelId={fieldLabelId} />
     </div>
   );
 }

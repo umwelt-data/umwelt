@@ -49,7 +49,7 @@ export function isAudioProp(propName: string): propName is AudioPropName {
 
 // need an explicit NONE value for transforms for when the field definition has a transform
 // but the user wants to override it to NONE in the encoding definition
-export const NONE = 'NONE';
+export const NONE = 'None';
 
 type FieldName = string;
 

@@ -12,10 +12,6 @@ export type EncodingDefinitionProps = {
 export function EncodingDefinition({ unit, property, encoding }: EncodingDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
 
-  const fieldDef = spec.fields.find((f) => f.name === encoding.field);
-
-  if (!fieldDef) return;
-
   return (
     <div>
       <h5>{property}</h5>
@@ -44,7 +40,7 @@ export function EncodingDefinition({ unit, property, encoding }: EncodingDefinit
         >
           Remove encoding
         </button>
-        <FieldTransforms field={fieldDef} encoding={{ unit, property }} />
+        <FieldTransforms fieldName={encoding.field} encoding={{ unit, property }} />
       </div>
     </div>
   );
