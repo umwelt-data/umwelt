@@ -2,6 +2,10 @@ import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE } from 
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 
+export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
+  return spec.fields.find((f) => f.name === field);
+}
+
 export function validateSpec(spec: UmweltSpec) {
   if (!spec.data) {
     return false;
@@ -46,7 +50,7 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
         Object.keys(encoding).forEach((channel) => {
           const encDef = encoding[channel];
           if (encDef) {
-            const specFieldDef = spec.fields.find((field) => field.name === encDef.field);
+            const specFieldDef = getFieldDef(spec, encDef.field);
             if (specFieldDef) {
               const { active, name, encodings, ...fieldDef } = specFieldDef;
               encoding[channel] = {
@@ -111,8 +115,8 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
     const unit = spec.visual.units[0];
     const yField = unit.encoding.y?.field;
     const xField = unit.encoding.x?.field;
-    const yFieldDef = spec.fields.find((field) => field.name === yField);
-    const xFieldDef = spec.fields.find((field) => field.name === xField);
+    const yFieldDef = getFieldDef(spec, yField);
+    const xFieldDef = getFieldDef(spec, xField);
     if (yFieldDef?.type === 'quantitative' && xFieldDef?.type !== 'quantitative') {
       params[0]['select'] = { type: 'interval', encodings: ['x'] };
     } else if (xFieldDef?.type === 'quantitative' && yFieldDef?.type !== 'quantitative') {

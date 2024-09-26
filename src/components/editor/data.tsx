@@ -5,6 +5,7 @@ import { UmweltDataset } from '../../types';
 import { createStoredSignal } from '../../util/solid';
 import { UploadData } from './dataUpload';
 import { fmtValue } from '../../util/description';
+import { getFieldDef } from '../../util/spec';
 
 export type DataProps = {
   currentTab: string;
@@ -95,14 +96,7 @@ export function Data(props: DataProps) {
               {spec.data.map((row) => (
                 <tr>
                   {Object.entries(row).map(([fieldName, value]) => (
-                    <td>
-                      {spec.fields.find((f) => f.name === fieldName)
-                        ? fmtValue(
-                            value,
-                            spec.fields.find((f) => f.name === fieldName)
-                          )
-                        : String(value)}
-                    </td>
+                    <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>
                   ))}
                 </tr>
               ))}

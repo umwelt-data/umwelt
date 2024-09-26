@@ -2,6 +2,7 @@ import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, NONE, VisualPropName, visualPropNames } from '../../types';
 import { TimeUnit } from 'vega';
+import { getFieldDef } from '../../util/spec';
 
 interface FieldTransformsProps {
   fieldName: string;
@@ -63,7 +64,7 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
     return undefined;
   };
 
-  const fieldDef = () => spec.fields.find((f) => f.name === fieldName);
+  const fieldDef = () => getFieldDef(spec, fieldName);
 
   const AggregateInput = () => {
     return (
