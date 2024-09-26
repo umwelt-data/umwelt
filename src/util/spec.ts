@@ -53,7 +53,6 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
                 ...fieldDef,
                 ...encDef,
               };
-              encoding[channel] = Object.fromEntries(Object.values(encoding[channel]!).filter((v) => v)) as VisualEncodingFieldDef;
               if (channel === 'facet') {
                 const domain = getDomain(encDef, data);
                 encoding[channel] = {

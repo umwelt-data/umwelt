@@ -190,6 +190,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           'fields',
           spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
         );
+        console.log('addEncoding', spec.fields);
       } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
         setSpec(
           'audio',
