@@ -1,6 +1,8 @@
-import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE } from '../types';
+import { VegaLiteAdapter } from 'olli-adapters';
+import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
+import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -146,4 +148,50 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
       ...compiled,
     };
   }
+}
+
+export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): Promise<OlliSpec> {
+  let olliSpec: OlliSpec;
+  const vlSpec = umweltToVegaLiteSpec(spec, data);
+  if (vlSpec) {
+    olliSpec = await VegaLiteAdapter(vlSpec);
+  } else {
+    olliSpec = {
+      data,
+      fields: [],
+    };
+  }
+
+  if ('units' in olliSpec) {
+    // multi-spec
+    olliSpec.units.forEach((unit) => {
+      handleUnitSpec(unit, spec);
+    });
+  } else {
+    handleUnitSpec(olliSpec, spec);
+  }
+
+  function handleUnitSpec(olliSpec: UnitOlliSpec, spec: UmweltSpec) {
+    if (olliSpec.fields?.length === 0) {
+      delete olliSpec.mark;
+      delete olliSpec.axes;
+      delete olliSpec.legends;
+    }
+    if (olliSpec.fields) {
+      spec.fields
+        .filter((f) => f.active)
+        .forEach((field) => {
+          // if field is not in olliSpec.fields, add it
+          if (!olliSpec.fields?.find((f) => f.field === field.name)) {
+            olliSpec.fields?.push({
+              ...field,
+              field: field.name,
+              timeUnit: field.timeUnit as OlliTimeUnit,
+            });
+          }
+        });
+    }
+  }
+
+  return olliSpec;
 }
