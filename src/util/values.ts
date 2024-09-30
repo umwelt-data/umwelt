@@ -1,6 +1,6 @@
 import { isNumeric as vlIsNumeric } from 'vega-lite';
 import { TimeUnit, isString } from 'vega';
-import { FieldDef } from '../types';
+import { FieldDef, NONE } from '../types';
 import moize from 'moize';
 
 export function serializeValue(value: any, fieldDef: FieldDef) {
@@ -35,36 +35,11 @@ export function rangesAreEqual(range1: any[], range2: any[], fieldDef: FieldDef)
   return false;
 }
 
-export const dateToTimeUnit = moize((date: Date, timeUnit: TimeUnit) => {
-  if (!timeUnit) {
-    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-  const opts: { [s: string]: string } = {};
-  if (timeUnit.includes('year')) {
-    opts['year'] = 'numeric';
-  }
-  if (timeUnit.includes('month')) {
-    opts['month'] = 'short';
-  }
-  if (timeUnit.includes('day')) {
-    opts['weekday'] = 'short';
-  }
-  if (timeUnit.includes('date')) {
-    opts['day'] = 'numeric';
-  }
-  if (timeUnit.includes('hours')) {
-    opts['hour'] = 'numeric';
-  }
-  if (timeUnit.includes('minutes')) {
-    opts['minute'] = 'numeric';
-  }
-  if (timeUnit.includes('seconds')) {
-    opts['second'] = 'numeric';
-  }
-  if (!Object.keys(opts).length) {
-    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-  return date.toLocaleString('en-US', opts);
-});
-
 export const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
+
+export const unwrapNone = (obj: any) => {
+  if (obj === NONE) {
+    return undefined;
+  }
+  return obj;
+};

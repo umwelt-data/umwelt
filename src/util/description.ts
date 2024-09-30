@@ -1,8 +1,9 @@
 import moize from 'moize';
 import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, NONE, UmweltValue } from '../types';
-import { dateToTimeUnit } from './values';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
+import { TimeUnit } from 'vega';
+import { unwrapNone } from './values';
 
 export const fmtValue = moize((value, fieldDef): string => {
   if (Array.isArray(value)) {
@@ -12,11 +13,43 @@ export const fmtValue = moize((value, fieldDef): string => {
     value = new Date(value);
   }
   if (value instanceof Date) {
-    return dateToTimeUnit(value, fieldDef.timeUnit);
+    return dateToFormattedString(value, fieldDef.timeUnit);
   } else if (typeof value !== 'string' && !isNaN(value) && value % 1 != 0) {
     return Number(value).toFixed(2);
   }
   return String(value);
+});
+
+export const dateToFormattedString = moize((date: Date, timeUnit?: TimeUnit) => {
+  if (!timeUnit) {
+    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  const opts: { [s: string]: string } = {};
+  if (timeUnit.includes('year')) {
+    opts['year'] = 'numeric';
+  }
+  if (timeUnit.includes('month')) {
+    opts['month'] = 'short';
+  }
+  if (timeUnit.includes('day')) {
+    opts['weekday'] = 'short';
+  }
+  if (timeUnit.includes('date')) {
+    opts['day'] = 'numeric';
+  }
+  if (timeUnit.includes('hours')) {
+    opts['hour'] = 'numeric';
+  }
+  if (timeUnit.includes('minutes')) {
+    opts['minute'] = 'numeric';
+  }
+  if (timeUnit.includes('seconds')) {
+    opts['second'] = 'numeric';
+  }
+  if (!Object.keys(opts).length) {
+    return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  return date.toLocaleString('en-US', opts);
 });
 
 function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef[]) {
@@ -60,5 +93,5 @@ export function predicateToDescription(predicate: LogicalComposition<FieldPredic
 
 export const describeField = moize((fieldDef: FieldDef, encFieldDef?: EncodingFieldDef | AudioTraversalFieldDef): string => {
   const inheritedFieldDef = encFieldDef ? { ...fieldDef, ...encFieldDef } : { field: fieldDef.name, ...fieldDef };
-  return (inheritedFieldDef.bin ? 'binned ' : '') + (inheritedFieldDef.aggregate && inheritedFieldDef.aggregate !== NONE ? `${inheritedFieldDef.aggregate} ` : '') + inheritedFieldDef.field + (inheritedFieldDef.timeUnit && inheritedFieldDef.timeUnit !== NONE ? ` (${inheritedFieldDef.timeUnit})` : '');
+  return (inheritedFieldDef.bin ? 'binned ' : '') + (unwrapNone(inheritedFieldDef.aggregate) ? `${inheritedFieldDef.aggregate} ` : '') + inheritedFieldDef.field + (unwrapNone(inheritedFieldDef.timeUnit) ? ` (${inheritedFieldDef.timeUnit})` : '');
 });

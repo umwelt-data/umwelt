@@ -1,7 +1,8 @@
 import moize from 'moize';
-import { EncodingFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
+import { EncodingFieldDef, NONE, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
 import { selectionTest } from './selection';
-import { dateToTimeUnit } from './values';
+import { dateToFormattedString } from './description';
+import { unwrapNone } from './values';
 
 export const getDomain = moize((fieldDef: EncodingFieldDef, data: UmweltDataset, predicate?: UmweltPredicate): UmweltValue[] => {
   const unique_vals = new Set<UmweltValue>();
@@ -13,7 +14,7 @@ export const getDomain = moize((fieldDef: EncodingFieldDef, data: UmweltDataset,
       .map((d) => d[fieldDef.field])
       .forEach((v) => {
         if (v instanceof Date && 'timeUnit' in fieldDef && fieldDef.timeUnit) {
-          const time_val = dateToTimeUnit(v, fieldDef.timeUnit);
+          const time_val = dateToFormattedString(v, unwrapNone(fieldDef.timeUnit));
           if (!unique_time_vals.has(time_val)) {
             unique_time_vals.add(time_val);
             unique_vals.add(v);
