@@ -8,6 +8,7 @@ import { validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { TimeUnit } from 'vega';
+import { cleanData, typeCoerceData } from '../util/datasets';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -131,7 +132,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const actions: UmweltSpecActions = {
     initializeData: (data: any[]) => {
       if (data && data.length) {
-        setSpec('data', data);
         const baseFieldDefs = Object.keys(data[0]).map((name) => {
           return {
             active: true,
@@ -160,6 +160,9 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
             },
           ]);
         }
+        const typedData = typeCoerceData(data, spec.fields);
+        const cleanedData = cleanData(typedData, spec.fields);
+        setSpec('data', cleanedData);
       }
       internalActions.updateSearchParams();
     },
