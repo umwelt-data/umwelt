@@ -23,7 +23,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
 
   const assignableMtypes = (field: FieldDef) => {
     const mtypes = ['nominal', 'ordinal'];
-    const domain = getDomain({ ...field, field: field.name }, spec.data);
+    const domain = getDomain({ ...field, field: field.name }, spec.data.values);
     if (domain.every((v) => dayjs(v).isValid())) {
       mtypes.push('temporal');
     }

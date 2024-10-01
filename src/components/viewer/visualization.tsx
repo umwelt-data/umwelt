@@ -10,7 +10,7 @@ export function Visualization(props: VisualizationProps) {
   const [spec, specActions] = useUmweltSpec();
 
   createEffect(() => {
-    const vlSpec = umweltToVegaLiteSpec(spec, spec.data);
+    const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
     if (vlSpec) {
       try {
         const view = renderVegaLite(vlSpec, '#vl-container');

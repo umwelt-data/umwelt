@@ -1,16 +1,12 @@
-import { Accessor, createEffect, createSignal, For, Match, Show, Switch } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
-import { createStoredSignal } from '../../util/solid';
 import { UploadData } from './dataUpload';
 import { fmtValue } from '../../util/description';
 import { getFieldDef } from '../../util/spec';
-
-interface DataFile {
-  filename: string;
-  data: UmweltDataset;
-}
+import { UmweltDatastore, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
+import { createStoredSignal } from '../../util/solid';
 
 const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
 const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
@@ -19,72 +15,64 @@ const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
 
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
+  const [datastore, datastoreActions] = useUmweltDatastore();
 
-  const [recentFiles, setRecentFiles] = createStoredSignal<DataFile[]>('recentFiles', []);
-  const [vegaDatasetsCache, setVegaDatasetsCache] = createStoredSignal<{ [f: string]: UmweltDataset }>('vegaDatasetsCache', {});
+  const [recentFiles, setRecentFiles] = createStoredSignal<string[]>('umweltRecentFiles', []);
+  const [vegaDatasetsCache, setVegaDatasetsCache] = createStoredSignal<UmweltDatastore>('vegaDatasetsCache', {});
 
   // if spec.data is not set, initialize with most recently uploaded file or example dataset
-  createEffect(() => {
-    if (!spec.data || !spec.data.length) {
-      const recent = recentFiles();
-      if (recent.length) {
-        specActions.initializeData(recent[0].data);
-      } else {
-        loadDataFromVegaDatasets(vegaDatasets[0]);
-      }
-    }
-  });
+  // createEffect(() => {
+  //   if (!spec.data.name) {
+  //     const recent = recentFiles();
+  //     if (recent.length) {
+  //       specActions.initializeData(recent[0].data);
+  //     } else {
+  //       loadDataFromVegaDatasets(vegaDatasets[0]);
+  //     }
+  //   }
+  // });
 
   const loadDataFromUpload = (filename: string, data: UmweltDataset) => {
-    const nextRecentFiles = [...recentFiles()];
-    // if filename already exists, remove it
-    const index = nextRecentFiles.findIndex((file) => file.filename === filename);
-    if (index > -1) {
-      nextRecentFiles.splice(index, 1);
-    }
-    // add file to the beginning
-    nextRecentFiles.unshift({ filename, data });
-    if (nextRecentFiles.length > 5) {
-      // keep only 5 most recent files
-      nextRecentFiles.pop();
-    }
-    setRecentFiles(nextRecentFiles);
-    // set to selected dataset
-    specActions.initializeData(data);
+    datastoreActions.setDataset(filename, data);
+    setRecentFiles([filename, ...recentFiles().filter((f) => f !== filename)]);
+    specActions.initializeData(filename);
   };
 
   const loadDataFromRecentFile = (filename: string) => {
-    const file = recentFiles().find((file) => file.filename === filename);
-    if (file) {
-      specActions.initializeData(file.data);
+    if (datastore()[filename]) {
+      specActions.initializeData(filename);
     }
   };
 
   const loadDataFromVegaDatasets = (filename: string) => {
     const cache = vegaDatasetsCache();
     if (cache[filename]) {
-      specActions.initializeData(cache[filename]);
+      setRecentFiles([...recentFiles().filter((f) => f !== filename)]);
+      datastoreActions.setDataset(filename, cache[filename]);
+      specActions.initializeData(filename);
       return;
     }
     getData(vegaDataUrl(filename)).then((data) => {
       if (data && data.length) {
-        specActions.initializeData(data);
         setVegaDatasetsCache({ ...cache, [filename]: data });
+        setRecentFiles([...recentFiles().filter((f) => f !== filename)]);
+        datastoreActions.setDataset(filename, data);
+        specActions.initializeData(filename);
       }
     });
   };
 
   const DataTable = () => {
     return (
-      <Show when={spec.data && spec.data.length} fallback={'No dataset loaded'}>
+      <Show when={spec.data && spec.data.name && spec.data.values.length} fallback={'No dataset loaded'}>
         <table>
           <thead>
             <tr>
-              <For each={Object.keys(spec.data[0])}>{(key) => <th>{key}</th>}</For>
+              <For each={Object.keys(spec.data.values[0])}>{(key) => <th>{key}</th>}</For>
             </tr>
           </thead>
           <tbody>
-            <For each={spec.data}>
+            <For each={spec.data.values}>
               {(row) => (
                 <tr>
                   <For each={Object.entries(row)}>{([fieldName, value]) => <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>}</For>
@@ -106,13 +94,13 @@ export function Data() {
       <h3>Recently uploaded files</h3>
       <Show when={recentFiles().length > 0} fallback={'No files uploaded.'}>
         <For each={recentFiles()}>
-          {(file) => (
+          {(filename) => (
             <div>
               <label>
-                <input type="radio" name="recent_files" checked={JSON.stringify(file.data) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={file.filename} />
-                {file.filename}
+                <input type="radio" name="recent_files" checked={filename === spec.data.name} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={filename} />
+                {filename}
               </label>
-              <button onClick={() => setRecentFiles(recentFiles().filter((f) => f.filename !== file.filename))}>Remove {file.filename}</button>
+              <button onClick={() => setRecentFiles(recentFiles().filter((f) => f !== filename))}>Remove {filename}</button>
             </div>
           )}
         </For>
@@ -123,7 +111,7 @@ export function Data() {
           return (
             <div>
               <label>
-                <input type="radio" name="example_datasets" checked={JSON.stringify(vegaDatasetsCache()[filename]) === JSON.stringify(spec.data)} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
+                <input type="radio" name="example_datasets" checked={filename === spec.data.name} onChange={(e) => loadDataFromVegaDatasets(e.target.value)} value={filename} />
                 {filename}
               </label>
             </div>

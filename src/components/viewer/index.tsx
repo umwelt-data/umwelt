@@ -1,9 +1,9 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { printableSpec } from '../../util/debug';
 
 import styles from '../../App.module.css';
 import { Visualization } from './visualization';
 import { TextualStructure } from './textualStructure';
+import { exportableSpec, prettyPrintSpec } from '../../util/spec';
 
 export function Viewer() {
   const [spec, setSpec] = useUmweltSpec();
@@ -16,7 +16,7 @@ export function Viewer() {
       <TextualStructure />
 
       <pre>
-        <code>{printableSpec(spec)}</code>
+        <code>{prettyPrintSpec(exportableSpec(spec))}</code>
       </pre>
     </div>
   );

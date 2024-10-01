@@ -12,7 +12,7 @@ export function TextualStructure(props: VisualizationProps) {
   const [olliContainerRef, setOlliContainerRef] = createSignal<HTMLDivElement | null>(null);
 
   createEffect(async () => {
-    const olliSpec = await umweltToOlliSpec(spec, spec.data);
+    const olliSpec = await umweltToOlliSpec(spec, spec.data.values);
     console.log(olliSpec);
     if (olliSpec) {
       const elem = olli(olliSpec, {

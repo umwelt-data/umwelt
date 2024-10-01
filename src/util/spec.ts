@@ -12,6 +12,9 @@ export function validateSpec(spec: UmweltSpec) {
   if (!spec.data) {
     return false;
   }
+  if (!spec.data.values.length) {
+    return false;
+  }
   if (!(spec.fields && spec.fields.length)) {
     return false;
   }
@@ -194,4 +197,13 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
   }
 
   return olliSpec;
+}
+
+export function exportableSpec(spec: UmweltSpec): UmweltSpec {
+  const { data, ...rest } = spec;
+  return { ...rest, data: { name: data.name, values: [] } };
+}
+
+export function prettyPrintSpec(spec: UmweltSpec): string {
+  return JSON.stringify(spec, null, 2);
 }

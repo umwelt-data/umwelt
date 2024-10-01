@@ -1,5 +1,4 @@
 import { Type } from 'vega-lite/src/type';
-import { UrlData, InlineData } from 'vega-lite/src/data';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { Spec, TimeUnit } from 'vega';
@@ -25,7 +24,11 @@ type ScaleRange = {
 }; //  | "reverse"
 
 export type MeasureType = Exclude<Type, 'geojson'>;
-export type UmweltDataSource = UrlData | InlineData;
+
+export interface UmweltDataSource {
+  name?: string;
+  values: UmweltDataset;
+}
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
@@ -146,7 +149,7 @@ export interface AudioSpec {
 }
 
 export interface UmweltSpec {
-  data: UmweltDataset;
+  data: UmweltDataSource;
   fields: FieldDef[];
   key: FieldName[];
   visual: VisualSpec;

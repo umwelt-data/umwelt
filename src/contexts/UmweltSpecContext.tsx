@@ -1,14 +1,15 @@
 import { createContext, useContext, ParentProps, createSignal } from 'solid-js';
-import { SetStoreFunction, createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { createStore } from 'solid-js/store';
+import { AudioEncodingFieldDef, EncodingPropName, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
-import { useParams, useSearchParams } from '@solidjs/router';
+import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
-import { validateSpec } from '../util/spec';
+import { exportableSpec, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { TimeUnit } from 'vega';
 import { cleanData, typeCoerceData } from '../util/datasets';
+import { useUmweltDatastore } from './UmweltDatastoreContext';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -20,7 +21,7 @@ export type UmweltSpecInternalActions = {
 };
 
 export type UmweltSpecActions = {
-  initializeData: (data: any[]) => void;
+  initializeData: (name: string) => void;
   setFieldActive: (field: string, active: boolean) => void;
   reorderKeyField: (field: string, newIndex: number) => void;
   setFieldType: (field: string, type: MeasureType) => void;
@@ -57,7 +58,9 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       }
     }
     return {
-      data: [],
+      data: {
+        values: [],
+      },
       fields: [],
       key: [],
       visual: {
@@ -75,14 +78,16 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const [visualUnitCount, setVisualUnitCount] = createSignal<number>(0);
   const [audioUnitCount, setAudioUnitCount] = createSignal<number>(0);
 
+  const [datastore, _] = useUmweltDatastore();
+
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
-      setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(spec)) });
+      setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec))) });
     },
     detectKey: async () => {
       const key = await detectKey(
         spec.fields.filter((f) => f.active),
-        spec.data
+        spec.data.values
       );
       setSpec('key', key);
       internalActions.updateSearchParams();
@@ -130,8 +135,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const actions: UmweltSpecActions = {
-    initializeData: (data: any[]) => {
+    initializeData: (name: string) => {
+      const data = datastore()[name];
       if (data && data.length) {
+        setSpec('data', 'name', name);
         const baseFieldDefs = Object.keys(data[0]).map((name) => {
           return {
             active: true,
@@ -162,7 +169,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         }
         const typedData = typeCoerceData(data, spec.fields);
         const cleanedData = cleanData(typedData, spec.fields);
-        setSpec('data', cleanedData);
+        setSpec('data', 'values', cleanedData);
       }
       internalActions.updateSearchParams();
     },

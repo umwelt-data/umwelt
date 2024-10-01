@@ -12,7 +12,7 @@ type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
 
 export function Editor() {
   const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createSignal<EditorTab>(spec.data && spec.fields.length ? 'fields' : 'data');
+  const [currentTab, setCurrentTab] = createSignal<EditorTab>(spec.data.values.length && spec.fields.length ? 'fields' : 'data');
 
   const onFocus = (e: FocusEvent) => {};
 
@@ -32,13 +32,13 @@ export function Editor() {
         <button role="tab" id="tab-data" aria-controls="tabpanel-data" aria-selected={currentTab() === 'data'} onClick={() => setCurrentTab('data')}>
           Data
         </button>
-        <button role="tab" id="tab-fields" aria-controls="tabpanel-fields" aria-selected={currentTab() === 'fields'} onClick={() => setCurrentTab('fields')} disabled={!(spec.data && spec.fields.length)}>
+        <button role="tab" id="tab-fields" aria-controls="tabpanel-fields" aria-selected={currentTab() === 'fields'} onClick={() => setCurrentTab('fields')} disabled={!(spec.data.values.length && spec.fields.length)}>
           Fields
         </button>
-        <button role="tab" id="tab-visual" aria-controls="tabpanel-visual" aria-selected={currentTab() === 'visual'} onClick={() => setCurrentTab('visual')} disabled={!(spec.data && spec.fields.length)}>
+        <button role="tab" id="tab-visual" aria-controls="tabpanel-visual" aria-selected={currentTab() === 'visual'} onClick={() => setCurrentTab('visual')} disabled={!(spec.data.values.length && spec.fields.length)}>
           Visual
         </button>
-        <button role="tab" id="tab-audio" aria-controls="tabpanel-audio" aria-selected={currentTab() === 'audio'} onClick={() => setCurrentTab('audio')} disabled={!(spec.data && spec.fields.length)}>
+        <button role="tab" id="tab-audio" aria-controls="tabpanel-audio" aria-selected={currentTab() === 'audio'} onClick={() => setCurrentTab('audio')} disabled={!(spec.data.values.length && spec.fields.length)}>
           Audio
         </button>
       </div>
