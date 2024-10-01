@@ -54,7 +54,7 @@ export function isAudioProp(propName: string): propName is AudioPropName {
 // but the user wants to override it to NONE in the encoding definition
 export const NONE = 'None';
 
-type FieldName = string;
+export type FieldName = string;
 
 export interface FieldRef {
   field: FieldName;

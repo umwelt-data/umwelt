@@ -1,6 +1,6 @@
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, NONE, VisualPropName, visualPropNames } from '../../types';
+import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, FieldName, NONE, VisualPropName, visualPropNames } from '../../types';
 import { TimeUnit } from 'vega';
 import { getFieldDef } from '../../util/spec';
 import { For, Show } from 'solid-js';
@@ -17,7 +17,7 @@ const timeUnits = ['year', 'month', 'yearmonth', 'day', 'date', 'hours', 'minute
 export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTransformsProps) {
   const [spec, specActions] = useUmweltSpec();
 
-  const canAggregateField = (key: string[], field?: FieldDef) => {
+  const canAggregateField = (key: FieldName[], field?: FieldDef) => {
     if (!field) return false;
     return !key.includes(field.name) && field.type === 'quantitative';
   };

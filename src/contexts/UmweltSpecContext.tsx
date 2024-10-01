@@ -1,15 +1,16 @@
 import { createContext, useContext, ParentProps, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, FieldDef, MeasureType, UmweltDataset, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
-import { exportableSpec, validateSpec } from '../util/spec';
+import { exportableSpec, getFieldDef, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { TimeUnit } from 'vega';
 import { cleanData, typeCoerceData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
+import { getDefaultSpec } from '../util/heuristics';
 
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
@@ -135,7 +136,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const actions: UmweltSpecActions = {
-    initializeData: (name: string) => {
+    initializeData: async (name: string) => {
       const data = datastore()[name];
       if (data && data.length) {
         setSpec('data', 'name', name);
@@ -146,30 +147,21 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
             encodings: [],
           };
         });
-        if (!(spec.fields.length === baseFieldDefs.length && spec.fields.every((field) => baseFieldDefs.find((fieldDef) => fieldDef.name === field.name)))) {
-          // elaborate fields and set field defs
-          const elaboratedFields = elaborateFields(baseFieldDefs, data);
-          setSpec('fields', elaboratedFields);
-          internalActions.detectKey();
-          // initialize default visual and audio units
-          setSpec('visual', 'units', [
-            {
-              name: 'vis_unit_0',
-              mark: 'point',
-              encoding: {},
-            },
-          ]);
-          setSpec('audio', 'units', [
-            {
-              name: 'audio_unit_0',
-              encoding: {},
-              traversal: [],
-            },
-          ]);
-        }
+        // elaborate fields and set field defs
+        const elaboratedFields = elaborateFields(baseFieldDefs, data);
+        setSpec('fields', elaboratedFields);
+        // type and clean data
         const typedData = typeCoerceData(data, spec.fields);
         const cleanedData = cleanData(typedData, spec.fields);
         setSpec('data', 'values', cleanedData);
+        // detect key
+        await internalActions.detectKey();
+        // initialize default visual and audio units
+        const keyFieldDefs = spec.fields.filter((field) => field.active && spec.key.includes(field.name));
+        const valueFieldDefs = spec.fields.filter((field) => field.active && !spec.key.includes(field.name));
+        const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, spec.data.values);
+        setSpec('visual', defaultSpec.visual);
+        setSpec('audio', defaultSpec.audio);
       }
       internalActions.updateSearchParams();
     },
