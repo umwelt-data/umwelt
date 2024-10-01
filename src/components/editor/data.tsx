@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { createEffect, For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
@@ -21,16 +21,16 @@ export function Data() {
   const [vegaDatasetsCache, setVegaDatasetsCache] = createStoredSignal<UmweltDatastore>('vegaDatasetsCache', {});
 
   // if spec.data is not set, initialize with most recently uploaded file or example dataset
-  // createEffect(() => {
-  //   if (!spec.data.name) {
-  //     const recent = recentFiles();
-  //     if (recent.length) {
-  //       specActions.initializeData(recent[0].data);
-  //     } else {
-  //       loadDataFromVegaDatasets(vegaDatasets[0]);
-  //     }
-  //   }
-  // });
+  createEffect(() => {
+    if (!spec.data.name) {
+      const recent = recentFiles();
+      if (recent.length && recent[0] in datastore()) {
+        specActions.initializeData(recent[0]);
+      } else {
+        loadDataFromVegaDatasets(vegaDatasets[0]);
+      }
+    }
+  });
 
   const loadDataFromUpload = (filename: string, data: UmweltDataset) => {
     datastoreActions.setDataset(filename, data);
@@ -47,7 +47,6 @@ export function Data() {
   const loadDataFromVegaDatasets = (filename: string) => {
     const cache = vegaDatasetsCache();
     if (cache[filename]) {
-      setRecentFiles([...recentFiles().filter((f) => f !== filename)]);
       datastoreActions.setDataset(filename, cache[filename]);
       specActions.initializeData(filename);
       return;
@@ -55,7 +54,6 @@ export function Data() {
     getData(vegaDataUrl(filename)).then((data) => {
       if (data && data.length) {
         setVegaDatasetsCache({ ...cache, [filename]: data });
-        setRecentFiles([...recentFiles().filter((f) => f !== filename)]);
         datastoreActions.setDataset(filename, data);
         specActions.initializeData(filename);
       }
@@ -106,7 +104,7 @@ export function Data() {
         </For>
       </Show>
       <h3>Example datasets</h3>
-      <For each={vegaDatasets}>
+      <For each={vegaDatasets.filter((name) => !recentFiles().find((n) => n === name))}>
         {(filename) => {
           return (
             <div>
