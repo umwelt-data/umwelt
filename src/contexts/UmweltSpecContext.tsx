@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, FieldDef, MeasureType, UmweltDataset, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, FieldDef, MeasureType, UmweltDataset, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
@@ -162,6 +162,35 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, spec.data.values);
         setSpec('visual', defaultSpec.visual);
         setSpec('audio', defaultSpec.audio);
+        // update encoding refs to match new spec
+        const fieldNameToEncodingRefs = new Map<string, EncodingRef[]>();
+        defaultSpec.visual.units.forEach((unit) => {
+          Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
+            const field = encFieldDef?.field;
+            const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
+            if (field) {
+              fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
+            }
+          });
+        });
+        defaultSpec.audio.units.forEach((unit) => {
+          Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
+            const field = encFieldDef?.field;
+            const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
+            if (field) {
+              fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
+            }
+          });
+        });
+        setSpec(
+          'fields',
+          spec.fields.map((fieldDef) => {
+            return {
+              ...fieldDef,
+              encodings: fieldNameToEncodingRefs.get(fieldDef.name) || [],
+            };
+          })
+        );
       }
       internalActions.updateSearchParams();
     },
