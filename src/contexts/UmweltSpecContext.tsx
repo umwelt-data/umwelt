@@ -83,7 +83,9 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
 
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
-      setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec))) });
+      if (searchParams.spec) {
+        setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec))) });
+      }
     },
     detectKey: async () => {
       const key = await detectKey(

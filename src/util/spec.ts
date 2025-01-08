@@ -3,6 +3,7 @@ import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioS
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
+import LZString from 'lz-string';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -206,4 +207,11 @@ export function exportableSpec(spec: UmweltSpec): UmweltSpec {
 
 export function prettyPrintSpec(spec: UmweltSpec): string {
   return JSON.stringify(spec, null, 2);
+}
+
+export function shareSpecURL(spec: UmweltSpec): string {
+  const specString = LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec)));
+  const url = new URL(window.location.origin);
+  url.searchParams.set('spec', specString);
+  return url.toString();
 }

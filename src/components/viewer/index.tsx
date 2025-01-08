@@ -3,21 +3,48 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import styles from '../../App.module.css';
 import { Visualization } from './visualization';
 import { TextualStructure } from './textualStructure';
-import { exportableSpec, prettyPrintSpec } from '../../util/spec';
+import { exportableSpec, prettyPrintSpec, shareSpecURL } from '../../util/spec';
+import { Sonification } from './sonification';
+
+import { styled } from 'solid-styled-components';
 
 export function Viewer() {
   const [spec, setSpec] = useUmweltSpec();
+
+  const ExportUrlInput = styled('input')`
+    width: 100%;
+  `;
+  const ExportSpecTextarea = styled('textarea')`
+    width: 100%;
+  `;
 
   return (
     <div class={styles.Viewer}>
       <h1>Viewer</h1>
 
+      <details>
+        <summary>Export</summary>
+        <label>
+          Shareable Editor URL
+          <ExportUrlInput readonly type="url" value={shareSpecURL(spec)} />
+        </label>
+        {/** TODO add an embeddable URL of just the viewer */}
+        <label>
+          Spec
+          <ExportSpecTextarea readonly rows={30}>
+            {prettyPrintSpec(exportableSpec(spec))}
+          </ExportSpecTextarea>
+        </label>
+      </details>
+
+      <h2>Visualization</h2>
       <Visualization />
+
+      <h2>Description</h2>
       <TextualStructure />
 
-      <pre>
-        <code>{prettyPrintSpec(exportableSpec(spec))}</code>
-      </pre>
+      <h2>Sonification</h2>
+      <Sonification />
     </div>
   );
 }

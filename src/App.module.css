@@ -19,6 +19,11 @@ table {
   overflow: auto;
 }
 
+td, th {
+  text-align: left;
+  padding-right: 5px;
+}
+
 details > summary {
   cursor: pointer;
 }

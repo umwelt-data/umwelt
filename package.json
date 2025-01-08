@@ -28,6 +28,7 @@
     "olli-adapters": "^2.0.2",
     "papaparse": "^5.4.1",
     "solid-js": "^1.7.12",
+    "solid-styled-components": "^0.28.5",
     "vega": "^5.25.0",
     "vega-lite": "^5.15.0"
   }

@@ -1,10 +1,10 @@
 import moize from 'moize';
-import { EncodingFieldDef, NONE, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
+import { AudioTraversalFieldDef, EncodingFieldDef, NONE, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
 import { selectionTest } from './selection';
 import { dateToFormattedString } from './description';
 import { unwrapNone } from './values';
 
-export const getDomain = moize((fieldDef: EncodingFieldDef, data: UmweltDataset, predicate?: UmweltPredicate): UmweltValue[] => {
+export const getDomain = moize((fieldDef: EncodingFieldDef | AudioTraversalFieldDef, data: UmweltDataset, predicate?: UmweltPredicate): UmweltValue[] => {
   const unique_vals = new Set<UmweltValue>();
   const dataset = predicate ? selectionTest(data, predicate) : data;
   // TODO account for domain overrides in the field def
