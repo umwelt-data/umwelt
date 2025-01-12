@@ -1,16 +1,19 @@
 import { For } from 'solid-js';
-import { SonificationRuntimeProvider } from '../../../contexts/SonificationRuntimeContext';
+import { SonificationStateProvider } from '../../../contexts/sonification/SonificationStateContext';
 import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
 import { AudioUnit } from './audioUnit';
+import { AudioEngineProvider } from '../../../contexts/sonification/AudioEngineContext';
 
 export type SonificationProps = {};
 
 export function Sonification(props: SonificationProps) {
-  const [spec, specActions] = useUmweltSpec();
+  const [spec] = useUmweltSpec();
 
   return (
-    <SonificationRuntimeProvider>
-      <For each={spec.audio.units}>{(audioUnitSpec) => <AudioUnit audioUnitSpec={audioUnitSpec} />}</For>
-    </SonificationRuntimeProvider>
+    <SonificationStateProvider>
+      <AudioEngineProvider>
+        <For each={spec.audio.units}>{(audioUnitSpec) => <AudioUnit audioUnitSpec={audioUnitSpec} />}</For>
+      </AudioEngineProvider>
+    </SonificationStateProvider>
   );
 }

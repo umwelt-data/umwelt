@@ -49,7 +49,7 @@ export function UmweltDatastoreProvider(props: UmweltDatastoreProviderProps) {
 export function useUmweltDatastore() {
   const context = useContext(UmweltDatastoreContext);
   if (context === undefined) {
-    throw new Error('useUmweltDAtastore must be used within a UmweltDatastoreProvider');
+    throw new Error('useUmweltDatastore must be used within a UmweltDatastoreProvider');
   }
   return context;
 }

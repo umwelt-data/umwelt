@@ -4,6 +4,7 @@ import { selectionTest } from './selection';
 import { dateToFormattedString } from './description';
 import { unwrapNone } from './values';
 
+// TODO should this function account for overrides between the parent field def and the encoding field def?
 export const getDomain = moize((fieldDef: EncodingFieldDef | AudioTraversalFieldDef, data: UmweltDataset, predicate?: UmweltPredicate): UmweltValue[] => {
   const unique_vals = new Set<UmweltValue>();
   const dataset = predicate ? selectionTest(data, predicate) : data;
