@@ -32,10 +32,10 @@ export type AudioUnitStateActions = {
 };
 
 type AudioUnitStateInternalActions = {
-  getAllTraversalStates: () => TraversalState[];
   traversalStateToData: (state: TraversalState) => UmweltDataset;
   encodeDataAsNote: (data: UmweltDataset, encoding: AudioEncoding) => EncodedNote;
   countEndingSectionsOfState: (state: TraversalState) => number;
+  getTransportTimeFromState: (state: TraversalState) => number;
 };
 
 export type TraversalState = Record<string, number>; // Field -> Index
@@ -65,23 +65,27 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
 
+  // derived state
+  const getFieldDomains = createMemo(() => {
+    return Object.fromEntries(
+      audioUnitSpec.traversal.map((traversalFieldDef) => {
+        const domain = getDomain(traversalFieldDef, spec.data.values); // todo global selection
+        return [traversalFieldDef.field, domain];
+      })
+    );
+  });
+
   const actions: AudioUnitStateActions = {
     setTraversalIndex: (field, index) => {
       setAudioUnitState((prev) => {
         return { ...prev, traversalState: { ...prev.traversalState, [field]: index } };
       });
+      actions.setupTransportSequence();
+      audioEngine.transport.seconds = internalActions.getTransportTimeFromState(audioUnitState.traversalState);
     },
     getTraversalIndex: (field) => {
       return audioUnitState.traversalState[field];
     },
-    getFieldDomains: createMemo(() => {
-      return Object.fromEntries(
-        audioUnitSpec.traversal.map((traversalFieldDef) => {
-          const domain = getDomain(traversalFieldDef, spec.data.values); // todo global selection
-          return [traversalFieldDef.field, domain];
-        })
-      );
-    }),
     setupTransportSequence: () => {
       if (sonificationState.activeUnitName !== audioUnitSpec.name) {
         // update active unit
@@ -89,32 +93,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         // Clear previous sequence
         audioEngine.transport.cancel();
 
-        // Set up new sequence based on all possible states
-        let currentTime = 0;
-        const notes: SonifierNote[] = [];
-
-        const allTraversalStates = internalActions.getAllTraversalStates();
-
-        allTraversalStates.forEach((state) => {
-          const data = internalActions.traversalStateToData(state);
-          const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
-
-          // Add the note with cumulative timing
-          notes.push({
-            ...note,
-            time: currentTime,
-            state,
-          });
-
-          // Update the time for the next note, including the gap
-          currentTime += note.duration;
-
-          // Add section breaks if this state ends one or more sections
-          const endingSections = internalActions.countEndingSectionsOfState(state);
-          if (endingSections > 0) {
-            currentTime += audioEngine.pauseBetweenSections * endingSections;
-          }
-        });
+        const notes = getSonifierNotes();
 
         // Schedule notes in the transport
         notes.forEach((note) => {
@@ -129,31 +108,14 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         console.log('Scheduled notes:', notes);
       }
     },
+    getFieldDomains,
   };
 
   const internalActions: AudioUnitStateInternalActions = {
-    getAllTraversalStates: createMemo(() => {
-      const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
-      const fieldDomains = actions.getFieldDomains();
-
-      const domainLengths = traversalFields.map((field) => Array.from({ length: fieldDomains[field].length }, (_, i) => i));
-
-      // Generate all combinations of indices using fastCartesian
-      const indexCombinations = fastCartesian(domainLengths);
-
-      // Convert index combinations to field combinations
-      return indexCombinations.map((combination) => {
-        const result: TraversalState = {};
-        combination.forEach((index, fieldIndex) => {
-          result[traversalFields[fieldIndex]] = index;
-        });
-        return result;
-      });
-    }),
     traversalStateToData: (traversalState: TraversalState) => {
       const predicate: LogicalAnd<FieldEqualPredicate> = {
         and: Object.entries(traversalState).map(([field, index]) => {
-          const value = actions.getFieldDomains()[field][index];
+          const value = getFieldDomains()[field][index];
           const fieldDef = getFieldDef(spec, field)!;
           return {
             field,
@@ -174,12 +136,70 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     },
     countEndingSectionsOfState: (state: TraversalState) => {
       const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
-      const domains = actions.getFieldDomains();
+      const domains = getFieldDomains();
       return traversalFields.reduce((count, field) => {
         return state[field] === domains[field].length - 1 ? count + 1 : count;
       }, 0);
     },
+    getTransportTimeFromState: (state: TraversalState) => {
+      const notes = getSonifierNotes();
+      const note = notes.find((note) => {
+        return Object.entries(state).every(([field, index]) => {
+          return note.state[field] === index;
+        });
+      });
+      return note ? note.time : 0;
+    },
   };
+
+  const getAllTraversalStates = createMemo(() => {
+    const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
+    const fieldDomains = getFieldDomains();
+
+    const domainLengths = traversalFields.map((field) => Array.from({ length: fieldDomains[field].length }, (_, i) => i));
+
+    // Generate all combinations of indices using fastCartesian
+    const indexCombinations = fastCartesian(domainLengths);
+
+    // Convert index combinations to field combinations
+    return indexCombinations.map((combination) => {
+      const result: TraversalState = {};
+      combination.forEach((index, fieldIndex) => {
+        result[traversalFields[fieldIndex]] = index;
+      });
+      return result;
+    });
+  });
+  const getSonifierNotes = createMemo(() => {
+    // Set up new sequence based on all possible states
+    let currentTime = 0;
+    const notes: SonifierNote[] = [];
+
+    const allTraversalStates = getAllTraversalStates();
+
+    allTraversalStates.forEach((state) => {
+      const data = internalActions.traversalStateToData(state);
+      const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
+
+      // Add the note with cumulative timing
+      notes.push({
+        ...note,
+        time: currentTime,
+        state,
+      });
+
+      // Update the time for the next note, including the gap
+      currentTime += note.duration;
+
+      // Add section breaks if this state ends one or more sections
+      const endingSections = internalActions.countEndingSectionsOfState(state);
+      if (endingSections > 0) {
+        currentTime += audioEngine.pauseBetweenSections * endingSections;
+      }
+    });
+
+    return notes;
+  });
 
   return <AudioUnitStateContext.Provider value={[audioUnitState, actions]}>{props.children}</AudioUnitStateContext.Provider>;
 }
