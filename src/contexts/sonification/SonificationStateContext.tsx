@@ -16,11 +16,9 @@ export interface SonificationState {
 const SonificationContext = createContext<[SonificationState, SonificationStateActions]>();
 
 export function SonificationStateProvider(props: SonificationStateProviderProps) {
-  const [spec] = useUmweltSpec();
-
   const getInitialState = (): SonificationState => {
     return {
-      activeUnitName: spec.audio.units.length ? spec.audio.units[0].name : undefined,
+      activeUnitName: undefined,
     };
   };
 

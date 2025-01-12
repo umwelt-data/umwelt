@@ -11,7 +11,8 @@ import { getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
 import { SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
-import { encodeAudioProperty } from '../../util/audioEncoding';
+import { encodeProperty } from '../../util/encoding';
+import { useAudioScales } from './AudioScalesContext';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -27,6 +28,7 @@ export type AudioUnitStateActions = {
   setTraversalIndex: (field: string, index: number) => void;
   getTraversalIndex: (field: string) => number;
   getFieldDomains: () => Record<string, UmweltValue[]>;
+  setupTransportSequence: () => void;
 };
 
 type AudioUnitStateInternalActions = {
@@ -34,10 +36,9 @@ type AudioUnitStateInternalActions = {
   traversalStateToData: (state: TraversalState) => UmweltDataset;
   encodeDataAsNote: (data: UmweltDataset, encoding: AudioEncoding) => EncodedNote;
   countEndingSectionsOfState: (state: TraversalState) => number;
-  setupTransportSequence: () => void;
 };
 
-type TraversalState = Record<string, number>; // Field -> Index
+export type TraversalState = Record<string, number>; // Field -> Index
 
 export interface AudioUnitState {
   traversalState: TraversalState;
@@ -48,6 +49,7 @@ const AudioUnitStateContext = createContext<[AudioUnitState, AudioUnitStateActio
 export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const { audioUnitSpec } = props;
   const [spec] = useUmweltSpec();
+  const scales = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
 
@@ -80,6 +82,53 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         })
       );
     }),
+    setupTransportSequence: () => {
+      if (sonificationState.activeUnitName !== audioUnitSpec.name) {
+        // update active unit
+        sonificationStateActions.setActiveUnit(audioUnitSpec.name);
+        // Clear previous sequence
+        audioEngine.transport.cancel();
+
+        // Set up new sequence based on all possible states
+        let currentTime = 0;
+        const notes: SonifierNote[] = [];
+
+        const allTraversalStates = internalActions.getAllTraversalStates();
+
+        allTraversalStates.forEach((state) => {
+          const data = internalActions.traversalStateToData(state);
+          const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
+
+          // Add the note with cumulative timing
+          notes.push({
+            ...note,
+            time: currentTime,
+            state,
+          });
+
+          // Update the time for the next note, including the gap
+          currentTime += note.duration;
+
+          // Add section breaks if this state ends one or more sections
+          const endingSections = internalActions.countEndingSectionsOfState(state);
+          if (endingSections > 0) {
+            currentTime += audioEngine.pauseBetweenSections * endingSections;
+          }
+        });
+
+        // Schedule notes in the transport
+        notes.forEach((note) => {
+          audioEngine.transport.schedule(() => {
+            audioEngineActions.playNote(note);
+            setAudioUnitState((prev) => {
+              return { ...prev, traversalState: note.state };
+            });
+          }, note.time);
+        });
+
+        console.log('Scheduled notes:', notes);
+      }
+    },
   };
 
   const internalActions: AudioUnitStateInternalActions = {
@@ -117,9 +166,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     },
     encodeDataAsNote: (data: UmweltDataset, encoding: AudioEncoding): EncodedNote => {
       const note = {
-        pitch: data.length ? encodeAudioProperty('pitch', encoding.pitch, getFieldDef(spec, encoding.pitch?.field), data) : undefined,
-        volume: encodeAudioProperty('volume', encoding.volume, data),
-        duration: encodeAudioProperty('duration', encoding.duration, data),
+        pitch: data.length ? encodeProperty('pitch', encoding.pitch, scales.pitch, data) : undefined,
+        volume: encodeProperty('volume', encoding.volume, scales.volume, data),
+        duration: encodeProperty('duration', encoding.duration, scales.duration, data),
       };
       return note;
     },
@@ -130,50 +179,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         return state[field] === domains[field].length - 1 ? count + 1 : count;
       }, 0);
     },
-    setupTransportSequence: () => {
-      // Clear previous sequence
-      audioEngine.transport.cancel();
-
-      // Set up new sequence based on all possible states
-      let currentTime = 0;
-      const notes: SonifierNote[] = [];
-
-      const allTraversalStates = internalActions.getAllTraversalStates();
-
-      allTraversalStates.forEach((state) => {
-        const data = internalActions.traversalStateToData(state);
-        const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
-
-        // Add the note with cumulative timing
-        notes.push({
-          ...note,
-          time: currentTime,
-        });
-
-        // Update the time for the next note, including the gap
-        currentTime += note.duration;
-
-        // Add section breaks if this state ends one or more sections
-        const endingSections = internalActions.countEndingSectionsOfState(state);
-        if (endingSections > 0) {
-          currentTime += audioEngine.pauseBetweenSections * endingSections;
-        }
-      });
-
-      // Schedule notes in the transport
-      notes.forEach((note) => {
-        audioEngine.transport.schedule(() => {
-          audioEngineActions.playNote(note);
-        }, note.time);
-      });
-    },
   };
-
-  createEffect(() => {
-    if (sonificationState.activeUnitName === audioUnitSpec.name) {
-      internalActions.setupTransportSequence();
-    }
-  });
 
   return <AudioUnitStateContext.Provider value={[audioUnitState, actions]}>{props.children}</AudioUnitStateContext.Provider>;
 }
