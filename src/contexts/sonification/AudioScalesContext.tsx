@@ -48,7 +48,9 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
     const fieldDef = getFieldDef(spec, encodingFieldDef.field);
 
     if (!fieldDef) {
-      throw new Error(`Field ${encodingFieldDef.field} not found in spec`);
+      // throw new Error(`Field ${encodingFieldDef.field} not found in spec`);
+      console.warn(`Field ${encodingFieldDef.field} not found in spec`);
+      return () => DEFAULT_VALUES[property];
     }
 
     let domain = encodingFieldDef.scale?.domain;
@@ -91,7 +93,9 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
   const getAxisTicks = (field: string) => {
     const fieldDef = getFieldDef(spec, field);
     if (!fieldDef) {
-      throw new Error(`Field ${field} not found in spec`);
+      // throw new Error(`Field ${field} not found in spec`);
+      console.warn(`Field ${field} not found in spec`);
+      return [];
     }
 
     if ('view' in window) {

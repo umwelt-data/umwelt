@@ -67,6 +67,7 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
               if (channel === 'facet') {
                 const domain = getDomain(encDef, data);
                 encoding[channel] = {
+                  ...fieldDef,
                   ...encDef,
                   columns: domain.length === 3 ? 3 : 2, // TODO do something better
                 } as any;
@@ -74,6 +75,7 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
               if (unit.mark === 'point') {
                 if ((channel === 'x' || channel === 'y') && fieldDef.type === 'quantitative') {
                   encoding[channel] = {
+                    ...fieldDef,
                     ...encDef,
                     scale: {
                       ...encDef.scale,
@@ -200,9 +202,9 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
   return olliSpec;
 }
 
-export function exportableSpec(spec: UmweltSpec): UmweltSpec {
+export function exportableSpec(spec: UmweltSpec): any {
   const { data, ...rest } = spec;
-  return { ...rest, data: { name: data.name, values: [] } };
+  return { ...rest, data: { name: data.name } };
 }
 
 export function prettyPrintSpec(spec: UmweltSpec): string {

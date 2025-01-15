@@ -11,7 +11,9 @@ export function Visualization(props: VisualizationProps) {
 
   createEffect(() => {
     const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
+    console.log('yo');
     if (vlSpec) {
+      console.log(JSON.parse(JSON.stringify(vlSpec)));
       try {
         const view = renderVegaLite(vlSpec, '#vl-container');
 
