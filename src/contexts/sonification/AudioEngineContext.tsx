@@ -3,13 +3,20 @@ import { createStore } from 'solid-js/store';
 import * as Tone from 'tone';
 import { TransportClass } from 'tone/build/esm/core/clock/Transport';
 import { EncodedNote, TraversalState } from './AudioUnitStateContext';
+import { set } from 'vega-lite/src/log';
 
 export interface SonifierNote extends EncodedNote {
   time: number; // elapsed time when should play in transport, in seconds
   state: TraversalState; // traversal state corresponding to this note
   speakBefore?: string; // text to speak before playing
-  noise?: boolean; // does this note represent noise
-  ramp?: boolean; // should we ramp from this note
+  pauseAfter?: number; // in seconds
+  ramp?: boolean; // whether to ramp this note
+}
+
+interface InternalSynthState {
+  isSynthPlaying: boolean;
+  isNoisePlaying: boolean;
+  rampTime: number; // in seconds
 }
 
 export type AudioEngineProviderProps = ParentProps<{}>;
@@ -22,6 +29,8 @@ export type AudioEngineActions = {
   startTransport: () => void;
   stopTransport: () => void;
   playNote: (note: SonifierNote) => void;
+  playRampedNote: (note: SonifierNote) => void;
+  releaseSynth: () => void;
 };
 
 export interface AudioEngine {
@@ -37,8 +46,32 @@ export interface AudioEngine {
 const AudioEngineContext = createContext<[AudioEngine, AudioEngineActions]>();
 
 export function AudioEngineProvider(props: AudioEngineProviderProps) {
-  const synth = new Tone.Synth().toDestination();
-  const noiseSynth = new Tone.NoiseSynth().toDestination();
+  const envelope = {
+    attack: 0.01,
+    decay: 0,
+    sustain: 1,
+    release: 0.01,
+  };
+  const synth = new Tone.Synth({
+    oscillator: {
+      type: 'sine',
+    },
+    envelope,
+  }).toDestination();
+  const noiseSynth = new Tone.NoiseSynth({
+    noise: {
+      type: 'pink',
+    },
+    envelope: {
+      ...envelope,
+      sustain: 0.3, // lower sustain for noise
+    },
+  }).toDestination();
+  const [internalSynthState, setInternalSynthState] = createStore<InternalSynthState>({
+    isSynthPlaying: false,
+    isNoisePlaying: false,
+    rampTime: 0.1,
+  });
 
   const getInitialState = (): AudioEngine => {
     return {
@@ -76,19 +109,18 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
     },
     startTransport: async () => {
-      await Tone.start();
-      Tone.getTransport().start();
       setAudioEngineState((prev) => {
         return { ...prev, isPlaying: true };
       });
+      await Tone.start();
+      Tone.getTransport().start();
     },
     stopTransport: () => {
-      Tone.getTransport().pause();
-      synth.triggerRelease();
-      noiseSynth.triggerRelease();
       setAudioEngineState((prev) => {
         return { ...prev, isPlaying: false };
       });
+      Tone.getTransport().pause();
+      // actions.releaseSynth();
     },
     playNote: (note: SonifierNote) => {
       if (note.pitch) {
@@ -96,11 +128,50 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
         // midi to frequency for note.pitch
         // note that we're currently rounding to the nearest midi note
         // this seems reasonable imo but something to consider
-        synth.triggerAttackRelease(Tone.Frequency(Math.round(note.pitch), 'midi').toFrequency(), note.duration);
+        const frequency = Tone.Frequency(Math.round(note.pitch), 'midi').toFrequency();
+        synth.triggerAttackRelease(frequency, note.duration);
       } else {
         noiseSynth.volume.value = note.volume;
         noiseSynth.triggerAttackRelease(note.duration);
       }
+    },
+    playRampedNote: (note: SonifierNote) => {
+      if (note.pitch) {
+        // stop noise synth
+        noiseSynth.triggerRelease();
+        setInternalSynthState('isNoisePlaying', false);
+        // midi to frequency for note.pitch
+        const frequency = Tone.Frequency(Math.round(note.pitch), 'midi').toFrequency();
+        if (!internalSynthState.isSynthPlaying) {
+          // trigger synth
+          synth.volume.value = note.volume;
+          setInternalSynthState('isSynthPlaying', true);
+          synth.triggerAttack(frequency);
+        } else {
+          // ramp to new values
+          synth.volume.rampTo(note.volume, internalSynthState.rampTime);
+          synth.frequency.rampTo(frequency, internalSynthState.rampTime);
+        }
+      } else {
+        // stop synth
+        synth.triggerRelease();
+        setInternalSynthState('isSynthPlaying', false);
+        if (!internalSynthState.isNoisePlaying) {
+          // trigger noise synth
+          noiseSynth.volume.value = note.volume;
+          setInternalSynthState('isNoisePlaying', true);
+          noiseSynth.triggerAttack();
+        } else {
+          // ramp to new values
+          noiseSynth.volume.rampTo(note.volume, internalSynthState.rampTime);
+        }
+      }
+    },
+    releaseSynth: () => {
+      synth.triggerRelease();
+      noiseSynth.triggerRelease();
+      setInternalSynthState('isSynthPlaying', false);
+      setInternalSynthState('isNoisePlaying', false);
     },
   };
 

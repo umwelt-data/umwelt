@@ -35,7 +35,7 @@ type AudioUnitStateInternalActions = {
   traversalStateToData: (state: TraversalState) => UmweltDataset;
   encodeDataAsNote: (data: UmweltDataset, encoding: AudioEncoding) => EncodedNote;
   countEndingSectionsOfState: (state: TraversalState) => number;
-  getTransportTimeFromState: (state: TraversalState) => number;
+  getNoteFromState: (state: TraversalState) => SonifierNote | undefined;
 };
 
 export type TraversalState = Record<string, number>; // Field -> Index
@@ -77,11 +77,16 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
   const actions: AudioUnitStateActions = {
     setTraversalIndex: (field, index) => {
+      audioEngineActions.stopTransport();
       setAudioUnitState((prev) => {
         return { ...prev, traversalState: { ...prev.traversalState, [field]: index } };
       });
       actions.setupTransportSequence();
-      audioEngine.transport.seconds = internalActions.getTransportTimeFromState(audioUnitState.traversalState);
+      const note = internalActions.getNoteFromState(audioUnitState.traversalState);
+      if (note) {
+        audioEngine.transport.seconds = note?.time;
+        // audioEngineActions.playNote(note);
+      }
     },
     getTraversalIndex: (field) => {
       return audioUnitState.traversalState[field];
@@ -98,11 +103,23 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         // Schedule notes in the transport
         notes.forEach((note) => {
           audioEngine.transport.schedule(() => {
-            audioEngineActions.playNote(note);
-            setAudioUnitState((prev) => {
-              return { ...prev, traversalState: note.state };
-            });
+            // if (note.ramp) {
+            //   audioEngineActions.playRampedNote(note);
+            // } else {
+            //   audioEngineActions.playNote(note);
+            // }
+            console.log(audioEngine.isPlaying, 'playing', note.state);
+            if (audioEngine.isPlaying) {
+              setAudioUnitState((prev) => {
+                return { ...prev, traversalState: note.state };
+              });
+            }
           }, note.time);
+          // if (note.pauseAfter) {
+          //   audioEngine.transport.schedule(() => {
+          //     audioEngineActions.releaseSynth();
+          //   }, note.time + note.duration);
+          // }
         });
 
         console.log('Scheduled notes:', notes);
@@ -141,16 +158,22 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         return state[field] === domains[field].length - 1 ? count + 1 : count;
       }, 0);
     },
-    getTransportTimeFromState: (state: TraversalState) => {
+    getNoteFromState: (state: TraversalState) => {
       const notes = getSonifierNotes();
       const note = notes.find((note) => {
         return Object.entries(state).every(([field, index]) => {
           return note.state[field] === index;
         });
       });
-      return note ? note.time : 0;
+      return note;
     },
   };
+
+  const shouldRamp = createMemo(() => {
+    const innermostField = audioUnitSpec.traversal[audioUnitSpec.traversal.length - 1].field;
+    const fieldDef = getFieldDef(spec, innermostField);
+    return fieldDef?.type === 'quantitative' || fieldDef?.type === 'temporal' || fieldDef?.type === 'ordinal';
+  });
 
   const getAllTraversalStates = createMemo(() => {
     const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
@@ -181,21 +204,21 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       const data = internalActions.traversalStateToData(state);
       const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
 
+      // Add section breaks if this state ends one or more sections
+      const endingSections = internalActions.countEndingSectionsOfState(state);
+      const pauseAfter = audioEngine.pauseBetweenSections * endingSections;
+
       // Add the note with cumulative timing
       notes.push({
         ...note,
         time: currentTime,
+        pauseAfter,
+        ramp: shouldRamp(),
         state,
       });
 
       // Update the time for the next note, including the gap
-      currentTime += note.duration;
-
-      // Add section breaks if this state ends one or more sections
-      const endingSections = internalActions.countEndingSectionsOfState(state);
-      if (endingSections > 0) {
-        currentTime += audioEngine.pauseBetweenSections * endingSections;
-      }
+      currentTime += note.duration + pauseAfter;
     });
 
     return notes;
