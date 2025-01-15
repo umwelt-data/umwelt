@@ -64,7 +64,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
     },
     envelope: {
       ...envelope,
-      sustain: 0.3, // lower sustain for noise
+      sustain: 0.2, // lower sustain for noise
     },
   }).toDestination();
   const [internalSynthState, setInternalSynthState] = createStore<InternalSynthState>({

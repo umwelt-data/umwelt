@@ -1,4 +1,4 @@
-import { GroupMark, SceneGroup, View, parse } from 'vega';
+import { GroupMark, Scene, SceneGroup, View, parse } from 'vega';
 import { VgSpec, VlSpec } from '../types';
 import { compile } from 'vega-lite';
 import cloneDeep from 'lodash.clonedeep';
@@ -89,4 +89,36 @@ export function renderVegaLite(vlSpec: VlSpec, domSelector: string) {
   view.runAsync();
 
   return view;
+}
+
+//
+
+export function getVegaAxisTicks(view: { scenegraph: () => any }) {
+  if (!view) {
+    return null;
+  }
+
+  const scene = (view.scenegraph() as any).root.items[0] as SceneGroup;
+
+  const axisTicks = findNodeByRole(scene, 'axis-tick');
+
+  if (axisTicks.length) {
+    const ticks = axisTicks.map((axis) => axis.items.map((n) => (n.datum as any)?.value));
+    return ticks;
+  }
+
+  return null;
+}
+
+function findNodeByRole(node: SceneGroup | Scene, role: string, found: Scene[] = []): Scene[] {
+  if ('role' in node) {
+    if (node.role === role) {
+      found.push(node);
+    }
+    return node.items.reduce((acc, n) => findNodeByRole(n, role, acc), found);
+  }
+  if ('items' in node) {
+    return node.items.reduce((acc, n) => findNodeByRole(n, role, acc), found);
+  }
+  return found;
 }

@@ -49,7 +49,7 @@ const AudioUnitStateContext = createContext<[AudioUnitState, AudioUnitStateActio
 export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const { audioUnitSpec } = props;
   const [spec] = useUmweltSpec();
-  const scales = useAudioScales();
+  const [scales, scaleActions] = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
 
@@ -172,7 +172,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const shouldRamp = createMemo(() => {
     const innermostField = audioUnitSpec.traversal[audioUnitSpec.traversal.length - 1].field;
     const fieldDef = getFieldDef(spec, innermostField);
-    return fieldDef?.type === 'quantitative' || fieldDef?.type === 'temporal' || fieldDef?.type === 'ordinal';
+    return fieldDef?.type === 'quantitative' || fieldDef?.type === 'temporal';
   });
 
   const getAllTraversalStates = createMemo(() => {
@@ -200,6 +200,11 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
     const allTraversalStates = getAllTraversalStates();
 
+    const fields = audioUnitSpec.traversal.map((f) => f.field);
+    const ticks = fields.map((field) => scaleActions.getAxisTicks(field));
+    console.log(ticks);
+
+    // let prevState: TraversalState | undefined = undefined;
     allTraversalStates.forEach((state) => {
       const data = internalActions.traversalStateToData(state);
       const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
@@ -219,6 +224,8 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
       // Update the time for the next note, including the gap
       currentTime += note.duration + pauseAfter;
+
+      // prevState = state;
     });
 
     return notes;
