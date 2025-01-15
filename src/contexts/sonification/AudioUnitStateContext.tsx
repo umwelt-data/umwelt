@@ -85,7 +85,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       const note = internalActions.getNoteFromState(audioUnitState.traversalState);
       if (note) {
         audioEngine.transport.seconds = note?.time;
-        // audioEngineActions.playNote(note);
+        audioEngineActions.playNote(note);
       }
     },
     getTraversalIndex: (field) => {
@@ -103,23 +103,23 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         // Schedule notes in the transport
         notes.forEach((note) => {
           audioEngine.transport.schedule(() => {
-            // if (note.ramp) {
-            //   audioEngineActions.playRampedNote(note);
-            // } else {
-            //   audioEngineActions.playNote(note);
-            // }
-            console.log(audioEngine.isPlaying, 'playing', note.state);
             if (audioEngine.isPlaying) {
+              // isPlaying check needed to avoid race conditions because of async scheduling
+              if (note.ramp) {
+                audioEngineActions.startOrRampSynth(note);
+              } else {
+                audioEngineActions.playNote(note);
+              }
               setAudioUnitState((prev) => {
                 return { ...prev, traversalState: note.state };
               });
             }
           }, note.time);
-          // if (note.pauseAfter) {
-          //   audioEngine.transport.schedule(() => {
-          //     audioEngineActions.releaseSynth();
-          //   }, note.time + note.duration);
-          // }
+          if (note.pauseAfter) {
+            audioEngine.transport.schedule(() => {
+              audioEngineActions.releaseSynth();
+            }, note.time + note.duration);
+          }
         });
 
         console.log('Scheduled notes:', notes);

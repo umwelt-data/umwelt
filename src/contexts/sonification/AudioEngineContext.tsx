@@ -29,7 +29,7 @@ export type AudioEngineActions = {
   startTransport: () => void;
   stopTransport: () => void;
   playNote: (note: SonifierNote) => void;
-  playRampedNote: (note: SonifierNote) => void;
+  startOrRampSynth: (note: SonifierNote) => void;
   releaseSynth: () => void;
 };
 
@@ -120,7 +120,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
         return { ...prev, isPlaying: false };
       });
       Tone.getTransport().pause();
-      // actions.releaseSynth();
+      actions.releaseSynth();
     },
     playNote: (note: SonifierNote) => {
       if (note.pitch) {
@@ -135,7 +135,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
         noiseSynth.triggerAttackRelease(note.duration);
       }
     },
-    playRampedNote: (note: SonifierNote) => {
+    startOrRampSynth: (note: SonifierNote) => {
       if (note.pitch) {
         // stop noise synth
         noiseSynth.triggerRelease();
