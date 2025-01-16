@@ -11,6 +11,7 @@ export function Visualization(props: VisualizationProps) {
 
   createEffect(() => {
     const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
+    console.log('new vl spec');
 
     if (vlSpec) {
       console.log(JSON.parse(JSON.stringify(vlSpec)));
@@ -27,6 +28,7 @@ export function Visualization(props: VisualizationProps) {
       }
     }
     onCleanup(() => {
+      console.log('cleanup');
       (window as any).view?.finalize();
       (window as any).view = null;
       document.getElementById('vl-container')!.innerHTML = '';

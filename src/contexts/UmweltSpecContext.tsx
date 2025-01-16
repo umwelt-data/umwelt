@@ -221,6 +221,14 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         'fields',
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, active } : fieldDef))
       );
+      if (!active) {
+        // remove encodings for this field
+        spec.fields
+          .find((fieldDef) => fieldDef.name === field)
+          ?.encodings.forEach((enc) => {
+            actions.removeEncoding(field, enc.property, enc.unit);
+          });
+      }
       internalActions.detectKey();
     },
     reorderKeyField: (field: string, newIndex: number) => {
