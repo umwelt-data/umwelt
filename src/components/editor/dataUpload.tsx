@@ -7,7 +7,7 @@ interface UploadDataProps {
   loadDataFromUpload: (filename: string, data: UmweltDataset) => void;
 }
 
-export function UploadData({ loadDataFromUpload }: UploadDataProps) {
+export function UploadData(props: UploadDataProps) {
   const onUploadDataFile = (e: Event & { currentTarget: HTMLInputElement; target: HTMLInputElement }) => {
     const fileList = e.target.files;
     if (fileList?.length) {
@@ -20,7 +20,7 @@ export function UploadData({ loadDataFromUpload }: UploadDataProps) {
         if (contents && isString(contents)) {
           try {
             const data = JSON.parse(contents);
-            loadDataFromUpload(file.name, data);
+            props.loadDataFromUpload(file.name, data);
           } catch (e) {
             // try to parse as csv
             Papa.parse<UmweltDatum>(contents, {
@@ -31,7 +31,7 @@ export function UploadData({ loadDataFromUpload }: UploadDataProps) {
                 if (results.errors.length) {
                   console.error('Errors while parsing csv:', results.errors);
                 } else {
-                  loadDataFromUpload(file.name, results.data);
+                  props.loadDataFromUpload(file.name, results.data);
                 }
               },
             });

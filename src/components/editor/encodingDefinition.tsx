@@ -10,23 +10,23 @@ export type EncodingDefinitionProps = {
   encoding: EncodingFieldDef;
 };
 
-export function EncodingDefinition({ unit, property, encoding }: EncodingDefinitionProps) {
+export function EncodingDefinition(props: EncodingDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
 
   return (
     <div>
-      <h5>{property}</h5>
+      <h5>{props.property}</h5>
       <div>
         <select
-          value={encoding.field}
+          value={props.encoding.field}
           onChange={(e) => {
-            specActions.removeEncoding(encoding.field, property, unit);
-            specActions.addEncoding(e.currentTarget.value, property, unit);
+            specActions.removeEncoding(props.encoding.field, props.property, props.unit);
+            specActions.addEncoding(e.currentTarget.value, props.property, props.unit);
           }}
         >
           <For each={spec.fields.filter((f) => f.active)}>
             {(field) => (
-              <option value={field.name} selected={encoding.field === field.name}>
+              <option value={field.name} selected={props.encoding.field === field.name}>
                 {field.name}
               </option>
             )}
@@ -34,12 +34,12 @@ export function EncodingDefinition({ unit, property, encoding }: EncodingDefinit
         </select>
         <button
           onClick={() => {
-            specActions.removeEncoding(encoding.field, property, unit);
+            specActions.removeEncoding(props.encoding.field, props.property, props.unit);
           }}
         >
           Remove encoding
         </button>
-        <FieldTransforms fieldName={encoding.field} encoding={{ unit, property }} />
+        <FieldTransforms fieldName={props.encoding.field} encoding={{ unit: props.unit, property: props.property }} />
       </div>
     </div>
   );

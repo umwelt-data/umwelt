@@ -14,7 +14,7 @@ interface FieldTransformsProps {
 const aggregateOps: NonArgAggregateOp[] = ['mean', 'median', 'min', 'max', 'sum', 'count'];
 const timeUnits = ['year', 'month', 'yearmonth', 'day', 'date', 'hours', 'minutes', 'seconds'];
 
-export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTransformsProps) {
+export function FieldTransforms(props: FieldTransformsProps) {
   const [spec, specActions] = useUmweltSpec();
 
   const canAggregateField = (key: FieldName[], field?: FieldDef) => {
@@ -31,41 +31,41 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
   };
 
   const setAggregate = (aggregate: NonArgAggregateOp) => {
-    if (encoding) {
-      specActions.setEncodingAggregate(encoding.unit, encoding.property, aggregate);
+    if (props.encoding) {
+      specActions.setEncodingAggregate(props.encoding.unit, props.encoding.property, aggregate);
     } else {
-      specActions.setFieldAggregate(fieldName, aggregate);
+      specActions.setFieldAggregate(props.fieldName, aggregate);
     }
   };
 
   const setBin = (bin: boolean) => {
-    if (encoding) {
-      specActions.setEncodingBin(encoding.unit, encoding.property, bin);
+    if (props.encoding) {
+      specActions.setEncodingBin(props.encoding.unit, props.encoding.property, bin);
     } else {
-      specActions.setFieldBin(fieldName, bin);
+      specActions.setFieldBin(props.fieldName, bin);
     }
   };
 
   const setTimeUnit = (timeUnit: TimeUnit) => {
-    if (encoding) {
-      specActions.setEncodingTimeUnit(encoding.unit, encoding.property, timeUnit);
+    if (props.encoding) {
+      specActions.setEncodingTimeUnit(props.encoding.unit, props.encoding.property, timeUnit);
     } else {
-      specActions.setFieldTimeUnit(fieldName, timeUnit);
+      specActions.setFieldTimeUnit(props.fieldName, timeUnit);
     }
   };
 
   const encodingDef = (): EncodingFieldDef | undefined => {
-    if (encoding) {
-      if (visualPropNames.includes(encoding.property as VisualPropName)) {
-        return spec.visual.units.find((unit) => unit.name === encoding.unit)?.encoding[encoding.property];
-      } else if (audioPropNames.includes(encoding.property as AudioPropName)) {
-        return spec.audio.units.find((unit) => unit.name === encoding.unit)?.encoding[encoding.property];
+    if (props.encoding) {
+      if (visualPropNames.includes(props.encoding.property as VisualPropName)) {
+        return spec.visual.units.find((unit) => unit.name === props.encoding?.unit)?.encoding[props.encoding.property];
+      } else if (audioPropNames.includes(props.encoding.property as AudioPropName)) {
+        return spec.audio.units.find((unit) => unit.name === props.encoding?.unit)?.encoding[props.encoding.property];
       }
     }
     return undefined;
   };
 
-  const fieldDef = () => getFieldDef(spec, fieldName);
+  const fieldDef = () => getFieldDef(spec, props.fieldName);
 
   const AggregateInput = () => {
     return (
@@ -73,8 +73,8 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
         <div>
           <label>
             Aggregate
-            <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
-              <Show when={encoding}>
+            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
+              <Show when={props.encoding}>
                 <option value={undefined}>Inherit ({fieldDef()?.aggregate ?? NONE})</option>
               </Show>
               <option value={NONE}>None</option>
@@ -92,7 +92,7 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
         <div>
           <label>
             Bin
-            <input aria-describedby={fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
+            <input aria-describedby={props.fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
           </label>
         </div>
       </Show>
@@ -105,8 +105,8 @@ export function FieldTransforms({ fieldName, encoding, fieldLabelId }: FieldTran
         <div>
           <label>
             Time unit
-            <select aria-describedby={fieldLabelId} value={encoding ? encodingDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
-              <Show when={encoding}>
+            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
+              <Show when={props.encoding}>
                 <option value={undefined}>Inherit ({fieldDef()?.timeUnit ?? NONE})</option>
               </Show>
               <option value={NONE}>None</option>

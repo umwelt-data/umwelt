@@ -12,11 +12,11 @@ export type AudioUnitProps = {
   audioUnitSpec: AudioUnitSpec;
 };
 
-export function AudioUnit({ audioUnitSpec }: AudioUnitProps) {
+export function AudioUnit(props: AudioUnitProps) {
   return (
-    <AudioScalesProvider encoding={audioUnitSpec.encoding}>
-      <AudioUnitStateProvider audioUnitSpec={audioUnitSpec}>
-        <For each={audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
+    <AudioScalesProvider encoding={props.audioUnitSpec.encoding}>
+      <AudioUnitStateProvider audioUnitSpec={props.audioUnitSpec}>
+        <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
         <AudioUnitPlaybackControl />
       </AudioUnitStateProvider>
     </AudioScalesProvider>
