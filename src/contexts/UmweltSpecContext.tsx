@@ -94,46 +94,50 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         spec.data.values
       );
       setSpec('key', key);
+      // check for default visual and audio units
+      internalActions.checkDefaultSpecHeuristics();
       internalActions.updateSearchParams();
     },
     checkDefaultSpecHeuristics: () => {
-      batch(() => {
-        // initialize default visual and audio units
-        const keyFieldDefs = spec.fields.filter((field) => field.active && spec.key.includes(field.name));
-        const valueFieldDefs = spec.fields.filter((field) => field.active && !spec.key.includes(field.name));
-        const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, spec.data.values);
-        setSpec('visual', defaultSpec.visual);
-        setSpec('audio', defaultSpec.audio);
-        // update encoding refs to match new spec
-        const fieldNameToEncodingRefs = new Map<string, EncodingRef[]>();
-        defaultSpec.visual.units.forEach((unit) => {
-          Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
-            const field = encFieldDef?.field;
-            const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
-            if (field) {
-              fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
-            }
+      if (spec.visual.units.length === 0 && spec.audio.units.length === 0) {
+        batch(() => {
+          // initialize default visual and audio units
+          const keyFieldDefs = spec.fields.filter((field) => field.active && spec.key.includes(field.name));
+          const valueFieldDefs = spec.fields.filter((field) => field.active && !spec.key.includes(field.name));
+          const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, spec.data.values);
+          setSpec('visual', defaultSpec.visual);
+          setSpec('audio', defaultSpec.audio);
+          // update encoding refs to match new spec
+          const fieldNameToEncodingRefs = new Map<string, EncodingRef[]>();
+          defaultSpec.visual.units.forEach((unit) => {
+            Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
+              const field = encFieldDef?.field;
+              const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
+              if (field) {
+                fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
+              }
+            });
           });
-        });
-        defaultSpec.audio.units.forEach((unit) => {
-          Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
-            const field = encFieldDef?.field;
-            const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
-            if (field) {
-              fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
-            }
+          defaultSpec.audio.units.forEach((unit) => {
+            Object.entries(unit.encoding).forEach(([propName, encFieldDef]) => {
+              const field = encFieldDef?.field;
+              const encodingRef: EncodingRef = { property: propName as any, unit: unit.name };
+              if (field) {
+                fieldNameToEncodingRefs.set(field, [...(fieldNameToEncodingRefs.get(field) || []), encodingRef]);
+              }
+            });
           });
+          setSpec(
+            'fields',
+            spec.fields.map((fieldDef) => {
+              return {
+                ...fieldDef,
+                encodings: fieldNameToEncodingRefs.get(fieldDef.name) || [],
+              };
+            })
+          );
         });
-        setSpec(
-          'fields',
-          spec.fields.map((fieldDef) => {
-            return {
-              ...fieldDef,
-              encodings: fieldNameToEncodingRefs.get(fieldDef.name) || [],
-            };
-          })
-        );
-      });
+      }
     },
     ensureAudioEncodingsHaveTraversal: () => {
       setSpec(
@@ -178,42 +182,46 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const actions: UmweltSpecActions = {
-    initializeData: async (name: string) => {
+    initializeData: (name: string) => {
       const data = datastore()[name];
       if (data && data.length) {
-        setSpec('data', 'name', name);
-        const baseFieldDefs = Object.keys(data[0]).map((name) => {
-          return {
-            active: true,
-            name,
-            encodings: [],
-          };
+        batch(() => {
+          setSpec('data', 'name', name);
+          const baseFieldDefs = Object.keys(data[0]).map((name) => {
+            return {
+              active: true,
+              name,
+              encodings: [],
+            };
+          });
+          // elaborate fields and set field defs
+          const elaboratedFields = elaborateFields(baseFieldDefs, data);
+          setSpec('fields', elaboratedFields);
+          setSpec('key', []);
+          setSpec('visual', {
+            units: [],
+            composition: 'layer',
+          });
+          setSpec('audio', {
+            units: [],
+            composition: 'concat',
+          });
+          // type and clean data
+          const typedData = typeCoerceData(data, spec.fields);
+          const cleanedData = cleanData(typedData, spec.fields);
+          setSpec('data', 'values', cleanedData);
+          internalActions.updateSearchParams();
         });
-        // elaborate fields and set field defs
-        const elaboratedFields = elaborateFields(baseFieldDefs, data);
-        setSpec('fields', elaboratedFields);
-        // type and clean data
-        const typedData = typeCoerceData(data, spec.fields);
-        const cleanedData = cleanData(typedData, spec.fields);
-        setSpec('data', 'values', cleanedData);
         // detect key
-        await internalActions.detectKey();
-        // check for default specification
-        internalActions.checkDefaultSpecHeuristics();
-        internalActions.updateSearchParams();
+        internalActions.detectKey();
       }
     },
-    setFieldActive: async (field: string, active: boolean) => {
+    setFieldActive: (field: string, active: boolean) => {
       setSpec(
         'fields',
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, active } : fieldDef))
       );
-      await internalActions.detectKey();
-      if (spec.visual.units.length === 0 && spec.audio.units.length === 0) {
-        // check for default visual and audio units
-        internalActions.checkDefaultSpecHeuristics();
-      }
-      internalActions.updateSearchParams();
+      internalActions.detectKey();
     },
     reorderKeyField: (field: string, newIndex: number) => {
       const key = spec.key.filter((k) => k !== field);
