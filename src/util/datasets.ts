@@ -4,6 +4,7 @@ import { getVegaScene } from './vega';
 import moize from 'moize';
 import { isNumber, isString } from 'vega';
 import { isNumeric } from './values';
+import cloneDeep from 'lodash.clonedeep';
 
 export const getData = moize.promise(async (url: string): Promise<UmweltDataset> => {
   const vlSpec = {
@@ -31,11 +32,11 @@ export const getData = moize.promise(async (url: string): Promise<UmweltDataset>
 });
 
 export const getTransformedData = moize.promise(async (data: UmweltDataset, fields: FieldDef[]): Promise<UmweltDataset> => {
-  const vlSpec: VlSpec = {
+  const vlSpec: VlSpec = cloneDeep({
     data: { values: data },
     transform: [],
     mark: 'point',
-  };
+  });
 
   if (fields) {
     fields.forEach((fieldDef) => {

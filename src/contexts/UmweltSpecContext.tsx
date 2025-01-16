@@ -178,43 +178,41 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const actions: UmweltSpecActions = {
-    initializeData: (name: string) => {
+    initializeData: async (name: string) => {
       const data = datastore()[name];
       if (data && data.length) {
-        batch(async () => {
-          setSpec('data', 'name', name);
-          const baseFieldDefs = Object.keys(data[0]).map((name) => {
-            return {
-              active: true,
-              name,
-              encodings: [],
-            };
-          });
-          // elaborate fields and set field defs
-          const elaboratedFields = elaborateFields(baseFieldDefs, data);
-          setSpec('fields', elaboratedFields);
-          // type and clean data
-          const typedData = typeCoerceData(data, spec.fields);
-          const cleanedData = cleanData(typedData, spec.fields);
-          setSpec('data', 'values', cleanedData);
-          // detect key
-          await internalActions.detectKey();
-          // check for default specification
-          internalActions.checkDefaultSpecHeuristics();
-          internalActions.updateSearchParams();
+        setSpec('data', 'name', name);
+        const baseFieldDefs = Object.keys(data[0]).map((name) => {
+          return {
+            active: true,
+            name,
+            encodings: [],
+          };
         });
+        // elaborate fields and set field defs
+        const elaboratedFields = elaborateFields(baseFieldDefs, data);
+        setSpec('fields', elaboratedFields);
+        // type and clean data
+        const typedData = typeCoerceData(data, spec.fields);
+        const cleanedData = cleanData(typedData, spec.fields);
+        setSpec('data', 'values', cleanedData);
+        // detect key
+        await internalActions.detectKey();
+        // check for default specification
+        internalActions.checkDefaultSpecHeuristics();
+        internalActions.updateSearchParams();
       }
     },
-    setFieldActive: (field: string, active: boolean) => {
+    setFieldActive: async (field: string, active: boolean) => {
       setSpec(
         'fields',
         spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, active } : fieldDef))
       );
+      await internalActions.detectKey();
       if (spec.visual.units.length === 0 && spec.audio.units.length === 0) {
         // check for default visual and audio units
         internalActions.checkDefaultSpecHeuristics();
       }
-      internalActions.detectKey();
       internalActions.updateSearchParams();
     },
     reorderKeyField: (field: string, newIndex: number) => {
@@ -231,28 +229,30 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.updateSearchParams();
     },
     addEncoding: (field: string, property: EncodingPropName, unit: string) => {
-      if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
-        setSpec(
-          'visual',
-          'units',
-          spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
-        );
-        setSpec(
-          'fields',
-          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
-        );
-      } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
-        setSpec(
-          'audio',
-          'units',
-          spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
-        );
-        setSpec(
-          'fields',
-          spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
-        );
-        internalActions.ensureAudioEncodingsHaveTraversal();
-      }
+      batch(() => {
+        if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
+          setSpec(
+            'visual',
+            'units',
+            spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
+          );
+          setSpec(
+            'fields',
+            spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
+          );
+        } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
+          setSpec(
+            'audio',
+            'units',
+            spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { field } } } : u))
+          );
+          setSpec(
+            'fields',
+            spec.fields.map((fieldDef) => (fieldDef.name === field ? { ...fieldDef, encodings: [{ property, unit }, ...fieldDef.encodings] } : fieldDef))
+          );
+          internalActions.ensureAudioEncodingsHaveTraversal();
+        }
+      });
       internalActions.updateSearchParams();
     },
     removeEncoding: (field: string, property: EncodingPropName, unit: string) => {

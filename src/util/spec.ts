@@ -143,16 +143,16 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
 
   const compiled = compileUnits(spec);
   if ('mark' in compiled) {
-    return {
+    return cloneDeep({
       data: { values: data },
       params,
       ...compiled,
-    };
+    });
   } else {
-    return {
+    return cloneDeep({
       data: { values: data },
       ...compiled,
-    };
+    });
   }
 }
 

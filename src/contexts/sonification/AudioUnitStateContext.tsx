@@ -133,7 +133,13 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       const predicate: LogicalAnd<FieldEqualPredicate> = {
         and: Object.entries(traversalState).map(([field, index]) => {
           const value = getFieldDomains()[field][index];
-          const fieldDef = getFieldDef(spec, field)!;
+          const fieldDef = getFieldDef(spec, field);
+          if (!fieldDef) {
+            return {
+              field,
+              equal: value,
+            };
+          }
           return {
             field,
             equal: serializeValue(value, fieldDef),

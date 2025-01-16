@@ -1,4 +1,4 @@
-import { Accessor, createEffect } from 'solid-js';
+import { Accessor, createEffect, onCleanup } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { umweltToVegaLiteSpec } from '../../util/spec';
 import { UmweltDataset } from '../../types';
@@ -11,7 +11,7 @@ export function Visualization(props: VisualizationProps) {
 
   createEffect(() => {
     const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
-    console.log('yo');
+
     if (vlSpec) {
       console.log(JSON.parse(JSON.stringify(vlSpec)));
       try {
@@ -25,10 +25,12 @@ export function Visualization(props: VisualizationProps) {
       } catch (e) {
         console.error(e);
       }
-    } else {
-      (window as any).view?.finalize();
-      document.getElementById('vl-container')!.innerHTML = '';
     }
+    onCleanup(() => {
+      (window as any).view?.finalize();
+      (window as any).view = null;
+      document.getElementById('vl-container')!.innerHTML = '';
+    });
   });
 
   const handleMouseMove = (e: MouseEvent) => {};
