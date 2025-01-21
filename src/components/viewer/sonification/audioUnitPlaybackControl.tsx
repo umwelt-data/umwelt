@@ -1,4 +1,3 @@
-import { AudioTraversalFieldDef } from '../../../types';
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { useAudioEngine } from '../../../contexts/sonification/AudioEngineContext';
 import { Show } from 'solid-js';

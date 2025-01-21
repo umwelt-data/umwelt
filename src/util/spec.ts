@@ -1,5 +1,5 @@
 import { VegaLiteAdapter } from 'olli-adapters';
-import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, AudioTraversalFieldDef, FieldDef, ResolvedFieldDef } from '../types';
+import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, AudioTraversalFieldDef, FieldDef, ResolvedFieldDef, visualPropNames, isVisualProp } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
@@ -13,7 +13,7 @@ export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
 
 export function resolveFieldDef(specFieldDef: FieldDef, encFieldDef?: EncodingFieldDef): ResolvedFieldDef {
   const { active, name, encodings, ...fieldDef } = specFieldDef;
-  const elaboratedFieldDef = encFieldDef
+  const resolvedFieldDef = encFieldDef
     ? {
         ...fieldDef,
         ...encFieldDef,
@@ -21,7 +21,7 @@ export function resolveFieldDef(specFieldDef: FieldDef, encFieldDef?: EncodingFi
     : { field: name, ...fieldDef };
   // TODO fix type jank
   // remember, filter has to be after spread so that NONE can overwrite other values
-  return Object.fromEntries(Object.entries(elaboratedFieldDef).filter(([k, v]) => v !== NONE)) as unknown as ResolvedFieldDef;
+  return Object.fromEntries(Object.entries(resolvedFieldDef).filter(([k, v]) => v !== NONE)) as unknown as ResolvedFieldDef;
 }
 
 export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): UmweltSpec | undefined {
@@ -74,34 +74,32 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
       const encoding = cloneDeep(unit.encoding);
       if (encoding) {
         Object.keys(encoding).forEach((channel) => {
-          const encDef = encoding[channel];
-          if (encDef) {
-            const specFieldDef = getFieldDef(spec, encDef.field);
-            if (specFieldDef) {
-              const { active, name, encodings, ...fieldDef } = specFieldDef;
-              encoding[channel] = {
-                ...fieldDef,
-                ...encDef,
-              };
-              encoding[channel] = Object.fromEntries(Object.entries(encoding[channel]!).filter(([k, v]) => v !== NONE)) as VisualEncodingFieldDef;
-              if (channel === 'facet') {
-                const domain = getDomain(encDef, data);
+          if (isVisualProp(channel)) {
+            const encDef = encoding[channel];
+            if (encDef) {
+              const specFieldDef = getFieldDef(spec, encDef.field);
+              if (specFieldDef) {
+                const resolvedFieldDef = resolveFieldDef(specFieldDef, encDef);
                 encoding[channel] = {
-                  ...fieldDef,
-                  ...encDef,
-                  columns: domain.length === 3 ? 3 : 2, // TODO do something better
-                } as any;
-              }
-              if (unit.mark === 'point') {
-                if ((channel === 'x' || channel === 'y') && fieldDef.type === 'quantitative') {
+                  ...resolvedFieldDef,
+                };
+                if (channel === 'facet') {
+                  const domain = getDomain(resolvedFieldDef, data);
                   encoding[channel] = {
-                    ...fieldDef,
-                    ...encDef,
-                    scale: {
-                      ...encDef.scale,
-                      zero: false,
-                    },
-                  };
+                    ...resolvedFieldDef,
+                    columns: domain.length === 3 ? 3 : 2, // TODO do something better
+                  } as any;
+                }
+                if (unit.mark === 'point') {
+                  if ((channel === 'x' || channel === 'y') && resolvedFieldDef.type === 'quantitative') {
+                    encoding[channel] = {
+                      ...resolvedFieldDef,
+                      scale: {
+                        ...resolvedFieldDef.scale,
+                        zero: false,
+                      },
+                    };
+                  }
                 }
               }
             }
@@ -183,7 +181,7 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
     olliSpec = await VegaLiteAdapter(vlSpec);
   } else {
     olliSpec = {
-      data,
+      data: data as any, // TODO align the types between Umwelt and Olli
       fields: [],
     };
   }

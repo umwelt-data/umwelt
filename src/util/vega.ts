@@ -85,7 +85,6 @@ export function renderVegaLite(vlSpec: VlSpec, domSelector: string) {
     container: domSelector,
     hover: true,
   });
-
   view.runAsync();
 
   return view;
