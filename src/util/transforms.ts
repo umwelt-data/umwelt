@@ -64,7 +64,7 @@ export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[
   return [...timeUnitTransforms, ...binTransforms, ...aggregateTransforms];
 };
 
-export function applyVegaTransforms(dataset: UmweltDataset, transforms: UmweltTransform[]): UmweltDataset {
+export function applyTransforms(dataset: UmweltDataset, transforms: UmweltTransform[]): UmweltDataset {
   let transformedData = cloneDeep(dataset);
 
   for (const transform of transforms) {
@@ -82,7 +82,10 @@ export function applyVegaTransforms(dataset: UmweltDataset, transforms: UmweltTr
 
 function computeAggregation(values: UmweltValue[], op: NonArgAggregateOp): number {
   // Filter out non-numeric values and convert to numbers
-  const numbers = values.map((v) => (typeof v === 'number' ? v : Number(v))).filter((n) => !isNaN(n));
+  const numbers = values
+    .filter((n) => n !== null && n !== undefined)
+    .map((v) => (typeof v === 'number' ? v : Number(v)))
+    .filter((n) => !isNaN(n));
 
   if (numbers.length === 0) return 0;
 
@@ -220,7 +223,12 @@ function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset 
   if (binParams.maxbins) {
     binner.thresholds(binParams.maxbins);
   } else {
-    binner.thresholds(6);
+    // VL uses either 10 or 6 and it's not clear when/why
+    // Let D3 use its default, but ensure minimum of 6 bins
+    const bins = binner(values);
+    if (bins.length < 6) {
+      binner.thresholds(6);
+    }
   }
 
   const bins = binner(values);
@@ -296,6 +304,8 @@ function handleTimeUnit(dataset: UmweltDataset, transform: TimeUnitTransform): U
 }
 
 function formatTimeUnit(date: Date, unit?: TimeUnit, utc: boolean = false): Date {
+  // Default year for time units that don't include a year
+  // it's 2012 because it's a leap year and we can use it for all time units
   const VEGA_DEFAULT_YEAR = 2012;
 
   const getters: TimeGetters = {
@@ -337,6 +347,11 @@ function formatTimeUnit(date: Date, unit?: TimeUnit, utc: boolean = false): Date
   }
   if (multiUnit.includes('month')) {
     result[setters.month](date[getters.month]());
+  } else if (multiUnit.includes('quarter')) {
+    // note these are mutually exclusive because they both set the month
+    const month = date[getters.month]();
+    const quarterMonth = Math.floor(month / 3) * 3;
+    result[setters.month](quarterMonth);
   }
   if (multiUnit.includes('date')) {
     result[setters.date](date[getters.date]());
