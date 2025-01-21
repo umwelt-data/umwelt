@@ -1,7 +1,7 @@
 import { test, expect } from 'vitest';
 import { getTransformedData } from '../../src/util/datasets';
 import { aggregatedFieldName, applyTransforms, binnedFieldNames, fieldsToTransforms, timeUnitFieldName } from '../../src/util/transforms';
-import { FieldDef, UmweltDataset } from '../../src/types';
+import { aggregateOps, FieldDef, timeUnits, UmweltDataset } from '../../src/types';
 import { UmweltTransform } from '../../src/types';
 import { resolveFieldDef } from '../../src/util/spec';
 
@@ -82,6 +82,55 @@ test('transforms match vega-lite', async () => {
   expect(transformedData).toEqual(expectedData);
 });
 
+test('supports all aggregate operators', async () => {
+  const dataset = [{ value: 10 }, { value: 20 }, { value: 30 }, { value: 40 }, { value: 50 }];
+
+  for (const op of aggregateOps) {
+    const fieldDefs: FieldDef[] = [
+      {
+        active: true,
+        name: 'value',
+        type: 'quantitative',
+        aggregate: op,
+        encodings: [],
+      },
+    ];
+
+    const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+    const transformedData = applyTransforms(dataset, transforms);
+    const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+      return Object.fromEntries(Object.entries(d));
+    });
+
+    expect(transformedData).toEqual(expectedData);
+  }
+});
+
+test('supports all time units', async () => {
+  const dataset = [{ date: new Date('2023-01-01T08:30:45.123') }, { date: new Date('2023-06-15T14:20:30.456') }, { date: new Date('2024-02-28T23:59:59.789') }];
+
+  for (const unit of timeUnits) {
+    const fieldDefs: FieldDef[] = [
+      {
+        active: true,
+        name: 'date',
+        type: 'temporal',
+        timeUnit: unit,
+        encodings: [],
+      },
+    ];
+
+    const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+
+    const transformedData = applyTransforms(dataset, transforms);
+    const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+      return Object.fromEntries(Object.entries(d));
+    });
+
+    expect(transformedData).toEqual(expectedData);
+  }
+});
+
 test('handles empty dataset', () => {
   const dataset: UmweltDataset = [];
   const transforms: UmweltTransform[] = [
@@ -105,6 +154,8 @@ test('handles empty dataset', () => {
   const result = applyTransforms(dataset, transforms);
   expect(result).toHaveLength(0);
 });
+
+// claude generated these tests lmao
 
 test('handles sparse temporal data with nulls', async () => {
   const dataset = [

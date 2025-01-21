@@ -38,6 +38,8 @@ export const getTransformedData = moize.promise(async (data: UmweltDataset, tran
     mark: 'point',
   });
 
+  console.log(JSON.stringify(vlSpec, null, 2));
+
   const scene = await getVegaScene(compile(vlSpec as any).spec);
 
   try {

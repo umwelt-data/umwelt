@@ -285,19 +285,23 @@ interface TimeSetters {
 
 function handleTimeUnit(dataset: UmweltDataset, transform: TimeUnitTransform): UmweltDataset {
   const { field, as, timeUnit } = transform;
+  const asStart = as;
+  const asEnd = `${as}_end`;
 
   return dataset.map((datum) => {
     const value = datum[field];
     if (!(value instanceof Date)) {
-      return { ...datum, [as]: null };
+      return { ...datum, [asStart]: null, [asEnd]: null };
     }
 
     const unit = typeof timeUnit === 'string' ? timeUnit : timeUnit.unit;
-    const utc = typeof timeUnit === 'object' ? timeUnit.utc : timeUnit.startsWith('utc');
+    const utc = typeof timeUnit === 'object' ? Boolean(timeUnit.utc) : timeUnit.startsWith('utc');
 
     const result = { ...datum };
     if (isUmweltTimeUnit(unit)) {
-      result[as] = formatTimeUnit(value, unit, utc);
+      const [start, end] = getTimeUnitInterval(value, unit, utc);
+      result[asStart] = start;
+      result[asEnd] = end;
     }
     return result;
   });
@@ -345,16 +349,24 @@ function formatTimeUnit(date: Date, unit?: TimeUnit, utc: boolean = false): Date
   if (multiUnit.includes('year')) {
     result[setters.year](date[getters.year]());
   }
-  if (multiUnit.includes('month')) {
-    result[setters.month](date[getters.month]());
-  } else if (multiUnit.includes('quarter')) {
+  if (multiUnit.includes('quarter')) {
     // note these are mutually exclusive because they both set the month
     const month = date[getters.month]();
     const quarterMonth = Math.floor(month / 3) * 3;
     result[setters.month](quarterMonth);
+  } else if (multiUnit.includes('month')) {
+    result[setters.month](date[getters.month]());
   }
   if (multiUnit.includes('date')) {
     result[setters.date](date[getters.date]());
+  }
+  if (multiUnit.includes('day')) {
+    // Get the current day of week
+    const dayOfWeek = date[getters.day]();
+    // Move to first valid date with same day of week
+    while (result[getters.day]() !== dayOfWeek) {
+      result[setters.date](result[getters.date]() + 1);
+    }
   }
   if (multiUnit.includes('hours')) {
     result[setters.hours](date[getters.hours]());
@@ -370,4 +382,34 @@ function formatTimeUnit(date: Date, unit?: TimeUnit, utc: boolean = false): Date
   }
 
   return result;
+}
+
+function getTimeUnitInterval(date: Date, unit: TimeUnit, utc: boolean): [Date, Date] {
+  // Get start of interval
+  const start = formatTimeUnit(date, unit, utc);
+
+  // Create end date by getting next interval
+  const end = new Date(start);
+  const multiUnit = unit.replace('utc', '').toLowerCase();
+
+  // Find smallest unit and increment only that
+  if (multiUnit.includes('milliseconds')) {
+    end.setMilliseconds(end.getMilliseconds() + 1);
+  } else if (multiUnit.includes('seconds')) {
+    end.setSeconds(end.getSeconds() + 1);
+  } else if (multiUnit.includes('minutes')) {
+    end.setMinutes(end.getMinutes() + 1);
+  } else if (multiUnit.includes('hours')) {
+    end.setHours(end.getHours() + 1);
+  } else if (multiUnit.includes('date') || multiUnit.includes('day')) {
+    end.setDate(end.getDate() + 1);
+  } else if (multiUnit.includes('month') && !multiUnit.includes('quarter')) {
+    end.setMonth(end.getMonth() + 1);
+  } else if (multiUnit.includes('quarter')) {
+    end.setMonth(end.getMonth() + 3);
+  } else if (multiUnit.includes('year')) {
+    end.setFullYear(end.getFullYear() + 1);
+  }
+
+  return [start, end];
 }

@@ -1,7 +1,6 @@
 import { Type } from 'vega-lite/src/type';
 import { Mark } from 'vega-lite/src/mark';
-import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
-import { Spec, TimeUnit } from 'vega';
+import { Spec } from 'vega';
 import { TopLevelSpec } from 'vega-lite/src/spec';
 import { Sort } from 'vega-lite/src/sort';
 import { LogicalComposition } from 'vega-lite/src/logical';
@@ -91,7 +90,7 @@ export interface FieldDef {
   encodings: EncodingRef[];
   //
   scale?: ScaleDomain;
-  timeUnit?: TimeUnit;
+  timeUnit?: UmweltTimeUnit;
   aggregate?: UmweltAggregateOp;
   bin?: boolean;
   sort?: Sort<any>;
@@ -101,7 +100,7 @@ export interface VisualEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit | typeof NONE;
+  timeUnit?: UmweltTimeUnit | typeof NONE;
   aggregate?: UmweltAggregateOp | typeof NONE;
   bin?: boolean;
   sort?: Sort<any>;
@@ -111,7 +110,7 @@ export interface AudioEncodingFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit | typeof NONE;
+  timeUnit?: UmweltTimeUnit | typeof NONE;
   aggregate?: UmweltAggregateOp | typeof NONE;
   sort?: Sort<any>;
   bin?: undefined;
@@ -125,7 +124,7 @@ export interface AudioTraversalFieldDef {
   field: FieldName;
   //
   scale?: ScaleDomain & ScaleRange;
-  timeUnit?: TimeUnit | typeof NONE;
+  timeUnit?: UmweltTimeUnit | typeof NONE;
   bin?: boolean;
   aggregate?: undefined;
 }
