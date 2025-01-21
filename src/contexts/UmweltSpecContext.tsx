@@ -1,13 +1,11 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
 import { exportableSpec, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
-import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
-import { TimeUnit } from 'vega';
 import { cleanData, typeCoerceData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
 import { getDefaultSpec } from '../util/heuristics';
@@ -35,12 +33,12 @@ export type UmweltSpecActions = {
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
   renameUnit: (oldName: string, newName: string) => void;
-  setFieldAggregate: (field: string, aggregate: NonArgAggregateOp | 'undefined') => void;
+  setFieldAggregate: (field: string, aggregate: UmweltAggregateOp | 'undefined') => void;
   setFieldBin: (field: string, bin: boolean) => void;
-  setFieldTimeUnit: (field: string, timeUnit: TimeUnit | 'undefined') => void;
-  setEncodingAggregate: (unit: string, property: EncodingPropName, aggregate: NonArgAggregateOp | 'undefined') => void;
+  setFieldTimeUnit: (field: string, timeUnit: UmweltTimeUnit | 'undefined') => void;
+  setEncodingAggregate: (unit: string, property: EncodingPropName, aggregate: UmweltAggregateOp | 'undefined') => void;
   setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => void;
-  setEncodingTimeUnit: (unit: string, property: EncodingPropName, timeUnit: TimeUnit | 'undefined') => void;
+  setEncodingTimeUnit: (unit: string, property: EncodingPropName, timeUnit: UmweltTimeUnit | 'undefined') => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -362,7 +360,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         internalActions.updateSearchParams();
       }
     },
-    setFieldAggregate: (field: string, inputAggregate: NonArgAggregateOp | 'undefined') => {
+    setFieldAggregate: (field: string, inputAggregate: UmweltAggregateOp | 'undefined') => {
       const aggregate = inputAggregate === 'undefined' ? undefined : inputAggregate;
       setSpec(
         'fields',
@@ -377,7 +375,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       );
       internalActions.updateSearchParams();
     },
-    setFieldTimeUnit: (field: string, inputTimeUnit: TimeUnit | 'undefined') => {
+    setFieldTimeUnit: (field: string, inputTimeUnit: UmweltTimeUnit | 'undefined') => {
       const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
       setSpec(
         'fields',
@@ -385,7 +383,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       );
       internalActions.updateSearchParams();
     },
-    setEncodingAggregate: (unit: string, property: EncodingPropName, inputAggregate: NonArgAggregateOp | 'undefined') => {
+    setEncodingAggregate: (unit: string, property: EncodingPropName, inputAggregate: UmweltAggregateOp | 'undefined') => {
       const aggregate = inputAggregate === 'undefined' ? undefined : inputAggregate;
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
         setSpec(
@@ -413,7 +411,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         internalActions.updateSearchParams();
       }
     },
-    setEncodingTimeUnit: (unit: string, property: EncodingPropName, inputTimeUnit: TimeUnit | 'undefined') => {
+    setEncodingTimeUnit: (unit: string, property: EncodingPropName, inputTimeUnit: UmweltTimeUnit | 'undefined') => {
       const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
         setSpec(
