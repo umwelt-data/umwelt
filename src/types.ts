@@ -6,13 +6,28 @@ import { TopLevelSpec } from 'vega-lite/src/spec';
 import { Sort } from 'vega-lite/src/sort';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
+import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/src/transform';
 
 export type VlSpec = TopLevelSpec;
 export type VgSpec = Spec;
 
-export type UmweltValue = string | number | Date;
+export type UmweltValue = string | number | Date | null;
 export type UmweltDatum = { [field: string]: UmweltValue };
 export type UmweltDataset = UmweltDatum[];
+
+export type UmweltTransform = AggregateTransform | BinTransform | TimeUnitTransform;
+
+export const aggregateOps = ['mean', 'median', 'min', 'max', 'sum', 'count'] as const;
+export type UmweltAggregateOp = (typeof aggregateOps)[number];
+export function isUmweltAggregateOp(op?: string): op is UmweltAggregateOp {
+  return aggregateOps.includes(op as UmweltAggregateOp);
+}
+
+export const timeUnits = ['year', 'quarter', 'month', 'yearmonth', 'day', 'date', 'hours', 'minutes', 'seconds'] as const;
+export type UmweltTimeUnit = (typeof timeUnits)[number];
+export function isUmweltTimeUnit(unit?: string): unit is UmweltTimeUnit {
+  return timeUnits.includes(unit as UmweltTimeUnit);
+}
 
 type ScaleDomain = {
   domain?: UmweltValue[];
@@ -32,8 +47,8 @@ export interface UmweltDataSource {
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
-export const visualPropNames = ['x', 'y', 'color', 'shape', 'size', 'opacity', 'order', 'facet'];
-export const audioPropNames = ['pitch', 'duration', 'volume'];
+export const visualPropNames = ['x', 'y', 'color', 'shape', 'size', 'opacity', 'order', 'facet'] as const;
+export const audioPropNames = ['pitch', 'duration', 'volume'] as const;
 
 export type VisualPropName = (typeof visualPropNames)[number];
 export type AudioPropName = (typeof audioPropNames)[number];
@@ -77,7 +92,7 @@ export interface FieldDef {
   //
   scale?: ScaleDomain;
   timeUnit?: TimeUnit;
-  aggregate?: NonArgAggregateOp;
+  aggregate?: UmweltAggregateOp;
   bin?: boolean;
   sort?: Sort<any>;
 }
@@ -87,7 +102,7 @@ export interface VisualEncodingFieldDef {
   //
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: TimeUnit | typeof NONE;
-  aggregate?: NonArgAggregateOp | typeof NONE;
+  aggregate?: UmweltAggregateOp | typeof NONE;
   bin?: boolean;
   sort?: Sort<any>;
 }
@@ -97,12 +112,14 @@ export interface AudioEncodingFieldDef {
   //
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: TimeUnit | typeof NONE;
-  aggregate?: NonArgAggregateOp | typeof NONE;
+  aggregate?: UmweltAggregateOp | typeof NONE;
   sort?: Sort<any>;
   bin?: undefined;
 }
 
-export type EncodingFieldDef = VisualEncodingFieldDef | AudioEncodingFieldDef;
+export type EncodingFieldDef = VisualEncodingFieldDef | AudioEncodingFieldDef | AudioTraversalFieldDef;
+
+export type ResolvedFieldDef = Omit<FieldDef, 'active' | 'name' | 'encodings'> & EncodingFieldDef;
 
 export interface AudioTraversalFieldDef {
   field: FieldName;
@@ -155,4 +172,8 @@ export interface UmweltSpec {
   visual: VisualSpec;
   audio: AudioSpec;
   // text: OlliNode | OlliNode[] | boolean;
+}
+
+export interface ExportableSpec extends Omit<UmweltSpec, 'data'> {
+  data: { name?: string };
 }

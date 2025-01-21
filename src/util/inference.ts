@@ -1,6 +1,8 @@
 import dayjs from 'dayjs';
 import { FieldDef, MeasureType, UmweltDataset, UmweltDatum } from '../types';
 import { getTransformedData } from './datasets';
+import { fieldsToTransforms } from './transforms';
+import { resolveFieldDef } from './spec';
 
 export function elaborateFields(fields: FieldDef[], data: UmweltDataset): FieldDef[] {
   return fields.map((fieldDef) => {
@@ -128,7 +130,8 @@ export const detectKey = async (fields: FieldDef[], data: UmweltDataset): Promis
   const keyCandidates: FieldDef[][] = combine<FieldDef>(candidateFields, 1);
   const shortestPossibleKeys = [];
 
-  const transformedData = await getTransformedData(data, fields);
+  const transforms = fieldsToTransforms(fields.map((fieldDef) => resolveFieldDef(fieldDef)));
+  const transformedData = await getTransformedData(data, transforms);
 
   for (let i = 0; i < keyCandidates.length; i++) {
     const keyCandidate = keyCandidates[i];

@@ -36,10 +36,3 @@ export function rangesAreEqual(range1: any[], range2: any[], fieldDef: FieldDef)
 }
 
 export const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
-
-export const unwrapNone = (obj: any) => {
-  if (obj === NONE) {
-    return undefined;
-  }
-  return obj;
-};

@@ -1,11 +1,10 @@
-import moize from 'moize';
-import { AudioTraversalFieldDef, EncodingFieldDef, FieldDef, NONE, UmweltValue } from '../types';
+import { EncodingFieldDef, FieldDef, UmweltValue } from '../types';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
 import { TimeUnit } from 'vega';
-import { unwrapNone } from './values';
+import { resolveFieldDef } from './spec';
 
-export const fmtValue = moize((value, fieldDef): string => {
+export const fmtValue = (value: any, fieldDef: FieldDef): string => {
   if (Array.isArray(value)) {
     return value.map((v) => fmtValue(v, fieldDef)).join(', ');
   }
@@ -18,9 +17,9 @@ export const fmtValue = moize((value, fieldDef): string => {
     return Number(value).toFixed(2);
   }
   return String(value);
-});
+};
 
-export const dateToFormattedString = moize((date: Date, timeUnit?: TimeUnit) => {
+export const dateToFormattedString = (date: Date, timeUnit?: TimeUnit) => {
   if (!timeUnit) {
     return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
@@ -50,7 +49,7 @@ export const dateToFormattedString = moize((date: Date, timeUnit?: TimeUnit) => 
     return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
   return date.toLocaleString('en-US', opts);
-});
+};
 
 function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef[]) {
   const fieldDef = fields.find((f) => f.name === predicate.field);
@@ -91,7 +90,7 @@ export function predicateToDescription(predicate: LogicalComposition<FieldPredic
   return fieldPredicateToDescription(predicate, fields);
 }
 
-export const describeField = moize((fieldDef: FieldDef, encFieldDef?: EncodingFieldDef | AudioTraversalFieldDef): string => {
-  const inheritedFieldDef = encFieldDef ? { ...fieldDef, ...encFieldDef } : { field: fieldDef.name, ...fieldDef };
-  return (inheritedFieldDef.bin ? 'binned ' : '') + (unwrapNone(inheritedFieldDef.aggregate) ? `${inheritedFieldDef.aggregate} ` : '') + inheritedFieldDef.field + (unwrapNone(inheritedFieldDef.timeUnit) ? ` (${inheritedFieldDef.timeUnit})` : '');
-});
+export const describeField = (fieldDef: FieldDef, encFieldDef?: EncodingFieldDef): string => {
+  const inheritedFieldDef = resolveFieldDef(fieldDef, encFieldDef);
+  return `${inheritedFieldDef.bin ? 'binned ' : ''}${inheritedFieldDef.aggregate ?? ''} ${inheritedFieldDef.field}${inheritedFieldDef.timeUnit ? ` (${inheritedFieldDef.timeUnit})` : ''}`.trim();
+};

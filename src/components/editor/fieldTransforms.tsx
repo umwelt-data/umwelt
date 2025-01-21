@@ -1,6 +1,6 @@
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, FieldName, NONE, VisualPropName, visualPropNames } from '../../types';
+import { aggregateOps, AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, FieldName, NONE, timeUnits, VisualPropName, visualPropNames } from '../../types';
 import { TimeUnit } from 'vega';
 import { getFieldDef } from '../../util/spec';
 import { For, Show } from 'solid-js';
@@ -10,9 +10,6 @@ interface FieldTransformsProps {
   encoding?: EncodingRef;
   fieldLabelId?: string;
 }
-
-const aggregateOps: NonArgAggregateOp[] = ['mean', 'median', 'min', 'max', 'sum', 'count'];
-const timeUnits = ['year', 'month', 'yearmonth', 'day', 'date', 'hours', 'minutes', 'seconds'];
 
 export function FieldTransforms(props: FieldTransformsProps) {
   const [spec, specActions] = useUmweltSpec();

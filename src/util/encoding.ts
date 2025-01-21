@@ -1,8 +1,4 @@
-import { SonifierNote } from '../contexts/sonification/AudioEngineContext';
-import { AudioEncoding, AudioEncodingFieldDef, AudioPropName, audioPropNames, EncodingFieldDef, EncodingPropName, FieldDef, NONE, UmweltDataset } from '../types';
-import { getDomain } from './domain';
-import { scaleLinear, scaleOrdinal } from 'd3-scale';
-import { getFieldDef } from './spec';
+import { AudioPropName, EncodingFieldDef, EncodingPropName, NONE, UmweltDataset } from '../types';
 import { aggregate } from './aggregate';
 
 const DEFAULT_VALUES: Record<AudioPropName, any> = {
@@ -11,7 +7,7 @@ const DEFAULT_VALUES: Record<AudioPropName, any> = {
   volume: -15, // dB
 };
 
-export function encodeProperty(prop: EncodingPropName, encodingFieldDef: EncodingFieldDef | undefined, scale: any, data: UmweltDataset): number {
+export function encodeProperty(prop: AudioPropName, encodingFieldDef: EncodingFieldDef | undefined, scale: any, data: UmweltDataset): number {
   if (!encodingFieldDef) {
     return DEFAULT_VALUES[prop];
   }

@@ -1,10 +1,10 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, FieldDef, MeasureType, UmweltDataset, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
-import { exportableSpec, getFieldDef, validateSpec } from '../util/spec';
+import { exportableSpec, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { TimeUnit } from 'vega';
@@ -47,12 +47,14 @@ const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
 
 export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [datastore, _] = useUmweltDatastore();
 
   const getInitialSpec = (): UmweltSpec => {
     if (searchParams.spec) {
       try {
-        const maybeSpec = JSON.parse(LZString.decompressFromEncodedURIComponent(searchParams.spec));
-        if (validateSpec(maybeSpec)) {
+        const exportedSpec: ExportableSpec = JSON.parse(LZString.decompressFromEncodedURIComponent(searchParams.spec));
+        const maybeSpec = validateSpec(exportedSpec, datastore());
+        if (maybeSpec) {
           return maybeSpec;
         }
       } catch (e) {
@@ -79,8 +81,6 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const [spec, setSpec] = createStore(getInitialSpec());
   const [visualUnitCount, setVisualUnitCount] = createSignal<number>(0);
   const [audioUnitCount, setAudioUnitCount] = createSignal<number>(0);
-
-  const [datastore, _] = useUmweltDatastore();
 
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {

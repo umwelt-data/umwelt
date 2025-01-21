@@ -1,5 +1,5 @@
 import { compile } from 'vega-lite';
-import { FieldDef, MeasureType, UmweltDataset, UmweltDatum, UmweltValue, VlSpec } from '../types';
+import { FieldDef, MeasureType, UmweltDataset, UmweltDatum, UmweltTransform, UmweltValue, VlSpec } from '../types';
 import { getVegaScene } from './vega';
 import moize from 'moize';
 import { isNumber, isString } from 'vega';
@@ -31,29 +31,12 @@ export const getData = moize.promise(async (url: string): Promise<UmweltDataset>
   }
 });
 
-export const getTransformedData = moize.promise(async (data: UmweltDataset, fields: FieldDef[]): Promise<UmweltDataset> => {
+export const getTransformedData = moize.promise(async (data: UmweltDataset, transforms: UmweltTransform[]): Promise<UmweltDataset> => {
   const vlSpec: VlSpec = cloneDeep({
     data: { values: data },
-    transform: [],
+    transform: transforms,
     mark: 'point',
   });
-
-  if (fields) {
-    fields.forEach((fieldDef) => {
-      if (fieldDef.aggregate) {
-        const groupBy = fields.filter((f) => f.bin || f.timeUnit).map((f) => f.name);
-        if (groupBy.length) {
-          vlSpec.transform!.push({ aggregate: [{ op: fieldDef.aggregate, field: fieldDef.name, as: fieldDef.name }], groupby: groupBy });
-        }
-      }
-      if (fieldDef.bin) {
-        vlSpec.transform!.push({ bin: fieldDef.bin, field: fieldDef.name, as: fieldDef.name });
-      }
-      if (fieldDef.timeUnit) {
-        vlSpec.transform!.push({ timeUnit: fieldDef.timeUnit, field: fieldDef.name, as: fieldDef.name });
-      }
-    });
-  }
 
   const scene = await getVegaScene(compile(vlSpec as any).spec);
 
@@ -86,6 +69,8 @@ export function typeCoerceData(data: UmweltDataset, fields: FieldDef[]): UmweltD
 function typeCoerceDatum(lookup: { [x: string]: MeasureType | undefined }, datum: UmweltDatum): UmweltDatum {
   return Object.fromEntries(
     Object.entries(datum).map(([field, value]: [string, UmweltValue]) => {
+      if (!lookup[field]) return [field, value];
+      if (value === null || value === undefined) return [field, value];
       switch (lookup[field]) {
         case 'temporal':
           if (field.toLowerCase() === 'year') {

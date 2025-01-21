@@ -1,25 +1,45 @@
 import { VegaLiteAdapter } from 'olli-adapters';
-import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec } from '../types';
+import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, AudioTraversalFieldDef, FieldDef, ResolvedFieldDef } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
 import LZString from 'lz-string';
+import { UmweltDatastore } from '../contexts/UmweltDatastoreContext';
+import { cleanData, typeCoerceData } from './datasets';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
 }
 
-export function validateSpec(spec: UmweltSpec) {
-  if (!spec.data) {
-    return false;
-  }
-  if (!spec.data.values.length) {
-    return false;
+export function resolveFieldDef(specFieldDef: FieldDef, encFieldDef?: EncodingFieldDef): ResolvedFieldDef {
+  const { active, name, encodings, ...fieldDef } = specFieldDef;
+  const elaboratedFieldDef = encFieldDef
+    ? {
+        ...fieldDef,
+        ...encFieldDef,
+      }
+    : { field: name, ...fieldDef };
+  // TODO fix type jank
+  // remember, filter has to be after spread so that NONE can overwrite other values
+  return Object.fromEntries(Object.entries(elaboratedFieldDef).filter(([k, v]) => v !== NONE)) as unknown as ResolvedFieldDef;
+}
+
+export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): UmweltSpec | undefined {
+  if (!spec.data?.name) {
+    return undefined;
   }
   if (!(spec.fields && spec.fields.length)) {
-    return false;
+    return undefined;
   }
-  return true;
+  const data = datastore[spec.data.name];
+  if (!data || !data.length) {
+    return undefined;
+  }
+  const newSpec: UmweltSpec = {
+    ...spec,
+    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, spec.fields), spec.fields) },
+  };
+  return newSpec;
 }
 
 export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlSpec | undefined {
@@ -202,7 +222,7 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
   return olliSpec;
 }
 
-export function exportableSpec(spec: UmweltSpec): any {
+export function exportableSpec(spec: UmweltSpec): ExportableSpec {
   const { data, ...rest } = spec;
   return { ...rest, data: { name: data.name } };
 }
