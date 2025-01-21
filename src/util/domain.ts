@@ -1,16 +1,14 @@
 import moize from 'moize';
-import { AudioTraversalFieldDef, ResolvedFieldDef, EncodingFieldDef, NONE, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
+import { ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
 import { selectionTest } from './selection';
 import { dateToFormattedString } from './description';
 
-// TODO should this function account for overrides between the parent field def and the encoding field def?
-export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset, predicate?: UmweltPredicate): UmweltValue[] => {
-  // TODO apply binning and aggregation
+export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset): UmweltValue[] => {
   // TODO account for domain overrides in the field def
-  const dataset = predicate ? selectionTest(data, predicate) : data;
+
   const uniqueVals = new Map<any, UmweltValue>();
 
-  dataset.forEach((d) => {
+  data.forEach((d) => {
     const value = d[fieldDef.field];
 
     if (value instanceof Date) {

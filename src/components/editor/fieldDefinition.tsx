@@ -1,10 +1,11 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioPropName, EncodingPropName, FieldDef, MeasureType, VisualPropName, audioPropNames, visualPropNames } from '../../types';
+import { AudioPropName, EncodingPropName, FieldDef, MeasureType, VisualPropName, audioPropNames, isAudioProp, isVisualProp, visualPropNames } from '../../types';
 import { getDomain } from '../../util/domain';
 import dayjs from 'dayjs';
 import { isString } from 'vega';
 import { isNumeric } from 'vega-lite';
 import { FieldTransforms } from './fieldTransforms';
+import { resolveFieldDef } from '../../util/spec';
 
 export type FieldDefinitionProps = {
   field: FieldDef;
@@ -23,7 +24,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
 
   const assignableMtypes = (field: FieldDef) => {
     const mtypes = ['nominal', 'ordinal'];
-    const domain = getDomain({ ...field, field: field.name }, spec.data.values);
+    const domain = getDomain(resolveFieldDef(field), spec.data.values);
     if (domain.every((v) => dayjs(v).isValid())) {
       mtypes.push('temporal');
     }
@@ -55,16 +56,18 @@ export function FieldDefinition(props: FieldDefinitionProps) {
 
   const addEncoding = (field: FieldDef) => {
     const validPropNames = assignablePropertyNames();
-    let propName: EncodingPropName;
+    let propName;
     if (field.type === 'quantitative') {
-      propName = ['y', 'x', 'pitch', 'volume', 'opacity', 'size', 'duration'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
+      propName = ['y', 'x', 'pitch', 'volume', 'opacity', 'size', 'duration'].find((propName) => validPropNames.includes(propName)) || (validPropNames[0] as EncodingPropName);
     } else if (field.type === 'temporal') {
       propName = ['x', 'y', 'pitch', 'volume', 'opacity', 'size', 'duration'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
     } else {
       propName = ['color', 'shape'].find((propName) => validPropNames.includes(propName)) || validPropNames[0];
     }
-    const unitName: string = assignableUnitsForProperty(propName)[0];
-    specActions.addEncoding(field.name, propName, unitName);
+    const unitName = assignableUnitsForProperty(propName)[0];
+    if (isVisualProp(propName) || isAudioProp(propName)) {
+      specActions.addEncoding(field.name, propName, unitName);
+    }
   };
 
   const changeEncodingProp = (field: FieldDef, oldPropName: EncodingPropName, newPropName: EncodingPropName, unitName: string) => {
@@ -112,7 +115,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                   aria-describedby={fieldLabelId}
                   value={encodingRef.property}
                   onChange={(e) => {
-                    changeEncodingProp(field, encodingRef.property, e.target.value, encodingRef.unit);
+                    changeEncodingProp(field, encodingRef.property, e.target.value as EncodingPropName, encodingRef.unit);
                   }}
                 >
                   {!assignablePropertyNames().includes(encodingRef.property) ? <option value={encodingRef.property}>{encodingRef.property}</option> : null}

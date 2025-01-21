@@ -10,6 +10,11 @@ export const aggregatedFieldName = (field: string, op: NonArgAggregateOp): strin
 export const binnedFieldNames = (field: string): [string, string] => [`${field}_bin_start`, `${field}_bin_end`];
 export const timeUnitFieldName = (field: string, timeUnit: TimeUnit): string => `${timeUnit}_${field}`;
 
+export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[]): UmweltDataset => {
+  const transformedData = applyTransforms(data, fieldsToTransforms(fields));
+  return transformedData;
+};
+
 export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[] => {
   const timeUnitTransforms: TimeUnitTransform[] = [];
   const binTransforms: BinTransform[] = [];
@@ -213,7 +218,10 @@ function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset 
     });
   }
 
-  const values = data.map((d) => d[field]).filter((v): v is number => typeof v === 'number');
+  const values = data
+    .map((d) => d[field])
+    .map((v) => (v instanceof Date ? v.getTime() : v))
+    .filter((v): v is number => typeof v === 'number');
 
   const binner = d3bin();
 
@@ -238,7 +246,18 @@ function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset 
     const value = datum[field];
     const result = { ...datum };
 
-    if (typeof value === 'number') {
+    if (value instanceof Date) {
+      // Find the appropriate bin, ensuring both boundaries are defined
+      const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value.getTime() >= b.x0 && value.getTime() < b.x1);
+
+      if (bin && bin.x0 !== undefined && bin.x1 !== undefined) {
+        result[startField] = bin.x0;
+        result[endField] = bin.x1;
+      } else {
+        result[startField] = null;
+        result[endField] = null;
+      }
+    } else if (typeof value === 'number') {
       // Find the appropriate bin, ensuring both boundaries are defined
       const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value >= b.x0 && value < b.x1);
 

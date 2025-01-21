@@ -155,6 +155,28 @@ test('handles empty dataset', () => {
   expect(result).toHaveLength(0);
 });
 
+test('supports binning temporal fields', async () => {
+  const dataset = [{ date: new Date('2023-01-01T00:00:00') }, { date: new Date('2023-01-15T12:30:00') }, { date: new Date('2023-03-01T08:45:00') }, { date: new Date('2023-06-15T16:20:00') }, { date: new Date('2023-12-31T23:59:59') }, { date: new Date('2024-01-01T00:00:00') }];
+
+  const fieldDefs: FieldDef[] = [
+    {
+      active: true,
+      name: 'date',
+      type: 'temporal',
+      bin: true,
+      encodings: [],
+    },
+  ];
+
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+  const transformedData = applyTransforms(dataset, transforms);
+  const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+    return Object.fromEntries(Object.entries(d));
+  });
+
+  expect(transformedData).toEqual(expectedData);
+});
+
 // claude generated these tests lmao
 
 test('handles sparse temporal data with nulls', async () => {

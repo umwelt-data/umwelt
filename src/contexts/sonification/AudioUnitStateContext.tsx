@@ -2,7 +2,7 @@ import { createContext, useContext, ParentProps, createMemo, createEffect } from
 import { createStore } from 'solid-js/store';
 import { AudioEncoding, audioPropNames, AudioUnitSpec, UmweltDataset, UmweltPredicate, UmweltValue } from '../../types';
 import { LogicalAnd } from 'vega-lite/src/logical';
-import { getFieldDef } from '../../util/spec';
+import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
 import { selectionTest } from '../../util/selection';
 import { useUmweltSpec } from '../UmweltSpecContext';
@@ -13,6 +13,7 @@ import { SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
+import { derivedDataset } from '../../util/transforms';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -66,10 +67,26 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
 
   // derived state
+  const getResolvedFields = createMemo(() => {
+    return spec.fields.map((fieldDef) => {
+      const encFieldDef = Object.values(audioUnitSpec.encoding).find((f) => f.field === fieldDef.name) || audioUnitSpec.traversal.find((f) => f.field === fieldDef.name);
+      return resolveFieldDef(fieldDef, encFieldDef);
+    });
+  });
+  const getDerivedData = createMemo(() => {
+    const data = derivedDataset(spec.data.values, getResolvedFields()); // TODO global selection
+    console.log(data);
+    return data;
+  });
   const getFieldDomains = createMemo(() => {
     return Object.fromEntries(
       audioUnitSpec.traversal.map((traversalFieldDef) => {
-        const domain = getDomain(traversalFieldDef, spec.data.values); // todo global selection
+        const fieldDef = getFieldDef(spec, traversalFieldDef.field);
+        if (!fieldDef) {
+          return [traversalFieldDef.field, []];
+        }
+        const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
+        const domain = getDomain(resolvedFieldDef, getDerivedData());
         return [traversalFieldDef.field, domain];
       })
     );
@@ -121,8 +138,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
             }, note.time + note.duration);
           }
         });
-
-        console.log('Scheduled notes:', notes);
       }
     },
     getFieldDomains,
@@ -184,6 +199,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const getAllTraversalStates = createMemo(() => {
     const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
     const fieldDomains = getFieldDomains();
+    console.log(fieldDomains);
 
     const domainLengths = traversalFields.map((field) => Array.from({ length: fieldDomains[field].length }, (_, i) => i));
 
@@ -206,9 +222,14 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
     const allTraversalStates = getAllTraversalStates();
 
-    const fields = audioUnitSpec.traversal.map((f) => f.field);
-    const ticks = fields.map((field) => scaleActions.getAxisTicks(field));
-    console.log(ticks);
+    // const ticks = audioUnitSpec.traversal.map((traversalFieldDef) => {
+    //   const fieldDef = getFieldDef(spec, traversalFieldDef.field);
+    //   if (!fieldDef) {
+    //     return [];
+    //   }
+    //   const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
+    //   scaleActions.getAxisTicks(resolvedFieldDef);
+    // });
 
     // let prevState: TraversalState | undefined = undefined;
     allTraversalStates.forEach((state) => {

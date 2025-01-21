@@ -2,6 +2,7 @@
 
 import { VisualSpec, AudioSpec, FieldName, MeasureType, UmweltDataset, FieldDef } from '../types';
 import { getDomain } from './domain';
+import { resolveFieldDef } from './spec';
 
 interface DefaultSpec {
   visual: VisualSpec;
@@ -134,7 +135,7 @@ const heuristicSpecMappings: HeuristicSpecMapping[] = [
         throw new Error('Invalid keys for heuristic');
       }
 
-      const categoricalDomainLength = getDomain({ ...categoricalKey, field: categoricalKey.name }, data).length;
+      const categoricalDomainLength = getDomain(resolveFieldDef(categoricalKey), data).length;
 
       if (categoricalDomainLength > 5 || temporalKey.timeUnit) {
         // bubble plot
@@ -214,8 +215,8 @@ const heuristicSpecMappings: HeuristicSpecMapping[] = [
     },
     specFn: (keys, values, data) => {
       const sortedKeys = [...keys].sort((a, b) => {
-        const aDomainLength = getDomain({ ...a, field: a.name }, data).length;
-        const bDomainLength = getDomain({ ...b, field: b.name }, data).length;
+        const aDomainLength = getDomain(resolveFieldDef(a), data).length;
+        const bDomainLength = getDomain(resolveFieldDef(b), data).length;
         // sort by shortest domain length first
         return aDomainLength - bDomainLength;
       });

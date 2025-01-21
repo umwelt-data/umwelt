@@ -1,4 +1,4 @@
-import { EncodingFieldDef, FieldDef, UmweltValue } from '../types';
+import { EncodingFieldDef, FieldDef, UmweltTimeUnit, UmweltValue } from '../types';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
 import { TimeUnit } from 'vega';
@@ -19,7 +19,7 @@ export const fmtValue = (value: any, fieldDef: FieldDef): string => {
   return String(value);
 };
 
-export const dateToFormattedString = (date: Date, timeUnit?: TimeUnit) => {
+export const dateToFormattedString = (date: Date, timeUnit?: UmweltTimeUnit) => {
   if (!timeUnit) {
     return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }

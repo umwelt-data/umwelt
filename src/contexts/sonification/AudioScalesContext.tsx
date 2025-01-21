@@ -1,9 +1,9 @@
 import { createContext, useContext, ParentProps } from 'solid-js';
-import { AudioEncoding, AudioPropName, UmweltValue } from '../../types';
+import { AudioEncoding, AudioPropName, ResolvedFieldDef, UmweltValue } from '../../types';
 import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
-import { getFieldDef } from '../../util/spec';
+import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { getVegaAxisTicks } from '../../util/vega';
 
 export type AudioScalesProviderProps = ParentProps<{
@@ -17,7 +17,7 @@ export interface AudioScales {
 }
 
 export interface AudioScaleActions {
-  getAxisTicks: (field: string) => UmweltValue[];
+  getAxisTicks: (resolvedFieldDef: ResolvedFieldDef) => UmweltValue[];
 }
 
 const AudioScalesContext = createContext<[AudioScales, AudioScaleActions]>();
@@ -53,25 +53,27 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
       return () => DEFAULT_VALUES[property];
     }
 
-    let domain = encodingFieldDef.scale?.domain;
+    const resolvedFieldDef = resolveFieldDef(fieldDef, encodingFieldDef);
+
+    let domain = resolvedFieldDef.scale?.domain;
     if (!domain) {
       switch (fieldDef.type) {
         case 'ordinal':
         case 'nominal':
-          domain = getDomain(encodingFieldDef, spec.data.values);
+          domain = getDomain(resolvedFieldDef, spec.data.values);
           break;
         case 'quantitative':
         case 'temporal':
-          domain = getDomain(encodingFieldDef, spec.data.values);
+          domain = getDomain(resolvedFieldDef, spec.data.values);
           domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
           break;
         default:
-          throw new Error(`Unsupported field type ${fieldDef.type}`);
+          throw new Error(`Unsupported field type ${resolvedFieldDef.type}`);
       }
     }
-    const range = (encodingFieldDef.scale?.range as number[]) || DEFAULT_RANGES[property]; // TODO support non-number ranges
+    const range = (resolvedFieldDef.scale?.range as number[]) || DEFAULT_RANGES[property]; // TODO support non-number ranges
 
-    switch (fieldDef.type) {
+    switch (resolvedFieldDef.type) {
       case 'ordinal':
       case 'nominal':
         return scaleOrdinal<number>()
@@ -86,15 +88,15 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
           .domain(domain as Date[])
           .range(range);
       default:
-        throw new Error(`Unsupported field type ${fieldDef.type}`);
+        throw new Error(`Unsupported field type ${resolvedFieldDef.type}`);
     }
   };
 
-  const getAxisTicks = (field: string) => {
-    const fieldDef = getFieldDef(spec, field);
+  const getAxisTicks = (resolvedFieldDef: ResolvedFieldDef) => {
+    const fieldDef = getFieldDef(spec, resolvedFieldDef.field);
     if (!fieldDef) {
       // throw new Error(`Field ${field} not found in spec`);
-      console.warn(`Field ${field} not found in spec`);
+      console.warn(`Field ${resolvedFieldDef.field} not found in spec`);
       return [];
     }
 
@@ -122,7 +124,7 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
       }
     }
 
-    let domain = getDomain({ field }, spec.data.values);
+    let domain = getDomain(resolvedFieldDef, spec.data.values);
     if (fieldDef.type === 'ordinal' || fieldDef.type === 'nominal') {
       return domain;
     }
