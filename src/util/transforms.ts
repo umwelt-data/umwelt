@@ -12,6 +12,25 @@ export const aggregatedFieldName = (field: string, op: NonArgAggregateOp): strin
 export const binnedFieldNames = (field: string): [string, string] => [`${field}_bin_start`, `${field}_bin_end`];
 export const timeUnitFieldName = (field: string, timeUnit: TimeUnit): string => `${timeUnit}_${field}`;
 
+export const derivedFieldName = (field: ResolvedFieldDef): string => {
+  const transforms = fieldsToTransforms([field]);
+  let name = field.field;
+  for (const transform of transforms) {
+    if ('aggregate' in transform) {
+      for (const agg of transform.aggregate) {
+        if (isUmweltAggregateOp(agg.op)) {
+          name = aggregatedFieldName(name, agg.op);
+        }
+      }
+    } else if ('bin' in transform && !field.aggregate) {
+      name = binnedFieldNames(name)[0];
+    } else if ('timeUnit' in transform && !field.aggregate) {
+      name = timeUnitFieldName(name, transform.timeUnit as TimeUnit);
+    }
+  }
+  return name;
+};
+
 export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[]): UmweltDataset => {
   const transforms = fieldsToTransforms(fields);
   const transformedData = applyTransforms(data, transforms);
@@ -44,7 +63,10 @@ export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[
         field: fieldName,
         as: binnedFieldNames(fieldName),
       });
-      binnedFieldNames(fieldName).forEach((binnedField) => groupbyFields.add(binnedField));
+      // Only add to groupby if this field isn't being aggregated
+      if (!aggregate) {
+        binnedFieldNames(fieldName).forEach((binnedField) => groupbyFields.add(binnedField));
+      }
     }
 
     // Collect aggregate transforms

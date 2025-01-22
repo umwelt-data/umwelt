@@ -2,14 +2,17 @@ import moize from 'moize';
 import { ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
 import { selectionTest } from './selection';
 import { dateToFormattedString } from './description';
+import { derivedFieldName } from './transforms';
 
 export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset): UmweltValue[] => {
   // TODO account for domain overrides in the field def
 
+  const field = derivedFieldName(fieldDef);
+
   const uniqueVals = new Map<any, UmweltValue>();
 
   data.forEach((d) => {
-    const value = d[fieldDef.field];
+    const value = d[field];
 
     if (value instanceof Date) {
       const timeUnit = fieldDef.timeUnit ? dateToFormattedString(value, fieldDef.timeUnit) : value.getTime();

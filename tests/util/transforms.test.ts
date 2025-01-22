@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { getTransformedData } from '../../src/util/datasets';
-import { aggregatedFieldName, applyTransforms, binnedFieldNames, fieldsToTransforms, timeUnitFieldName } from '../../src/util/transforms';
+import { aggregatedFieldName, applyTransforms, binnedFieldNames, derivedFieldName, fieldsToTransforms, timeUnitFieldName } from '../../src/util/transforms';
 import { aggregateOps, FieldDef, timeUnits, UmweltDataset } from '../../src/types';
 import { UmweltTransform } from '../../src/types';
 import { resolveFieldDef } from '../../src/util/spec';
@@ -196,6 +196,8 @@ test('handles multiple transforms on single field', async () => {
     },
   ];
 
+  const derivedName = derivedFieldName(resolveFieldDef(fieldDefs[0]));
+
   const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
 
   const transformedData = applyTransforms(dataset, transforms);
@@ -204,6 +206,7 @@ test('handles multiple transforms on single field', async () => {
   });
 
   expect(transformedData).toEqual(expectedData);
+  expect(transformedData[0]).toHaveProperty(derivedName);
 });
 
 test('handles multiple transforms on single temporal field', async () => {
@@ -226,16 +229,19 @@ test('handles multiple transforms on single temporal field', async () => {
     },
   ];
 
-  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+  const derivedName = derivedFieldName(resolveFieldDef(fieldDefs[0]));
 
-  console.log(JSON.stringify(transforms, null, 2));
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
 
   const transformedData = applyTransforms(dataset, transforms);
   const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
     return Object.fromEntries(Object.entries(d));
   });
 
+  console.log(derivedName, transforms, transformedData);
+
   expect(transformedData).toEqual(expectedData);
+  expect(transformedData[0]).toHaveProperty(derivedName);
 });
 
 // claude generated these tests lmao

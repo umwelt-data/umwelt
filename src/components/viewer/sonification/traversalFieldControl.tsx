@@ -22,21 +22,22 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
 
   const selectedIdx = () => audioUnitStateActions.getTraversalIndex(props.traversalFieldDef.field);
   const setSelectedIdx = (idx: number) => audioUnitStateActions.setTraversalIndex(props.traversalFieldDef.field, idx);
-  const domain = audioUnitStateActions.getFieldDomains()[props.traversalFieldDef.field];
-  const selectedValue = () => domain[selectedIdx()];
+  const domain = () => audioUnitStateActions.getFieldDomains()[props.traversalFieldDef.field];
+  const selectedValue = () => domain()[selectedIdx()];
 
   return (
     <div>
+      {JSON.stringify(domain(), null, 2)}
       <label>
         <span>{describeField(resolvedFieldDef())}</span>
         <Switch>
           <Match when={resolvedFieldDef().type === 'nominal'}>
             <select onChange={(e) => setSelectedIdx(e.target.selectedIndex)} onMouseDown={() => audioEngineActions.stopTransport()} value={String(selectedValue())}>
-              <For each={domain}>{(val) => <option value={String(val)}>{String(val)}</option>}</For>
+              <For each={domain()}>{(val) => <option value={String(val)}>{String(val)}</option>}</For>
             </select>
           </Match>
           <Match when={resolvedFieldDef().type !== 'nominal'}>
-            <input aria-live="assertive" aria-valuetext={fmtValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain.length - 1} value={selectedIdx()}></input>
+            <input aria-live="assertive" aria-valuetext={fmtValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
             {fmtValue(selectedValue(), resolvedFieldDef())}
           </Match>
         </Switch>
