@@ -1,7 +1,6 @@
 import { For } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { EncodingFieldDef, EncodingPropName, audioPropNames, visualPropNames } from '../../types';
-import { describeField } from '../../util/description';
+import { EncodingFieldDef, EncodingPropName } from '../../types';
 import { FieldTransforms } from './fieldTransforms';
 
 export type EncodingDefinitionProps = {

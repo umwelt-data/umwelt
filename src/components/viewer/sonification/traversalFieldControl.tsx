@@ -16,13 +16,9 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
   const [_, audioUnitStateActions] = useAudioUnitState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
 
-  const fieldDef = getFieldDef(spec, props.traversalFieldDef.field);
+  const fieldDef = () => getFieldDef(spec, props.traversalFieldDef.field);
 
-  if (!fieldDef) {
-    return null;
-  }
-
-  const resolvedFieldDef = createMemo(() => resolveFieldDef(fieldDef, props.traversalFieldDef));
+  const resolvedFieldDef = () => resolveFieldDef(fieldDef()!, props.traversalFieldDef);
 
   const selectedIdx = () => audioUnitStateActions.getTraversalIndex(props.traversalFieldDef.field);
   const setSelectedIdx = (idx: number) => audioUnitStateActions.setTraversalIndex(props.traversalFieldDef.field, idx);

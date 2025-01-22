@@ -49,10 +49,10 @@ export const dateToFormattedString = (date: Date, timeUnit?: UmweltTimeUnit) => 
   return date.toLocaleString('en-US', opts);
 };
 
-function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef[]) {
-  const fieldDef = fields.find((f) => f.name === predicate.field);
+function fieldPredicateToDescription(predicate: FieldPredicate, fields: ResolvedFieldDef[]) {
+  const fieldDef = fields.find((f) => f.field === predicate.field);
   if (!fieldDef) return '';
-  const field = fieldDef.name;
+  const field = fieldDef.field;
   if ('equal' in predicate) {
     return `${fmtValue(predicate.equal as UmweltValue, fieldDef)}`;
   }
@@ -75,7 +75,7 @@ function fieldPredicateToDescription(predicate: FieldPredicate, fields: FieldDef
   return '';
 }
 
-export function predicateToDescription(predicate: LogicalComposition<FieldPredicate>, fields: FieldDef[]): string {
+export function predicateToDescription(predicate: LogicalComposition<FieldPredicate>, fields: ResolvedFieldDef[]): string {
   if ('and' in predicate) {
     return predicate.and.map((p) => predicateToDescription(p, fields)).join(' and ');
   }

@@ -308,8 +308,6 @@ export function handleBin(data: UmweltDataset, transform: BinTransform): UmweltD
     nice: binParams.nice ?? true,
   };
 
-  console.log(binOptions);
-
   // Generate bins using vega-statistics
   const bins = bin(binOptions);
   if (!bins?.step) return data;
