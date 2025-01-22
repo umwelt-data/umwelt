@@ -47,6 +47,7 @@
     "solid-styled-components": "^0.28.5",
     "tone": "^15.0.4",
     "vega": "^5.25.0",
-    "vega-lite": "^5.15.0"
+    "vega-lite": "^5.15.0",
+    "vega-statistics": "^1.9.0"
   }
 }

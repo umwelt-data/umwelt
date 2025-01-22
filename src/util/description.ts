@@ -1,10 +1,8 @@
-import { EncodingFieldDef, FieldDef, UmweltTimeUnit, UmweltValue } from '../types';
+import { FieldDef, ResolvedFieldDef, UmweltTimeUnit, UmweltValue } from '../types';
 import { LogicalComposition } from 'vega-lite/src/logical';
 import { FieldPredicate } from 'vega-lite/src/predicate';
-import { TimeUnit } from 'vega';
-import { resolveFieldDef } from './spec';
 
-export const fmtValue = (value: any, fieldDef: FieldDef): string => {
+export const fmtValue = (value: any, fieldDef: ResolvedFieldDef): string => {
   if (Array.isArray(value)) {
     return value.map((v) => fmtValue(v, fieldDef)).join(', ');
   }
@@ -90,7 +88,6 @@ export function predicateToDescription(predicate: LogicalComposition<FieldPredic
   return fieldPredicateToDescription(predicate, fields);
 }
 
-export const describeField = (fieldDef: FieldDef, encFieldDef?: EncodingFieldDef): string => {
-  const inheritedFieldDef = resolveFieldDef(fieldDef, encFieldDef);
-  return `${inheritedFieldDef.bin ? 'binned ' : ''}${inheritedFieldDef.aggregate ?? ''} ${inheritedFieldDef.field}${inheritedFieldDef.timeUnit ? ` (${inheritedFieldDef.timeUnit})` : ''}`.trim();
+export const describeField = (resolvedFieldDef: ResolvedFieldDef): string => {
+  return `${resolvedFieldDef.bin ? 'binned ' : ''}${resolvedFieldDef.aggregate ?? ''} ${resolvedFieldDef.field}${resolvedFieldDef.timeUnit ? ` (${resolvedFieldDef.timeUnit})` : ''}`.trim();
 };

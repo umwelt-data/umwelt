@@ -75,7 +75,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   });
   const getDerivedData = createMemo(() => {
     const data = derivedDataset(spec.data.values, getResolvedFields()); // TODO global selection
-    console.log(data);
     return data;
   });
   const getFieldDomains = createMemo(() => {
@@ -199,7 +198,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const getAllTraversalStates = createMemo(() => {
     const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
     const fieldDomains = getFieldDomains();
-    console.log(fieldDomains);
 
     const domainLengths = traversalFields.map((field) => Array.from({ length: fieldDomains[field].length }, (_, i) => i));
 

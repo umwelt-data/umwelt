@@ -2,6 +2,8 @@ import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/s
 import { ResolvedFieldDef, isUmweltAggregateOp, isUmweltTimeUnit, UmweltDataset, UmweltDatum, UmweltTransform, UmweltValue } from '../types';
 import { bin as d3bin } from 'd3-array';
 import { BinParams } from 'vega-lite/src/bin';
+//@ts-ignore
+import { bin } from 'vega-statistics';
 import cloneDeep from 'lodash.clonedeep';
 import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { TimeUnit } from 'vega-lite/src/timeunit';
@@ -11,7 +13,8 @@ export const binnedFieldNames = (field: string): [string, string] => [`${field}_
 export const timeUnitFieldName = (field: string, timeUnit: TimeUnit): string => `${timeUnit}_${field}`;
 
 export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[]): UmweltDataset => {
-  const transformedData = applyTransforms(data, fieldsToTransforms(fields));
+  const transforms = fieldsToTransforms(fields);
+  const transformedData = applyTransforms(data, transforms);
   return transformedData;
 };
 
@@ -200,80 +203,153 @@ function handleAggregate(data: UmweltDataset, transform: AggregateTransform): Um
   });
 }
 
-function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset {
-  const { field, bin, as } = transform;
-  const binParams: BinParams = bin === true ? {} : bin;
+// function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset {
+//   const { field, bin, as } = transform;
+//   const binParams: BinParams = bin === true ? {} : bin;
 
-  if (binParams.binned) {
-    return data.map((datum) => {
-      const result = { ...datum };
-      if (Array.isArray(as)) {
-        result[as[0]] = datum[field];
-        result[as[1]] = datum[`${field}_end`];
-      } else {
-        result[as] = datum[field];
-        result[`${as}_end`] = datum[`${field}_end`];
-      }
-      return result;
-    });
-  }
+//   if (binParams.binned) {
+//     return data.map((datum) => {
+//       const result = { ...datum };
+//       if (Array.isArray(as)) {
+//         result[as[0]] = datum[field];
+//         result[as[1]] = datum[`${field}_end`];
+//       } else {
+//         result[as] = datum[field];
+//         result[`${as}_end`] = datum[`${field}_end`];
+//       }
+//       return result;
+//     });
+//   }
 
+//   const values = data
+//     .map((d) => d[field])
+//     .map((v) => (v instanceof Date ? v.getTime() : v))
+//     .filter((v): v is number => typeof v === 'number');
+
+//   const binner = d3bin();
+
+//   if (binParams.extent && Array.isArray(binParams.extent)) {
+//     binner.domain(binParams.extent);
+//   }
+//   if (binParams.maxbins) {
+//     binner.thresholds(binParams.maxbins);
+//   } else {
+//     // VL uses either 10 or 6 and it's not clear when/why
+//     // Let D3 use its default, but ensure minimum of 6 bins
+//     // const bins = binner(values);
+//     // if (bins.length < 6) {
+//     //   binner.thresholds(6);
+//     // }
+//   }
+
+//   const bins = binner(values);
+//   const [startField, endField] = Array.isArray(as) ? as : [as, `${as}_end`];
+
+//   return data.map((datum) => {
+//     const value = datum[field];
+//     const result = { ...datum };
+
+//     if (value instanceof Date) {
+//       // Find the appropriate bin, ensuring both boundaries are defined
+//       const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value.getTime() >= b.x0 && value.getTime() < b.x1);
+
+//       if (bin && bin.x0 !== undefined && bin.x1 !== undefined) {
+//         result[startField] = bin.x0;
+//         result[endField] = bin.x1;
+//       } else {
+//         result[startField] = null;
+//         result[endField] = null;
+//       }
+//     } else if (typeof value === 'number') {
+//       // Find the appropriate bin, ensuring both boundaries are defined
+//       const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value >= b.x0 && value < b.x1);
+
+//       if (bin && bin.x0 !== undefined && bin.x1 !== undefined) {
+//         result[startField] = bin.x0;
+//         result[endField] = bin.x1;
+//       } else {
+//         result[startField] = null;
+//         result[endField] = null;
+//       }
+//     } else {
+//       result[startField] = null;
+//       result[endField] = null;
+//     }
+
+//     return result;
+//   });
+// }
+
+export function handleBin(data: UmweltDataset, transform: BinTransform): UmweltDataset {
+  if (!data.length) return [];
+
+  // Extract values to bin
   const values = data
-    .map((d) => d[field])
+    .map((d) => d[transform.field])
     .map((v) => (v instanceof Date ? v.getTime() : v))
     .filter((v): v is number => typeof v === 'number');
 
-  const binner = d3bin();
+  // Handle empty or invalid data
+  if (!values.length) return data;
 
-  if (binParams.extent && Array.isArray(binParams.extent)) {
-    binner.domain(binParams.extent);
-  }
-  if (binParams.maxbins) {
-    binner.thresholds(binParams.maxbins);
+  // Set up bin parameters
+  const binParams = transform.bin === true ? {} : transform.bin;
+  const extent = (binParams.extent as [number, number]) || [Math.min(...values), Math.max(...values)];
+
+  // Configure bin options
+  const binOptions = {
+    extent,
+    maxbins: binParams.maxbins ?? 10,
+    base: binParams.base,
+    step: binParams.step,
+    steps: binParams.steps,
+    minstep: binParams.minstep,
+    divide: binParams.divide,
+    nice: binParams.nice ?? true,
+  };
+
+  console.log(binOptions);
+
+  // Generate bins using vega-statistics
+  const bins = bin(binOptions);
+  if (!bins?.step) return data;
+
+  // Determine output field names
+  let startField: string;
+  let endField: string;
+  if (Array.isArray(transform.as)) {
+    [startField, endField] = transform.as;
   } else {
-    // VL uses either 10 or 6 and it's not clear when/why
-    // Let D3 use its default, but ensure minimum of 6 bins
-    const bins = binner(values);
-    if (bins.length < 6) {
-      binner.thresholds(6);
-    }
+    startField = transform.as;
+    endField = `${transform.as}_end`;
   }
 
-  const bins = binner(values);
-  const [startField, endField] = Array.isArray(as) ? as : [as, `${as}_end`];
-
+  // Apply binning to the dataset
   return data.map((datum) => {
-    const value = datum[field];
-    const result = { ...datum };
-
-    if (value instanceof Date) {
-      // Find the appropriate bin, ensuring both boundaries are defined
-      const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value.getTime() >= b.x0 && value.getTime() < b.x1);
-
-      if (bin && bin.x0 !== undefined && bin.x1 !== undefined) {
-        result[startField] = bin.x0;
-        result[endField] = bin.x1;
-      } else {
-        result[startField] = null;
-        result[endField] = null;
-      }
-    } else if (typeof value === 'number') {
-      // Find the appropriate bin, ensuring both boundaries are defined
-      const bin = bins.find((b) => b.x0 !== undefined && b.x1 !== undefined && value >= b.x0 && value < b.x1);
-
-      if (bin && bin.x0 !== undefined && bin.x1 !== undefined) {
-        result[startField] = bin.x0;
-        result[endField] = bin.x1;
-      } else {
-        result[startField] = null;
-        result[endField] = null;
-      }
-    } else {
-      result[startField] = null;
-      result[endField] = null;
+    const value = datum[transform.field] as number;
+    if (value == null) {
+      return {
+        ...datum,
+        [startField]: null,
+        [endField]: null,
+      };
     }
 
-    return result;
+    // Find the appropriate bin
+    const binStart = (index: number) => bins.start + index * bins.step;
+    const binEnd = (index: number) => bins.start + (index + 1) * bins.step;
+    const maxIndex = (bins.stop - bins.start) / bins.step - 1;
+    let binIndex = 0;
+
+    while (!(value >= binStart(binIndex) && value < binEnd(binIndex)) && binIndex < maxIndex) {
+      binIndex++;
+    }
+
+    return {
+      ...datum,
+      [startField]: binStart(binIndex),
+      [endField]: binEnd(binIndex),
+    };
   });
 }
 

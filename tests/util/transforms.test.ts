@@ -177,6 +177,67 @@ test('supports binning temporal fields', async () => {
   expect(transformedData).toEqual(expectedData);
 });
 
+test('handles multiple transforms on single field', async () => {
+  const dataset = [
+    { value: 100, timestamp: new Date('2023-01-01T08:30:00') },
+    { value: 150, timestamp: new Date('2023-01-01T12:45:00') },
+    { value: 200, timestamp: new Date('2023-01-02T09:15:00') },
+    { value: 300, timestamp: new Date('2023-02-01T14:20:00') },
+  ];
+
+  const fieldDefs: FieldDef[] = [
+    {
+      active: true,
+      name: 'value',
+      type: 'quantitative',
+      bin: true,
+      aggregate: 'mean',
+      encodings: [],
+    },
+  ];
+
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+
+  const transformedData = applyTransforms(dataset, transforms);
+  const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+    return Object.fromEntries(Object.entries(d));
+  });
+
+  expect(transformedData).toEqual(expectedData);
+});
+
+test('handles multiple transforms on single temporal field', async () => {
+  const dataset = [
+    { value: 100, timestamp: new Date('2023-01-01T08:30:00') },
+    { value: 150, timestamp: new Date('2023-01-01T12:45:00') },
+    { value: 200, timestamp: new Date('2023-01-02T09:15:00') },
+    { value: 300, timestamp: new Date('2023-02-01T14:20:00') },
+  ];
+
+  const fieldDefs: FieldDef[] = [
+    {
+      active: true,
+      name: 'timestamp',
+      type: 'temporal',
+      bin: true,
+      timeUnit: 'month',
+      aggregate: 'mean',
+      encodings: [],
+    },
+  ];
+
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+
+  console.log(JSON.stringify(transforms, null, 2));
+
+  const transformedData = applyTransforms(dataset, transforms);
+  const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+    return Object.fromEntries(Object.entries(d));
+  });
+
+  expect(transformedData).toEqual(expectedData);
+});
+
 // claude generated these tests lmao
 
 test('handles sparse temporal data with nulls', async () => {
