@@ -1,5 +1,6 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioTraversalFieldDef } from '../../types';
+import { FieldTransforms } from './fieldTransforms';
 
 export type TraversalDefinitionProps = {
   unit: string;
@@ -25,6 +26,7 @@ export function TraversalDefinition(props: TraversalDefinitionProps) {
             })}
         </select>
         <button onClick={() => {}}>Remove traversal</button>
+        <FieldTransforms fieldName={props.traversal.field} traversal={{ unit: props.unit }} />
       </div>
     </div>
   );

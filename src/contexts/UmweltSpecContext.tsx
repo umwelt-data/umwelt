@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, NONE, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
@@ -39,6 +39,8 @@ export type UmweltSpecActions = {
   setEncodingAggregate: (unit: string, property: EncodingPropName, aggregate: UmweltAggregateOp | 'undefined') => void;
   setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => void;
   setEncodingTimeUnit: (unit: string, property: EncodingPropName, timeUnit: UmweltTimeUnit | 'undefined') => void;
+  setTraversalBin: (unit: string, field: string, bin: boolean) => void;
+  setTraversalTimeUnit: (unit: string, field: string, timeUnit: UmweltTimeUnit | 'undefined') => void;
 };
 
 const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
@@ -421,6 +423,23 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         internalActions.updateSearchParams();
       }
+    },
+    setTraversalBin: (unit: string, field: string, bin: boolean) => {
+      setSpec(
+        'audio',
+        'units',
+        spec.audio.units.map((u) => (u.name === unit ? { ...u, traversal: u.traversal.map((t) => (t.field === field ? { ...t, bin } : t)) } : u))
+      );
+      internalActions.updateSearchParams();
+    },
+    setTraversalTimeUnit: (unit: string, field: string, inputTimeUnit: UmweltTimeUnit | 'undefined') => {
+      const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
+      setSpec(
+        'audio',
+        'units',
+        spec.audio.units.map((u) => (u.name === unit ? { ...u, traversal: u.traversal.map((t) => (t.field === field ? { ...t, timeUnit } : t)) } : u))
+      );
+      internalActions.updateSearchParams();
     },
   };
 

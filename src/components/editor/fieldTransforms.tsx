@@ -1,18 +1,46 @@
-import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { aggregateOps, AudioPropName, audioPropNames, EncodingFieldDef, EncodingRef, FieldDef, FieldName, NONE, timeUnits, VisualPropName, visualPropNames } from '../../types';
-import { TimeUnit } from 'vega';
+import { aggregateOps, EncodingFieldDef, EncodingRef, FieldDef, FieldName, isAudioProp, isVisualProp, NONE, timeUnits, UmweltAggregateOp, UmweltTimeUnit } from '../../types';
 import { getFieldDef } from '../../util/spec';
 import { For, Show } from 'solid-js';
 
 interface FieldTransformsProps {
   fieldName: string;
   encoding?: EncodingRef;
+  traversal?: { unit: string };
   fieldLabelId?: string;
+}
+
+interface TransformActions {
+  setAggregate?: (value: UmweltAggregateOp | 'undefined') => void;
+  setBin: (value: boolean) => void;
+  setTimeUnit: (value: UmweltTimeUnit | 'undefined') => void;
 }
 
 export function FieldTransforms(props: FieldTransformsProps) {
   const [spec, specActions] = useUmweltSpec();
+
+  function getTransformActions(fieldName: string, encoding?: EncodingRef, traversal?: { unit: string }): TransformActions {
+    if (encoding) {
+      return {
+        setAggregate: (value) => specActions.setEncodingAggregate(encoding.unit, encoding.property, value),
+        setBin: (value) => specActions.setEncodingBin(encoding.unit, encoding.property, value),
+        setTimeUnit: (value) => specActions.setEncodingTimeUnit(encoding.unit, encoding.property, value),
+      };
+    }
+
+    if (traversal) {
+      return {
+        setBin: (value) => specActions.setTraversalBin(traversal.unit, fieldName, value),
+        setTimeUnit: (value) => specActions.setTraversalTimeUnit(traversal.unit, fieldName, value),
+      };
+    }
+
+    return {
+      setAggregate: (value) => specActions.setFieldAggregate(fieldName, value),
+      setBin: (value) => specActions.setFieldBin(fieldName, value),
+      setTimeUnit: (value) => specActions.setFieldTimeUnit(fieldName, value),
+    };
+  }
 
   const canAggregateField = (key: FieldName[], field?: FieldDef) => {
     if (!field) return false;
@@ -27,37 +55,29 @@ export function FieldTransforms(props: FieldTransformsProps) {
     return field.type === 'temporal';
   };
 
-  const setAggregate = (aggregate: NonArgAggregateOp) => {
-    if (props.encoding) {
-      specActions.setEncodingAggregate(props.encoding.unit, props.encoding.property, aggregate);
-    } else {
-      specActions.setFieldAggregate(props.fieldName, aggregate);
-    }
+  const actions = getTransformActions(props.fieldName, props.encoding, props.traversal);
+
+  const setAggregate = (aggregate: UmweltAggregateOp) => {
+    actions.setAggregate?.(aggregate);
   };
 
   const setBin = (bin: boolean) => {
-    if (props.encoding) {
-      specActions.setEncodingBin(props.encoding.unit, props.encoding.property, bin);
-    } else {
-      specActions.setFieldBin(props.fieldName, bin);
-    }
+    actions.setBin(bin);
   };
 
-  const setTimeUnit = (timeUnit: TimeUnit) => {
-    if (props.encoding) {
-      specActions.setEncodingTimeUnit(props.encoding.unit, props.encoding.property, timeUnit);
-    } else {
-      specActions.setFieldTimeUnit(props.fieldName, timeUnit);
-    }
+  const setTimeUnit = (timeUnit: UmweltTimeUnit) => {
+    actions.setTimeUnit(timeUnit);
   };
 
-  const encodingDef = (): EncodingFieldDef | undefined => {
+  const encodingOrTraversalDef = (): EncodingFieldDef | undefined => {
     if (props.encoding) {
-      if (visualPropNames.includes(props.encoding.property as VisualPropName)) {
+      if (isVisualProp(props.encoding.property)) {
         return spec.visual.units.find((unit) => unit.name === props.encoding?.unit)?.encoding[props.encoding.property];
-      } else if (audioPropNames.includes(props.encoding.property as AudioPropName)) {
+      } else if (isAudioProp(props.encoding.property)) {
         return spec.audio.units.find((unit) => unit.name === props.encoding?.unit)?.encoding[props.encoding.property];
       }
+    } else if (props.traversal) {
+      return spec.audio.units.find((unit) => unit.name === props.traversal?.unit)?.traversal.find((traversal) => traversal.field === props.fieldName);
     }
     return undefined;
   };
@@ -70,7 +90,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
         <div>
           <label>
             Aggregate
-            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as NonArgAggregateOp)}>
+            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingOrTraversalDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as UmweltAggregateOp)}>
               <Show when={props.encoding}>
                 <option value={undefined}>Inherit ({fieldDef()?.aggregate ?? NONE})</option>
               </Show>
@@ -89,7 +109,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
         <div>
           <label>
             Bin
-            <input aria-describedby={props.fieldLabelId} type="checkbox" checked={encodingDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
+            <input aria-describedby={props.fieldLabelId} type="checkbox" checked={encodingOrTraversalDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
           </label>
         </div>
       </Show>
@@ -102,7 +122,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
         <div>
           <label>
             Time unit
-            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}>
+            <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingOrTraversalDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as UmweltTimeUnit)}>
               <Show when={props.encoding}>
                 <option value={undefined}>Inherit ({fieldDef()?.timeUnit ?? NONE})</option>
               </Show>

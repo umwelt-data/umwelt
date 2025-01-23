@@ -1,5 +1,5 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioUnitSpec, audioPropNames, markTypes, visualPropNames } from '../../types';
+import { AudioPropName, AudioUnitSpec, audioPropNames, isAudioProp, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
 import { TraversalDefinition } from './traversalDefinition';
 
@@ -12,9 +12,12 @@ export function AudioUnit(props: AudioUnitProps) {
 
   const getEncodings = () => {
     return Object.entries(props.unitSpec.encoding).sort((a, b) => {
-      const aIndex = audioPropNames.indexOf(a[0]);
-      const bIndex = audioPropNames.indexOf(b[0]);
-      return aIndex - bIndex;
+      if (isAudioProp(a[0]) && isAudioProp(b[0])) {
+        const aIndex = audioPropNames.indexOf(a[0]);
+        const bIndex = audioPropNames.indexOf(b[0]);
+        return aIndex - bIndex;
+      }
+      return 0;
     });
   };
 
@@ -38,7 +41,7 @@ export function AudioUnit(props: AudioUnitProps) {
         <h4>Encodings</h4>
         <div>
           {getEncodings().map(([propName, encoding]) => {
-            if (encoding) {
+            if (encoding && isAudioProp(propName)) {
               return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
             }
           })}
