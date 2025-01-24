@@ -7,6 +7,8 @@ import { derivedFieldName } from './transforms';
 export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset): UmweltValue[] => {
   // TODO account for domain overrides in the field def
 
+  console.log('getDomain', fieldDef, data);
+
   const field = derivedFieldName(fieldDef);
 
   const uniqueVals = new Map<any, UmweltValue>();

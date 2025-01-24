@@ -48,7 +48,6 @@ export interface AudioUnitState {
 const AudioUnitStateContext = createContext<[AudioUnitState, AudioUnitStateActions]>();
 
 export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
-  const { audioUnitSpec } = props;
   const [spec] = useUmweltSpec();
   const [scales, scaleActions] = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
@@ -57,7 +56,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const getInitialState = (): AudioUnitState => {
     return {
       traversalState: Object.fromEntries(
-        audioUnitSpec.traversal.map((traversalFieldDef) => {
+        props.audioUnitSpec.traversal.map((traversalFieldDef) => {
           return [traversalFieldDef.field, 0];
         })
       ),
@@ -69,21 +68,19 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   // derived state
   const getResolvedFields = createMemo(() => {
     return spec.fields.map((fieldDef) => {
-      const encFieldDef = Object.values(audioUnitSpec.encoding).find((f) => f.field === fieldDef.name) || audioUnitSpec.traversal.find((f) => f.field === fieldDef.name);
+      const encFieldDef = Object.values(props.audioUnitSpec.encoding).find((f) => f.field === fieldDef.name) || props.audioUnitSpec.traversal.find((f) => f.field === fieldDef.name);
       return resolveFieldDef(fieldDef, encFieldDef);
     });
   });
   const getDerivedData = createMemo(() => {
     const data = derivedDataset(spec.data.values, getResolvedFields()); // TODO global selection
+    console.log('resolved fields', getResolvedFields(), data);
     return data;
   });
   const getFieldDomains = createMemo(() => {
     return Object.fromEntries(
-      audioUnitSpec.traversal.map((traversalFieldDef) => {
-        const fieldDef = getFieldDef(spec, traversalFieldDef.field);
-        if (!fieldDef) {
-          return [traversalFieldDef.field, []];
-        }
+      props.audioUnitSpec.traversal.map((traversalFieldDef) => {
+        const fieldDef = getFieldDef(spec, traversalFieldDef.field)!;
         const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
         const domain = getDomain(resolvedFieldDef, getDerivedData());
         return [traversalFieldDef.field, domain];
@@ -108,9 +105,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return audioUnitState.traversalState[field];
     },
     setupTransportSequence: () => {
-      if (sonificationState.activeUnitName !== audioUnitSpec.name) {
+      if (sonificationState.activeUnitName !== props.audioUnitSpec.name) {
         // update active unit
-        sonificationStateActions.setActiveUnit(audioUnitSpec.name);
+        sonificationStateActions.setActiveUnit(props.audioUnitSpec.name);
         // Clear previous sequence
         audioEngine.transport.cancel();
 
@@ -172,7 +169,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return note;
     },
     countEndingSectionsOfState: (state: TraversalState) => {
-      const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
+      const traversalFields = [...props.audioUnitSpec.traversal.map((f) => f.field)];
       const domains = getFieldDomains();
       return traversalFields.reduce((count, field) => {
         return state[field] === domains[field].length - 1 ? count + 1 : count;
@@ -190,13 +187,13 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   };
 
   const shouldRamp = createMemo(() => {
-    const innermostField = audioUnitSpec.traversal[audioUnitSpec.traversal.length - 1].field;
+    const innermostField = props.audioUnitSpec.traversal[props.audioUnitSpec.traversal.length - 1].field;
     const fieldDef = getFieldDef(spec, innermostField);
     return fieldDef?.type === 'quantitative' || fieldDef?.type === 'temporal';
   });
 
   const getAllTraversalStates = createMemo(() => {
-    const traversalFields = [...audioUnitSpec.traversal.map((f) => f.field)];
+    const traversalFields = [...props.audioUnitSpec.traversal.map((f) => f.field)];
     const fieldDomains = getFieldDomains();
 
     const domainLengths = traversalFields.map((field) => Array.from({ length: fieldDomains[field].length }, (_, i) => i));
@@ -232,7 +229,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     // let prevState: TraversalState | undefined = undefined;
     allTraversalStates.forEach((state) => {
       const data = internalActions.traversalStateToData(state);
-      const note = internalActions.encodeDataAsNote(data, audioUnitSpec.encoding);
+      const note = internalActions.encodeDataAsNote(data, props.audioUnitSpec.encoding);
 
       // Add section breaks if this state ends one or more sections
       const endingSections = internalActions.countEndingSectionsOfState(state);

@@ -5,6 +5,20 @@ import { aggregateOps, FieldDef, timeUnits, UmweltDataset } from '../../src/type
 import { UmweltTransform } from '../../src/types';
 import { resolveFieldDef } from '../../src/util/spec';
 
+function expectToEqualWithClose(actualData: UmweltDataset, expectedData: UmweltDataset) {
+  expectedData.forEach((_, i) => {
+    const expected = expectedData[i];
+    const actual = actualData[i];
+    Object.keys(expected).forEach((key) => {
+      if (typeof expected[key] === 'number' && typeof actual[key] === 'number') {
+        expect(actual[key]).toBeCloseTo(expected[key], 5); // Adjust precision if needed
+      } else {
+        expect(actual[key]).toEqual(expected[key]);
+      }
+    });
+  });
+}
+
 test('transforms match vega-lite', async () => {
   // Create dataset with temporal and numerical data suitable for all transforms
   const dataset = [
@@ -20,16 +34,16 @@ test('transforms match vega-lite', async () => {
   // Define transforms to test all three types
   const transforms: UmweltTransform[] = [
     {
-      // TimeUnit transform: group by month
-      timeUnit: 'month',
-      field: 'date',
-      as: timeUnitFieldName('date', 'month'),
-    },
-    {
       // Bin transform: bin prices into ranges
       bin: true,
       field: 'price',
       as: binnedFieldNames('price'),
+    },
+    {
+      // TimeUnit transform: group by month
+      timeUnit: 'month',
+      field: 'date',
+      as: timeUnitFieldName('date', 'month'),
     },
     {
       // Aggregate transform: sum sales by month and price bin
@@ -233,14 +247,47 @@ test('handles multiple transforms on single temporal field', async () => {
 
   const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
 
+  console.log(JSON.stringify(transforms, null, 2));
+
   const transformedData = applyTransforms(dataset, transforms);
   const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
     return Object.fromEntries(Object.entries(d));
   });
 
-  console.log(derivedName, transforms, transformedData);
-
   expect(transformedData).toEqual(expectedData);
+  expect(transformedData[0]).toHaveProperty(derivedName);
+});
+
+test('penguins dataset example', async () => {
+  const dataset = require('../data/penguins.json');
+  const fieldDefs: FieldDef[] = [
+    {
+      active: true,
+      type: 'quantitative',
+      name: 'Flipper Length (mm)',
+      aggregate: 'mean',
+      encodings: [],
+    },
+    {
+      active: true,
+      type: 'quantitative',
+      name: 'Body Mass (g)',
+      bin: true,
+      encodings: [],
+    },
+  ];
+
+  const derivedName = derivedFieldName(resolveFieldDef(fieldDefs[1]));
+
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+
+  const transformedData = applyTransforms(dataset, transforms);
+  const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
+    return Object.fromEntries(Object.entries(d));
+  });
+
+  expectToEqualWithClose(transformedData, expectedData);
+
   expect(transformedData[0]).toHaveProperty(derivedName);
 });
 

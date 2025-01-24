@@ -1,7 +1,5 @@
 import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/src/transform';
 import { ResolvedFieldDef, isUmweltAggregateOp, isUmweltTimeUnit, UmweltDataset, UmweltDatum, UmweltTransform, UmweltValue } from '../types';
-import { bin as d3bin } from 'd3-array';
-import { BinParams } from 'vega-lite/src/bin';
 //@ts-ignore
 import { bin } from 'vega-statistics';
 import cloneDeep from 'lodash.clonedeep';
@@ -43,55 +41,68 @@ export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[
   const aggregateTransforms: AggregateTransform[] = [];
   const groupbyFields: Set<string> = new Set();
 
+  // First pass: collect non-aggregated groupby fields
   for (const field of fields) {
     const { field: fieldName, timeUnit, bin, aggregate } = field;
 
-    // Collect timeUnit transforms
-    if (timeUnit) {
-      timeUnitTransforms.push({
-        timeUnit,
-        field: fieldName,
-        as: timeUnitFieldName(fieldName, timeUnit),
-      });
-      groupbyFields.add(timeUnitFieldName(fieldName, timeUnit));
+    if (!aggregate) {
+      if (timeUnit) {
+        groupbyFields.add(timeUnitFieldName(fieldName, timeUnit));
+      }
+      if (bin) {
+        binnedFieldNames(fieldName).forEach((f) => groupbyFields.add(f));
+      }
     }
+  }
 
-    // Collect bin transforms
+  // Second pass: create transforms
+  for (const field of fields) {
+    const { field: fieldName, timeUnit, bin, aggregate } = field;
+
     if (bin) {
+      const binOutputFields = binnedFieldNames(fieldName);
       binTransforms.push({
         bin: true,
         field: fieldName,
-        as: binnedFieldNames(fieldName),
+        as: binOutputFields,
       });
-      // Only add to groupby if this field isn't being aggregated
-      if (!aggregate) {
-        binnedFieldNames(fieldName).forEach((binnedField) => groupbyFields.add(binnedField));
-      }
     }
 
-    // Collect aggregate transforms
+    if (timeUnit) {
+      const outputField = bin ? binnedFieldNames(fieldName)[0] : timeUnitFieldName(fieldName, timeUnit);
+      timeUnitTransforms.push({
+        timeUnit,
+        field: fieldName,
+        as: outputField,
+      });
+    }
+
     if (aggregate) {
-      const existingAggregate = aggregateTransforms.find((t) => t.groupby?.every((g) => groupbyFields.has(g)));
+      const targetField = bin ? binnedFieldNames(fieldName)[0] : fieldName;
+      const existingAggregate = aggregateTransforms.find((t) => t.groupby?.length === groupbyFields.size && t.groupby?.every((g) => groupbyFields.has(g)));
 
       if (existingAggregate) {
-        // Append to existing aggregate transform
         existingAggregate.aggregate.push({
           op: aggregate,
-          field: fieldName,
+          field: targetField,
           as: aggregatedFieldName(fieldName, aggregate),
         });
       } else {
-        // Create a new aggregate transform
         aggregateTransforms.push({
-          aggregate: [{ op: aggregate, field: fieldName, as: aggregatedFieldName(fieldName, aggregate) }],
-          groupby: Array.from(groupbyFields), // Use all collected groupby fields
+          aggregate: [
+            {
+              op: aggregate,
+              field: targetField,
+              as: aggregatedFieldName(fieldName, aggregate),
+            },
+          ],
+          groupby: Array.from(groupbyFields),
         });
       }
     }
   }
 
-  // Combine all transforms in precedence order: timeUnit → bin → aggregate
-  return [...timeUnitTransforms, ...binTransforms, ...aggregateTransforms];
+  return [...binTransforms, ...timeUnitTransforms, ...aggregateTransforms];
 };
 
 export function applyTransforms(dataset: UmweltDataset, transforms: UmweltTransform[]): UmweltDataset {
@@ -110,14 +121,14 @@ export function applyTransforms(dataset: UmweltDataset, transforms: UmweltTransf
   return transformedData;
 }
 
-function computeAggregation(values: UmweltValue[], op: NonArgAggregateOp): number {
+function computeAggregation(values: UmweltValue[], op: NonArgAggregateOp): number | undefined {
   // Filter out non-numeric values and convert to numbers
   const numbers = values
     .filter((n) => n !== null && n !== undefined)
     .map((v) => (typeof v === 'number' ? v : Number(v)))
     .filter((n) => !isNaN(n));
 
-  if (numbers.length === 0) return 0;
+  if (numbers.length === 0) return undefined;
 
   // TODO this is more operators than we currently expose via UmweltAggregateOp in types.ts
   switch (op) {
@@ -217,7 +228,10 @@ function handleAggregate(data: UmweltDataset, transform: AggregateTransform): Um
           : [];
 
       if (isUmweltAggregateOp(op)) {
-        result[as] = computeAggregation(values, op);
+        const v = computeAggregation(values, op);
+        if (v) {
+          result[as] = v;
+        }
       }
     });
 
