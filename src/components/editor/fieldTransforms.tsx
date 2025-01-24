@@ -44,10 +44,12 @@ export function FieldTransforms(props: FieldTransformsProps) {
 
   const canAggregateField = (key: FieldName[], field?: FieldDef) => {
     if (!field) return false;
+    if (props.traversal) return false;
     return !key.includes(field.name) && field.type === 'quantitative';
   };
   const canBinField = (field?: FieldDef) => {
     if (!field) return false;
+    if (props.encoding && isAudioProp(props.encoding.property)) return false;
     return field.type === 'quantitative' || field.type === 'temporal';
   };
   const canTimeUnitField = (field?: FieldDef) => {

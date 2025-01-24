@@ -3,6 +3,7 @@ import { SonificationStateProvider } from '../../../contexts/sonification/Sonifi
 import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
 import { AudioUnit } from './audioUnit';
 import { AudioEngineProvider } from '../../../contexts/sonification/AudioEngineContext';
+import { AudioEngineControl } from './audioEngineControl';
 
 export type SonificationProps = {};
 
@@ -13,6 +14,7 @@ export function Sonification(props: SonificationProps) {
     <SonificationStateProvider>
       <AudioEngineProvider>
         <For each={spec.audio.units}>{(audioUnitSpec) => <AudioUnit audioUnitSpec={audioUnitSpec} />}</For>
+        <AudioEngineControl />
       </AudioEngineProvider>
     </SonificationStateProvider>
   );

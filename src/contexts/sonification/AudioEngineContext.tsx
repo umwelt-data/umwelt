@@ -96,6 +96,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       setAudioEngineState((prev) => {
         return { ...prev, muted };
       });
+      Tone.getDestination().mute = muted;
     },
     setReadAxisTicks: (read) => {
       setAudioEngineState((prev) => {

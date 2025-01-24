@@ -30,7 +30,6 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
 
   return (
     <div>
-      {JSON.stringify(audioUnitStateActions.getFieldDomains(), null, 2)}
       <label>
         <span>{describeField(resolvedFieldDef())}</span>
         <Switch>
