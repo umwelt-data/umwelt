@@ -13,7 +13,7 @@ import { SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
-import { derivedDataset } from '../../util/transforms';
+import { derivedDataset, derivedFieldName } from '../../util/transforms';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -30,6 +30,7 @@ export type AudioUnitStateActions = {
   getTraversalIndex: (field: string) => number;
   getFieldDomains: () => Record<string, UmweltValue[]>;
   setupTransportSequence: () => void;
+  resetTraversalIfEnd: () => void;
 };
 
 type AudioUnitStateInternalActions = {
@@ -74,7 +75,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   });
   const getDerivedData = createMemo(() => {
     const data = derivedDataset(spec.data.values, getResolvedFields()); // TODO global selection
-    console.log('resolved fields', getResolvedFields(), data);
     return data;
   });
   const getFieldDomains = createMemo(() => {
@@ -82,7 +82,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       props.audioUnitSpec.traversal.map((traversalFieldDef) => {
         const fieldDef = getFieldDef(spec, traversalFieldDef.field)!;
         const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
-        const domain = getDomain(resolvedFieldDef, getDerivedData());
+        const domain = getDomain(resolvedFieldDef, getDerivedData(), true);
         return [traversalFieldDef.field, domain];
       })
     );
@@ -114,7 +114,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         const notes = getSonifierNotes();
 
         // Schedule notes in the transport
-        notes.forEach((note) => {
+        notes.forEach((note, idx) => {
           audioEngine.transport.schedule(() => {
             if (audioEngine.isPlaying) {
               // isPlaying check needed to avoid race conditions because of async scheduling
@@ -133,10 +133,28 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
               audioEngineActions.releaseSynth();
             }, note.time + note.duration);
           }
+          // if it's the last note, pause the transport
+          if (idx === notes.length - 1) {
+            audioEngine.transport.schedule(() => {
+              audioEngineActions.stopTransport();
+            }, note.time + note.duration + (note.pauseAfter || 0));
+          }
         });
       }
     },
     getFieldDomains,
+    resetTraversalIfEnd: () => {
+      const traversalFields = props.audioUnitSpec.traversal.map((f) => f.field);
+      const traversalState = audioUnitState.traversalState;
+      const traversalEnd = traversalFields.every((field) => {
+        return traversalState[field] === getFieldDomains()[field].length - 1;
+      });
+      if (traversalEnd) {
+        setAudioUnitState(getInitialState());
+        audioEngine.transport.seconds = 0;
+        return true;
+      }
+    },
   };
 
   const internalActions: AudioUnitStateInternalActions = {
@@ -151,20 +169,22 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
               equal: value,
             };
           }
+          const resolvedFieldDef = resolveFieldDef(fieldDef, props.audioUnitSpec.traversal.find((f) => f.field === field)!);
+          const derivedField = derivedFieldName(resolvedFieldDef);
           return {
-            field,
+            field: derivedField,
             equal: serializeValue(value, fieldDef),
           };
         }),
       };
-      const selection = selectionTest(spec.data.values, predicate);
+      const selection = selectionTest(getDerivedData(), predicate);
       return selection;
     },
     encodeDataAsNote: (data: UmweltDataset, encoding: AudioEncoding): EncodedNote => {
       const note = {
-        pitch: data.length ? encodeProperty('pitch', encoding.pitch, scales.pitch, data) : undefined,
-        volume: encodeProperty('volume', encoding.volume, scales.volume, data),
-        duration: encodeProperty('duration', encoding.duration, scales.duration, data),
+        pitch: data.length ? encodeProperty('pitch', spec, encoding.pitch, scales.pitch, data) : undefined,
+        volume: encodeProperty('volume', spec, encoding.volume, scales.volume, data),
+        duration: encodeProperty('duration', spec, encoding.duration, scales.duration, data),
       };
       return note;
     },

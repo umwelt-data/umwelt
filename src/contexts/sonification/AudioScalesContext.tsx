@@ -60,11 +60,11 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
       switch (fieldDef.type) {
         case 'ordinal':
         case 'nominal':
-          domain = getDomain(resolvedFieldDef, spec.data.values);
+          domain = getDomain(resolvedFieldDef, spec.data.values, false);
           break;
         case 'quantitative':
         case 'temporal':
-          domain = getDomain(resolvedFieldDef, spec.data.values);
+          domain = getDomain(resolvedFieldDef, spec.data.values, false);
           domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
           break;
         default:

@@ -22,6 +22,7 @@ interface InternalSynthState {
 export type AudioEngineProviderProps = ParentProps<{}>;
 
 export type AudioEngineActions = {
+  startAudioContext: () => Promise<void>;
   setMuted: (muted: boolean) => void;
   setReadAxisTicks: (read: boolean) => void;
   setSpeechRate: (rate: number) => void;
@@ -88,6 +89,9 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
   const [audioEngineState, setAudioEngineState] = createStore(getInitialState());
 
   const actions: AudioEngineActions = {
+    startAudioContext: async () => {
+      await Tone.start();
+    },
     setMuted: (muted) => {
       setAudioEngineState((prev) => {
         return { ...prev, muted };
@@ -112,7 +116,6 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       setAudioEngineState((prev) => {
         return { ...prev, isPlaying: true };
       });
-      await Tone.start();
       Tone.getTransport().start();
     },
     stopTransport: () => {

@@ -9,7 +9,9 @@ export function AudioUnitPlaybackControl(props: AudioUnitPlaybackControlProps) {
   const [audioEngine, audioEngineActions] = useAudioEngine();
 
   function play() {
+    audioEngineActions.startAudioContext();
     audioUnitStateActions.setupTransportSequence();
+    audioUnitStateActions.resetTraversalIfEnd();
     audioEngineActions.startTransport();
   }
 

@@ -4,12 +4,10 @@ import { selectionTest } from './selection';
 import { dateToFormattedString } from './description';
 import { derivedFieldName } from './transforms';
 
-export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset): UmweltValue[] => {
+export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset, derive?: boolean): UmweltValue[] => {
   // TODO account for domain overrides in the field def
 
-  console.log('getDomain', fieldDef, data);
-
-  const field = derivedFieldName(fieldDef);
+  const field = derive ? derivedFieldName(fieldDef) : fieldDef.field;
 
   const uniqueVals = new Map<any, UmweltValue>();
 

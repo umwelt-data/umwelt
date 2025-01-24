@@ -247,8 +247,6 @@ test('handles multiple transforms on single temporal field', async () => {
 
   const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
 
-  console.log(JSON.stringify(transforms, null, 2));
-
   const transformedData = applyTransforms(dataset, transforms);
   const expectedData = (await getTransformedData(dataset, transforms)).map((d) => {
     return Object.fromEntries(Object.entries(d));

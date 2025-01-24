@@ -1,5 +1,6 @@
-import { AudioPropName, EncodingFieldDef, EncodingPropName, NONE, UmweltDataset } from '../types';
-import { aggregate } from './aggregate';
+import { AudioPropName, EncodingFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../types';
+import { getFieldDef, resolveFieldDef } from './spec';
+import { derivedFieldName } from './transforms';
 
 const DEFAULT_VALUES: Record<AudioPropName, any> = {
   pitch: 60, // MIDI C4 middle C. We encode in MIDI because linear interpolations in Hz are not perceptually linear
@@ -7,16 +8,18 @@ const DEFAULT_VALUES: Record<AudioPropName, any> = {
   volume: -15, // dB
 };
 
-export function encodeProperty(prop: AudioPropName, encodingFieldDef: EncodingFieldDef | undefined, scale: any, data: UmweltDataset): number {
+export function encodeProperty(prop: AudioPropName, spec: UmweltSpec, encodingFieldDef: EncodingFieldDef | undefined, scale: any, data: UmweltDataset): number {
   if (!encodingFieldDef) {
     return DEFAULT_VALUES[prop];
   }
 
-  // If aggregation is specified, apply it before scaling
-  if (encodingFieldDef.aggregate && encodingFieldDef.aggregate !== NONE) {
-    return scale(aggregate(encodingFieldDef.field, encodingFieldDef.aggregate, data));
+  const fieldDef = getFieldDef(spec, encodingFieldDef.field);
+  if (!fieldDef) {
+    return DEFAULT_VALUES[prop];
   }
+  const resolvedFieldDef = resolveFieldDef(fieldDef, encodingFieldDef);
+  const field = derivedFieldName(resolvedFieldDef);
 
   // If no aggregation, use the first matching data point
-  return scale(data[0][encodingFieldDef.field] as any);
+  return scale(data[0][field] as UmweltValue);
 }
