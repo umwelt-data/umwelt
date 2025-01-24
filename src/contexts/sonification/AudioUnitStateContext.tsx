@@ -115,6 +115,11 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
         // Schedule notes in the transport
         notes.forEach((note, idx) => {
+          // if note.state is the same as the current traversal state, set the time to the note time
+          if (Object.entries(note.state).every(([field, index]) => audioUnitState.traversalState[field] === index)) {
+            audioEngine.transport.seconds = note.time;
+          }
+
           audioEngine.transport.schedule(() => {
             if (audioEngine.isPlaying) {
               // isPlaying check needed to avoid race conditions because of async scheduling
@@ -137,7 +142,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
           if (idx === notes.length - 1) {
             audioEngine.transport.schedule(() => {
               audioEngineActions.stopTransport();
-            }, note.time + note.duration + (note.pauseAfter || 0));
+            }, note.time + note.duration);
           }
         });
       }
@@ -152,7 +157,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       if (traversalEnd) {
         setAudioUnitState(getInitialState());
         audioEngine.transport.seconds = 0;
-        return true;
       }
     },
   };
