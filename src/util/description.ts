@@ -4,6 +4,9 @@ import { FieldPredicate } from 'vega-lite/src/predicate';
 
 export const fmtValue = (value: any, fieldDef: ResolvedFieldDef): string => {
   if (Array.isArray(value)) {
+    if (value.length === 2 && (fieldDef.type === 'quantitative' || fieldDef.type === 'temporal')) {
+      return value.map((v) => fmtValue(v, fieldDef)).join(' to ');
+    }
     return value.map((v) => fmtValue(v, fieldDef)).join(', ');
   }
   if (fieldDef.type === 'temporal' && !(value instanceof Date)) {
