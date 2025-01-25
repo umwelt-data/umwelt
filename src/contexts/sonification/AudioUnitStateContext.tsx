@@ -168,9 +168,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         return '';
       }
 
-      const outerTraversal = props.audioUnitSpec.traversal[0];
-      const fieldDef = getFieldDef(spec, outerTraversal.field);
-      const resolvedDef = resolveFieldDef(fieldDef!, outerTraversal);
+      const innerTraversal = props.audioUnitSpec.traversal[props.audioUnitSpec.traversal.length - 1];
+      const fieldDef = getFieldDef(spec, innerTraversal.field);
+      const resolvedDef = resolveFieldDef(fieldDef!, innerTraversal);
 
       let domain;
       if (resolvedDef.bin) {
@@ -179,7 +179,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         console.log('domain', domain);
       } else {
         const domains = getFieldDomains();
-        domain = domains[outerTraversal.field];
+        domain = domains[innerTraversal.field];
       }
 
       let label = '';
@@ -189,16 +189,16 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       } else if (domain.length === 1) {
         label = fmtValue(domain[0], resolvedDef);
       } else {
-        label = outerTraversal.field;
+        label = innerTraversal.field;
       }
 
-      const additionalFields = props.audioUnitSpec.traversal.slice(1).map((t) => {
+      const additionalFields = props.audioUnitSpec.traversal.slice(0, -1).map((t) => {
         const fieldDef = getFieldDef(spec, t.field);
         return describeField(resolveFieldDef(fieldDef!, t));
       });
 
       if (additionalFields.length) {
-        label += ` by ${additionalFields.join(', ')}`;
+        label += ` for each ${additionalFields.join(', ')}`;
       }
 
       return label;
