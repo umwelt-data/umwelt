@@ -7,13 +7,14 @@ import { serializeValue } from '../../util/values';
 import { selectionTest } from '../../util/selection';
 import { useUmweltSpec } from '../UmweltSpecContext';
 import { FieldEqualPredicate } from 'vega-lite/src/predicate';
-import { getDomain } from '../../util/domain';
+import { getBinnedDomain, getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
 import { SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
 import { derivedDataset, derivedFieldName } from '../../util/transforms';
+import { describeField, fmtValue } from '../../util/description';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -32,6 +33,7 @@ export type AudioUnitStateActions = {
   getDerivedData: () => UmweltDataset;
   setupTransportSequence: () => void;
   resetTraversalIfEnd: () => void;
+  describePlaybackOrder: () => string;
 };
 
 type AudioUnitStateInternalActions = {
@@ -160,6 +162,46 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         setAudioUnitState(getInitialState());
         audioEngine.transport.seconds = 0;
       }
+    },
+    describePlaybackOrder: () => {
+      if (!props.audioUnitSpec.traversal.length) {
+        return '';
+      }
+
+      const outerTraversal = props.audioUnitSpec.traversal[0];
+      const fieldDef = getFieldDef(spec, outerTraversal.field);
+      const resolvedDef = resolveFieldDef(fieldDef!, outerTraversal);
+
+      let domain;
+      if (resolvedDef.bin) {
+        domain = getBinnedDomain(resolvedDef, getDerivedData());
+        console.log('data', getDerivedData());
+        console.log('domain', domain);
+      } else {
+        const domains = getFieldDomains();
+        domain = domains[outerTraversal.field];
+      }
+
+      let label = '';
+
+      if (domain.length > 1) {
+        label = `${fmtValue(domain[0], resolvedDef)} to ${fmtValue(domain[domain.length - 1], resolvedDef)}`;
+      } else if (domain.length === 1) {
+        label = fmtValue(domain[0], resolvedDef);
+      } else {
+        label = outerTraversal.field;
+      }
+
+      const additionalFields = props.audioUnitSpec.traversal.slice(1).map((t) => {
+        const fieldDef = getFieldDef(spec, t.field);
+        return describeField(resolveFieldDef(fieldDef!, t));
+      });
+
+      if (additionalFields.length) {
+        label += ` by ${additionalFields.join(', ')}`;
+      }
+
+      return label;
     },
   };
 
