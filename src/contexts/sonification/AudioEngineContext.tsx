@@ -44,6 +44,8 @@ export interface AudioEngine {
   isPlaying: boolean;
 }
 
+const DEFAULT_TONE_BPM = 120;
+
 const AudioEngineContext = createContext<[AudioEngine, AudioEngineActions]>();
 
 export function AudioEngineProvider(props: AudioEngineProviderProps) {
@@ -109,9 +111,11 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
     },
     setPlaybackRate: (rate) => {
+      const clampedRate = Math.max(0.1, Math.min(2, rate));
       setAudioEngineState((prev) => {
-        return { ...prev, playbackRate: rate };
+        return { ...prev, playbackRate: clampedRate };
       });
+      Tone.getTransport().bpm.value = DEFAULT_TONE_BPM * clampedRate;
     },
     startTransport: async () => {
       setAudioEngineState((prev) => {

@@ -225,7 +225,7 @@ export function exportableSpec(spec: UmweltSpec): ExportableSpec {
   return { ...rest, data: { name: data.name } };
 }
 
-export function prettyPrintSpec(spec: UmweltSpec): string {
+export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {
   return JSON.stringify(spec, null, 2);
 }
 
