@@ -29,6 +29,7 @@ export type AudioUnitStateActions = {
   setTraversalIndex: (field: string, index: number) => void;
   getTraversalIndex: (field: string) => number;
   getFieldDomains: () => Record<string, UmweltValue[]>;
+  getDerivedData: () => UmweltDataset;
   setupTransportSequence: () => void;
   resetTraversalIfEnd: () => void;
 };
@@ -148,6 +149,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       }
     },
     getFieldDomains,
+    getDerivedData,
     resetTraversalIfEnd: () => {
       const traversalFields = props.audioUnitSpec.traversal.map((f) => f.field);
       const traversalState = audioUnitState.traversalState;

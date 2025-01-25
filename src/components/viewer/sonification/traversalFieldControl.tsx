@@ -5,6 +5,7 @@ import { describeField, fmtValue } from '../../../util/description';
 import { getFieldDef, resolveFieldDef } from '../../../util/spec';
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { useAudioEngine } from '../../../contexts/sonification/AudioEngineContext';
+import { derivedFieldNameBinStartEnd } from '../../../util/transforms';
 
 export type TraversalFieldControlProps = {
   traversalFieldDef: AudioTraversalFieldDef;
@@ -26,7 +27,16 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
     audioUnitStateActions.setTraversalIndex(props.traversalFieldDef.field, idx);
   };
   const domain = () => audioUnitStateActions.getFieldDomains()[props.traversalFieldDef.field];
-  const selectedValue = () => domain()[selectedIdx()];
+  const selectedValue = () => {
+    if (resolvedFieldDef().bin && !resolvedFieldDef().aggregate) {
+      const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef());
+      const startValue = domain()[selectedIdx()];
+      const endValue = audioUnitStateActions.getDerivedData().find((d) => d[startField] === startValue)![endField];
+      return [startValue, endValue];
+    } else {
+      return domain()[selectedIdx()];
+    }
+  };
 
   return (
     <div>

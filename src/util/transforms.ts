@@ -29,6 +29,40 @@ export const derivedFieldName = (field: ResolvedFieldDef): string => {
   return name;
 };
 
+export const derivedFieldNameBinStartEnd = (field: ResolvedFieldDef): [string, string] => {
+  const transforms = fieldsToTransforms([field]);
+  let name: string | [string, string] = field.field;
+  for (const transform of transforms) {
+    if ('aggregate' in transform) {
+      for (const agg of transform.aggregate) {
+        if (isUmweltAggregateOp(agg.op)) {
+          if (typeof name === 'string') {
+            name = aggregatedFieldName(name, agg.op);
+          } else {
+            name = [aggregatedFieldName(name[0], agg.op), aggregatedFieldName(name[1], agg.op)];
+          }
+        }
+      }
+    } else if ('bin' in transform && !field.aggregate) {
+      if (typeof name === 'string') {
+        name = binnedFieldNames(name);
+      } else {
+        name = [binnedFieldNames(name[0])[0], binnedFieldNames(name[1])[1]];
+      }
+    } else if ('timeUnit' in transform && !field.aggregate) {
+      if (typeof name === 'string') {
+        name = timeUnitFieldName(name, transform.timeUnit as TimeUnit);
+      } else {
+        name = [timeUnitFieldName(name[0], transform.timeUnit as TimeUnit), timeUnitFieldName(name[1], transform.timeUnit as TimeUnit)];
+      }
+    }
+  }
+  if (typeof name === 'string') {
+    throw new Error('Expected derived field name to be a tuple');
+  }
+  return name;
+};
+
 export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[]): UmweltDataset => {
   const transforms = fieldsToTransforms(fields);
   const transformedData = applyTransforms(data, transforms);
