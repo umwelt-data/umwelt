@@ -2,7 +2,7 @@ import { For } from 'solid-js';
 import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
 import { AudioUnitSpec } from '../../../types';
 import { TraversalFieldControl } from './traversalFieldControl';
-import { AudioUnitStateProvider } from '../../../contexts/sonification/AudioUnitStateContext';
+import { AudioUnitStateProvider, useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { AudioScalesProvider } from '../../../contexts/sonification/AudioScalesContext';
 import { AudioUnitPlaybackControl } from './audioUnitPlaybackControl';
 import { describeField } from '../../../util/description';
@@ -27,10 +27,21 @@ export function AudioUnit(props: AudioUnitProps) {
     });
   }
 
+  function AudioUnitDescription() {
+    const [_, audioUnitStateActions] = useAudioUnitState();
+
+    return (
+      <p>
+        {audioUnitStateActions.describeEncodings()}, playing {audioUnitStateActions.describePlaybackOrder()}
+      </p>
+    );
+  }
+
   return (
     <AudioScalesProvider encoding={props.audioUnitSpec.encoding}>
       <AudioUnitStateProvider audioUnitSpec={props.audioUnitSpec}>
-        {<AudioUnitEncodings />}
+        <AudioUnitDescription />
+        <AudioUnitEncodings />
         <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
         <AudioUnitPlaybackControl unitName={props.audioUnitSpec.name} />
       </AudioUnitStateProvider>

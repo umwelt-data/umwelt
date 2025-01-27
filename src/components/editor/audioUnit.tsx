@@ -1,7 +1,9 @@
+import { Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioPropName, AudioUnitSpec, audioPropNames, isAudioProp, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
 import { TraversalDefinition } from './traversalDefinition';
+import ReorderableList from '../ui/ReorderableList';
 
 export type AudioUnitProps = {
   unitSpec: AudioUnitSpec;
@@ -50,9 +52,15 @@ export function AudioUnit(props: AudioUnitProps) {
       <div>
         <h4>Traversals</h4>
         <div>
-          {props.unitSpec.traversal.map((traversal) => {
-            return <TraversalDefinition unit={props.unitSpec.name} traversal={traversal} />;
-          })}
+          <Show when={props.unitSpec.traversal.length} fallback={'No traversals'}>
+            <ReorderableList
+              items={props.unitSpec.traversal}
+              renderItem={(traversal) => <TraversalDefinition unit={props.unitSpec.name} traversal={traversal} />}
+              onReorder={(value, newIndex) => {
+                specActions.reorderTraversal(props.unitSpec.name, value.field, newIndex);
+              }}
+            />
+          </Show>
         </div>
       </div>
       {spec.audio.units.length > 1 ? <button onClick={() => specActions.removeAudioUnit(props.unitSpec.name)}>Remove unit</button> : null}

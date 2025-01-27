@@ -14,7 +14,7 @@ import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
 import { derivedDataset, derivedFieldName } from '../../util/transforms';
-import { describeField, fmtValue } from '../../util/description';
+import { describeField, fmtValue, makeCommaSeparatedString } from '../../util/description';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -33,6 +33,7 @@ export type AudioUnitStateActions = {
   getDerivedData: () => UmweltDataset;
   setupTransportSequence: () => void;
   resetTraversalIfEnd: () => void;
+  describeEncodings: () => string;
   describePlaybackOrder: () => string;
 };
 
@@ -163,6 +164,18 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         audioEngine.transport.seconds = 0;
       }
     },
+    describeEncodings: () => {
+      return makeCommaSeparatedString(
+        Object.entries(props.audioUnitSpec.encoding)
+          .map(([propName, encoding]) => {
+            if (encoding) {
+              return `${describeField(resolveFieldDef(getFieldDef(spec, encoding.field)!, encoding))} as ${propName}`;
+            }
+            return '';
+          })
+          .filter((x) => x)
+      );
+    },
     describePlaybackOrder: () => {
       if (!props.audioUnitSpec.traversal.length) {
         return '';
@@ -175,8 +188,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       let domain;
       if (resolvedDef.bin) {
         domain = getBinnedDomain(resolvedDef, getDerivedData());
-        console.log('data', getDerivedData());
-        console.log('domain', domain);
       } else {
         const domains = getFieldDomains();
         domain = domains[innerTraversal.field];
@@ -198,7 +209,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       });
 
       if (additionalFields.length) {
-        label += ` for each ${additionalFields.join(', ')}`;
+        label += ` for each ${makeCommaSeparatedString(additionalFields)}`;
       }
 
       return label;

@@ -1,6 +1,7 @@
 import { Accessor, For, Index, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { FieldDefinition } from './fieldDefinition';
+import ReorderableList from '../ui/ReorderableList';
 
 export function Fields() {
   const [spec, specActions] = useUmweltSpec();
@@ -30,19 +31,7 @@ export function Fields() {
       <h3>Key</h3>
       <div>
         <Show when={spec.key.length} fallback={'None'}>
-          <ol>
-            <Index each={spec.key}>
-              {(key, idx) => (
-                <li>
-                  <label>
-                    {key()}
-                    {idx === 0 ? null : <button onClick={() => specActions.reorderKeyField(key(), idx - 1)}>Move up</button>}
-                    {idx === spec.key.length - 1 ? null : <button onClick={() => specActions.reorderKeyField(key(), idx + 1)}>Move down</button>}
-                  </label>
-                </li>
-              )}
-            </Index>
-          </ol>
+          <ReorderableList items={spec.key} renderItem={(key: string) => <label>{key}</label>} onReorder={specActions.reorderKeyField} />
         </Show>
       </div>
 

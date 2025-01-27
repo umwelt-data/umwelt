@@ -33,6 +33,7 @@ export type UmweltSpecActions = {
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
   renameUnit: (oldName: string, newName: string) => void;
+  reorderTraversal: (unit: string, field: string, newIndex: number) => void;
   setFieldAggregate: (field: string, aggregate: UmweltAggregateOp | 'undefined') => void;
   setFieldBin: (field: string, bin: boolean) => void;
   setFieldTimeUnit: (field: string, timeUnit: UmweltTimeUnit | 'undefined') => void;
@@ -360,6 +361,22 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           spec.audio.units.map((u) => (u.name === oldName ? { ...u, name: newName } : u))
         );
         internalActions.updateSearchParams();
+      }
+    },
+    reorderTraversal: (unit, field, newIndex) => {
+      debugger;
+      const unitDef = spec.audio.units.find((u) => u.name === unit);
+      if (unitDef) {
+        const traversalDef = unitDef.traversal.find((t) => t.field === field);
+        if (traversalDef) {
+          const newTraversals = unitDef.traversal.filter((t) => t.field !== field);
+          newTraversals.splice(newIndex, 0, traversalDef);
+          setSpec(
+            'audio',
+            'units',
+            spec.audio.units.map((u) => (u.name === unit ? { ...u, traversal: newTraversals } : u))
+          );
+        }
       }
     },
     setFieldAggregate: (field: string, inputAggregate: UmweltAggregateOp | 'undefined') => {

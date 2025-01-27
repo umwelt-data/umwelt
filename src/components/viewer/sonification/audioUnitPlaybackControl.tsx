@@ -21,7 +21,6 @@ export function AudioUnitPlaybackControl(props: AudioUnitPlaybackControlProps) {
 
   return (
     <div>
-      <div>describePlaybackOrder {audioUnitStateActions.describePlaybackOrder()}</div>
       <Show when={audioEngine.isPlaying && sonificationState.activeUnitName === props.unitName} fallback={<button onClick={() => play()}>Play</button>}>
         <button onClick={() => audioEngineActions.stopTransport()}>Pause</button>
       </Show>

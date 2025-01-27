@@ -7,7 +7,7 @@ export const fmtValue = (value: any, fieldDef: ResolvedFieldDef): string => {
     if (value.length === 2 && (fieldDef.type === 'quantitative' || fieldDef.type === 'temporal')) {
       return value.map((v) => fmtValue(v, fieldDef)).join('–');
     }
-    return value.map((v) => fmtValue(v, fieldDef)).join(', ');
+    return makeCommaSeparatedString(value.map((v) => fmtValue(v, fieldDef)));
   }
   if (fieldDef.type === 'temporal' && !(value instanceof Date)) {
     value = new Date(value);
@@ -94,3 +94,15 @@ export function predicateToDescription(predicate: LogicalComposition<FieldPredic
 export const describeField = (resolvedFieldDef: ResolvedFieldDef): string => {
   return `${resolvedFieldDef.bin ? 'binned ' : ''}${resolvedFieldDef.aggregate ?? ''} ${resolvedFieldDef.field}${resolvedFieldDef.timeUnit ? ` (${resolvedFieldDef.timeUnit})` : ''}`.trim();
 };
+
+export const makeCommaSeparatedString = (arr: string[]) => {
+  const listStart = arr.slice(0, -1).join(', ');
+  const listEnd = arr.slice(-1);
+  const conjunction = arr.length <= 1 ? '' : arr.length > 2 ? ', and ' : ' and ';
+
+  return [listStart, listEnd].join(conjunction);
+};
+
+export function capitalizeFirst(s: string) {
+  return s.slice(0, 1).toUpperCase() + s.slice(1);
+}
