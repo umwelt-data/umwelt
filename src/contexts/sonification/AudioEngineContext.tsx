@@ -131,6 +131,8 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       actions.releaseSynth();
     },
     playNote: (note: SonifierNote) => {
+      noiseSynth.triggerRelease();
+      synth.triggerRelease();
       if (note.pitch) {
         synth.volume.value = note.volume;
         // midi to frequency for note.pitch
