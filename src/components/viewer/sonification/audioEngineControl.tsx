@@ -16,6 +16,15 @@ export function AudioEngineControl(props: AudioEngineControlProps) {
       </div>
       <div>
         <label>
+          <input type="checkbox" checked={audioEngine.speakAxisTicks} onChange={(e) => audioEngineActions.setSpeakAxisTicks(e.target.checked)} />
+          Speak axis ticks
+        </label>
+        <label>
+          <input type="number" min="0.1" max="2" value={audioEngine.speechRate} step={0.1} id="speechRate" onChange={(e) => audioEngineActions.setSpeechRate(Number(e.target.value))} />x speech rate
+        </label>
+      </div>
+      <div>
+        <label>
           <input type="checkbox" aria-live="polite" checked={audioEngine.muted} onChange={(e) => audioEngineActions.setMuted(e.target.checked)} />
           {audioEngine.muted ? 'Muted' : 'Unmuted'}
         </label>

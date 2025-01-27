@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createMemo, createEffect } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncoding, audioPropNames, AudioUnitSpec, UmweltDataset, UmweltPredicate, UmweltValue } from '../../types';
+import { AudioEncoding, audioPropNames, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../../types';
 import { LogicalAnd } from 'vega-lite/src/logical';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
@@ -91,6 +91,15 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       })
     );
   });
+  const getAxisTicks = createMemo(() => {
+    return Object.fromEntries(
+      props.audioUnitSpec.traversal.map((traversalFieldDef) => {
+        const fieldDef = getFieldDef(spec, traversalFieldDef.field)!;
+        const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
+        return [traversalFieldDef.field, scaleActions.getAxisTicks(resolvedFieldDef)];
+      })
+    );
+  });
 
   const actions: AudioUnitStateActions = {
     setTraversalIndex: (field, index) => {
@@ -127,14 +136,34 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
           audioEngine.transport.schedule(() => {
             if (audioEngine.isPlaying) {
               // isPlaying check needed to avoid race conditions because of async scheduling
-              if (note.ramp) {
-                audioEngineActions.startOrRampSynth(note);
-              } else {
-                audioEngineActions.playNote(note);
-              }
+
               setAudioUnitState((prev) => {
                 return { ...prev, traversalState: note.state };
               });
+
+              if (note.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
+                audioEngine.transport.pause();
+                audioEngineActions.releaseSynth();
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(note.speakBefore);
+                utterance.rate = audioEngine.speechRate * 10;
+                utterance.onend = () => {
+                  audioEngine.transport.start();
+                  // play note
+                  if (note.ramp) {
+                    audioEngineActions.startOrRampSynth(note);
+                  } else {
+                    audioEngineActions.playNote(note);
+                  }
+                };
+                speechSynthesis.speak(utterance);
+              } else {
+                if (note.ramp) {
+                  audioEngineActions.startOrRampSynth(note);
+                } else {
+                  audioEngineActions.playNote(note);
+                }
+              }
             }
           }, note.time);
           if (note.pauseAfter) {
@@ -289,6 +318,66 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return result;
     });
   });
+  const getAnnouncementForNote = (state: TraversalState, prevState?: TraversalState) => {
+    const announcement: string[] = [];
+    Object.entries(state).forEach(([field, stateIdx]) => {
+      const domain = getFieldDomains()[field];
+
+      if (!domain.length) return;
+
+      const fieldDef = getFieldDef(spec, field)!;
+      const resolvedDef = resolveFieldDef(fieldDef, props.audioUnitSpec.traversal.find((f) => f.field === field)!);
+
+      const shouldAnnounce = hasCrossedAxisTick(state, prevState, resolvedDef);
+
+      if (shouldAnnounce) {
+        announcement.push(fmtValue(domain[stateIdx], resolvedDef));
+      }
+    });
+
+    return announcement.join(', ');
+  };
+  const hasCrossedAxisTick = (state: TraversalState, prevState: TraversalState | undefined, resolvedDef: ResolvedFieldDef) => {
+    let domain;
+    if (resolvedDef.bin || resolvedDef.type === 'nominal' || resolvedDef.type === 'ordinal') {
+      // either already binned or is a nominal/ordinal field (no binning)
+      domain = getFieldDomains()[resolvedDef.field];
+    } else {
+      domain = getAxisTicks()[resolvedDef.field];
+    }
+
+    if (!prevState) {
+      // first state
+      return true;
+    }
+
+    const currentData = internalActions.traversalStateToData(state);
+    const prevData = internalActions.traversalStateToData(prevState);
+
+    if (currentData.length && prevData.length) {
+      const currentValue = currentData[0][resolvedDef.field];
+      const prevValue = prevData[0][resolvedDef.field];
+
+      if (currentValue && prevValue) {
+        const currentTickIdx = domain.findIndex((tick, idx) => {
+          const v = tick instanceof Date ? tick.getTime() : tick;
+          const nextTick = domain[idx + 1];
+          const v2 = nextTick instanceof Date ? nextTick.getTime() : nextTick;
+          return v && currentValue >= v && currentValue < (v2 || Infinity);
+        });
+        const prevTickIdx = domain.findIndex((tick, idx) => {
+          const v = tick instanceof Date ? tick.getTime() : tick;
+          const nextTick = domain[idx + 1];
+          const v2 = nextTick instanceof Date ? nextTick.getTime() : nextTick;
+          return v && prevValue >= v && prevValue < (v2 || Infinity);
+        });
+
+        return currentTickIdx !== prevTickIdx;
+      }
+    }
+
+    return false;
+  };
   const getSonifierNotes = createMemo(() => {
     // Set up new sequence based on all possible states
     let currentTime = 0;
@@ -296,16 +385,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
     const allTraversalStates = getAllTraversalStates();
 
-    // const ticks = audioUnitSpec.traversal.map((traversalFieldDef) => {
-    //   const fieldDef = getFieldDef(spec, traversalFieldDef.field);
-    //   if (!fieldDef) {
-    //     return [];
-    //   }
-    //   const resolvedFieldDef = resolveFieldDef(fieldDef, traversalFieldDef);
-    //   scaleActions.getAxisTicks(resolvedFieldDef);
-    // });
-
-    // let prevState: TraversalState | undefined = undefined;
+    let prevState: TraversalState | undefined = undefined;
     allTraversalStates.forEach((state) => {
       const data = internalActions.traversalStateToData(state);
       const note = internalActions.encodeDataAsNote(data, props.audioUnitSpec.encoding);
@@ -321,12 +401,13 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         pauseAfter,
         ramp: shouldRamp(),
         state,
+        speakBefore: getAnnouncementForNote(state, prevState),
       });
 
       // Update the time for the next note, including the gap
       currentTime += note.duration + pauseAfter;
 
-      // prevState = state;
+      prevState = state;
     });
 
     return notes;

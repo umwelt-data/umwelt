@@ -24,7 +24,7 @@ export type AudioEngineProviderProps = ParentProps<{}>;
 export type AudioEngineActions = {
   startAudioContext: () => Promise<void>;
   setMuted: (muted: boolean) => void;
-  setReadAxisTicks: (read: boolean) => void;
+  setSpeakAxisTicks: (read: boolean) => void;
   setSpeechRate: (rate: number) => void;
   setPlaybackRate: (rate: number) => void;
   startTransport: () => void;
@@ -37,7 +37,7 @@ export type AudioEngineActions = {
 export interface AudioEngine {
   transport: TransportClass;
   muted: boolean;
-  readAxisTicks: boolean;
+  speakAxisTicks: boolean;
   speechRate: number;
   playbackRate: number; // multiplier for playback speed e.g. 1x, 2x, 0.5x
   pauseBetweenSections: number; // in seconds
@@ -57,7 +57,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
   };
   const synth = new Tone.Synth({
     oscillator: {
-      type: 'sine',
+      type: 'triangle',
     },
     envelope,
   }).toDestination();
@@ -80,7 +80,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
     return {
       transport: Tone.getTransport(),
       muted: false,
-      readAxisTicks: true,
+      speakAxisTicks: true,
       speechRate: 1,
       playbackRate: 1,
       pauseBetweenSections: 0.25,
@@ -100,9 +100,9 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
       Tone.getDestination().mute = muted;
     },
-    setReadAxisTicks: (read) => {
+    setSpeakAxisTicks: (read) => {
       setAudioEngineState((prev) => {
-        return { ...prev, readAxisTicks: read };
+        return { ...prev, speakAxisTicks: read };
       });
     },
     setSpeechRate: (rate) => {
