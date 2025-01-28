@@ -127,6 +127,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       setAudioEngineState((prev) => {
         return { ...prev, isPlaying: false };
       });
+      speechSynthesis.cancel();
       Tone.getTransport().pause();
       actions.releaseSynth();
     },
