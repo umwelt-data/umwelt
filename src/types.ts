@@ -173,6 +173,9 @@ export interface UmweltSpec {
   // text: OlliNode | OlliNode[] | boolean;
 }
 
+export type ExportableFieldDef = Omit<FieldDef, 'encodings'>;
+
 export interface ExportableSpec extends Omit<UmweltSpec, 'data'> {
   data: { name?: string };
+  fields: ExportableFieldDef[];
 }

@@ -1,5 +1,5 @@
 import { VegaLiteAdapter } from 'olli-adapters';
-import { UmweltSpec, VlSpec, VisualEncodingFieldDef, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, AudioTraversalFieldDef, FieldDef, ResolvedFieldDef, visualPropNames, isVisualProp } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
@@ -35,9 +35,28 @@ export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): 
   if (!data || !data.length) {
     return undefined;
   }
+  const fields: FieldDef[] = spec.fields.map((field) => {
+    const encodings: EncodingRef[] = [];
+    spec.visual.units.forEach((unit) => {
+      Object.entries(unit.encoding).forEach(([channel, encoding]) => {
+        if (isVisualProp(channel) && encoding.field === field.name) {
+          encodings.push({ unit: unit.name, property: channel });
+        }
+      });
+    });
+    spec.audio.units.forEach((unit) => {
+      Object.entries(unit.encoding).forEach(([channel, encoding]) => {
+        if (channel === 'pitch' && encoding.field === field.name) {
+          encodings.push({ unit: unit.name, property: channel });
+        }
+      });
+    });
+    return { ...field, encodings };
+  });
   const newSpec: UmweltSpec = {
     ...spec,
-    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, spec.fields), spec.fields) },
+    fields,
+    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, fields), fields) },
   };
   return newSpec;
 }
@@ -221,8 +240,12 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
 }
 
 export function exportableSpec(spec: UmweltSpec): ExportableSpec {
-  const { data, ...rest } = spec;
-  return { ...rest, data: { name: data.name } };
+  const { data, fields, ...rest } = spec;
+  const exportableFields: ExportableFieldDef[] = fields.map((field) => {
+    const { encodings, ...rest } = field;
+    return rest;
+  });
+  return { ...rest, fields: exportableFields, data: { name: data.name } };
 }
 
 export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {
