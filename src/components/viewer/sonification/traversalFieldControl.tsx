@@ -27,16 +27,7 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
     audioUnitStateActions.setTraversalIndex(props.traversalFieldDef.field, idx);
   };
   const domain = () => audioUnitStateActions.getFieldDomains()[props.traversalFieldDef.field];
-  const selectedValue = () => {
-    if (resolvedFieldDef().bin && !resolvedFieldDef().aggregate) {
-      const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef());
-      const startValue = domain()[selectedIdx()];
-      const endValue = audioUnitStateActions.getDerivedData().find((d) => d[startField] === startValue)![endField];
-      return [startValue, endValue];
-    } else {
-      return domain()[selectedIdx()];
-    }
-  };
+  const selectedValue = () => audioUnitStateActions.getDomainValue(props.traversalFieldDef.field, selectedIdx());
 
   return (
     <div>

@@ -13,7 +13,7 @@ import { SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
-import { derivedDataset, derivedFieldName } from '../../util/transforms';
+import { derivedDataset, derivedFieldName, derivedFieldNameBinStartEnd } from '../../util/transforms';
 import { describeField, fmtValue, makeCommaSeparatedString } from '../../util/description';
 
 export interface EncodedNote {
@@ -31,6 +31,7 @@ export type AudioUnitStateActions = {
   getTraversalIndex: (field: string) => number;
   getFieldDomains: () => Record<string, UmweltValue[]>;
   getDerivedData: () => UmweltDataset;
+  getDomainValue: (field: string, idx: number) => UmweltValue | [UmweltValue, UmweltValue];
   setupTransportSequence: () => void;
   resetTraversalIfEnd: () => void;
   describeEncodings: () => string;
@@ -195,6 +196,19 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         audioEngine.transport.seconds = 0;
       }
     },
+    getDomainValue: (field, idx) => {
+      const fieldDef = getFieldDef(spec, field)!;
+      const resolvedFieldDef = resolveFieldDef(fieldDef, props.audioUnitSpec.traversal.find((f) => f.field === field)!);
+      const domain = getFieldDomains()[field];
+      if (resolvedFieldDef.bin && !resolvedFieldDef.aggregate) {
+        const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef);
+        const startValue = domain[idx];
+        const endValue = getDerivedData().find((d) => d[startField] === startValue)![endField];
+        return [startValue, endValue];
+      } else {
+        return domain[idx];
+      }
+    },
     describeEncodings: () => {
       return makeCommaSeparatedString(
         Object.entries(props.audioUnitSpec.encoding)
@@ -333,7 +347,8 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       const shouldAnnounce = hasCrossedAxisTick(state, prevState, resolvedDef);
 
       if (shouldAnnounce) {
-        announcement.push(fmtValue(domain[stateIdx], resolvedDef));
+        announcement.push(fmtValue(actions.getDomainValue(field, state[field]), resolvedDef));
+        console.log(announcement);
       }
     });
 
@@ -357,8 +372,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     const prevData = internalActions.traversalStateToData(prevState);
 
     if (currentData.length && prevData.length) {
-      const currentValue = currentData[0][resolvedDef.field];
-      const prevValue = prevData[0][resolvedDef.field];
+      const fieldName = derivedFieldName(resolvedDef);
+      const currentValue = currentData[0][fieldName];
+      const prevValue = prevData[0][fieldName];
 
       if (currentValue && prevValue) {
         const currentTickIdx = domain.findIndex((tick, idx) => {
