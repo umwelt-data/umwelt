@@ -4,6 +4,7 @@ import * as Tone from 'tone';
 import { TransportClass } from 'tone/build/esm/core/clock/Transport';
 import { EncodedNote, TraversalState } from './AudioUnitStateContext';
 import { set } from 'vega-lite/src/log';
+import { getUserSettings, setUserSettings } from '../../util/localStorage';
 
 export interface SonifierNote extends EncodedNote {
   time: number; // elapsed time when should play in transport, in seconds
@@ -77,12 +78,13 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
   });
 
   const getInitialState = (): AudioEngine => {
+    const userSettings = getUserSettings();
     return {
       transport: Tone.getTransport(),
-      muted: false,
-      speakAxisTicks: true,
-      speechRate: 1,
-      playbackRate: 1,
+      muted: userSettings?.muted || false,
+      speakAxisTicks: userSettings?.speakAxisTicks || true,
+      speechRate: userSettings?.speechRate || 50,
+      playbackRate: userSettings?.playbackRate || 1,
       pauseBetweenSections: 0.25,
       isPlaying: false,
     };
@@ -95,23 +97,27 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       await Tone.start();
     },
     setMuted: (muted) => {
+      setUserSettings({ muted });
       setAudioEngineState((prev) => {
         return { ...prev, muted };
       });
       Tone.getDestination().mute = muted;
     },
     setSpeakAxisTicks: (read) => {
+      setUserSettings({ speakAxisTicks: read });
       setAudioEngineState((prev) => {
         return { ...prev, speakAxisTicks: read };
       });
     },
     setSpeechRate: (rate) => {
+      setUserSettings({ speechRate: rate });
       setAudioEngineState((prev) => {
         return { ...prev, speechRate: rate };
       });
     },
     setPlaybackRate: (rate) => {
       const clampedRate = Math.max(0.1, Math.min(2, rate));
+      setUserSettings({ playbackRate: clampedRate });
       setAudioEngineState((prev) => {
         return { ...prev, playbackRate: clampedRate };
       });

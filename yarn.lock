@@ -4031,6 +4031,14 @@ versioned-storage@^2.0.49:
     husky "^9.1.4"
     lint-staged "^15.2.7"
 
+versioned-storage@^3.1.7:
+  version "3.1.7"
+  resolved "https://registry.yarnpkg.com/versioned-storage/-/versioned-storage-3.1.7.tgz#5664e4b03322ca0df78620c7216a64945bd9904d"
+  integrity sha512-EXQGiumclN+MBMRmfchsWRHYy3WlNNNQD9cbBxiL+kdNmRKsOsfUYkOAurE4ScN/NWfAuPHCl5f6aFGunL/elg==
+  optionalDependencies:
+    husky "^9.1.4"
+    lint-staged "^15.2.7"
+
 vite-node@3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/vite-node/-/vite-node-3.0.2.tgz#0839794dfc9bcc847d8be5529cb6a240ae7a067c"

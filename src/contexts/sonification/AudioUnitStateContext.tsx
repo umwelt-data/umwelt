@@ -147,7 +147,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
                 audioEngineActions.releaseSynth();
                 speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(note.speakBefore);
-                utterance.rate = audioEngine.speechRate * 10;
+                utterance.rate = audioEngine.speechRate / 25;
                 utterance.onend = () => {
                   if (audioEngine.isPlaying) {
                     // play note
@@ -348,7 +348,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
       if (shouldAnnounce) {
         announcement.push(fmtValue(actions.getDomainValue(field, state[field]), resolvedDef));
-        console.log(announcement);
       }
     });
 

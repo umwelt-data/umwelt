@@ -20,7 +20,8 @@ export function AudioEngineControl(props: AudioEngineControlProps) {
           Speak axis ticks
         </label>
         <label>
-          <input type="number" min="0.1" max="2" value={audioEngine.speechRate} step={0.1} id="speechRate" onChange={(e) => audioEngineActions.setSpeechRate(Number(e.target.value))} />x speech rate
+          <input type="number" min="1" max="100" value={audioEngine.speechRate} step={10} id="speechRate" onChange={(e) => audioEngineActions.setSpeechRate(Number(e.target.value))} />
+          speech rate
         </label>
       </div>
       <div>
