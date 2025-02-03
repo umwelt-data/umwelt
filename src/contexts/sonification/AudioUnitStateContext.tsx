@@ -148,13 +148,15 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
                 const utterance = new SpeechSynthesisUtterance(note.speakBefore);
                 utterance.rate = audioEngine.speechRate * 10;
                 utterance.onend = () => {
-                  // play note
-                  if (note.ramp) {
-                    audioEngineActions.startOrRampSynth(note);
-                  } else {
-                    audioEngineActions.playNote(note);
+                  if (audioEngine.isPlaying) {
+                    // play note
+                    if (note.ramp) {
+                      audioEngineActions.startOrRampSynth(note);
+                    } else {
+                      audioEngineActions.playNote(note);
+                    }
+                    audioEngine.transport.start();
                   }
-                  audioEngine.transport.start();
                 };
                 speechSynthesis.speak(utterance);
               } else {

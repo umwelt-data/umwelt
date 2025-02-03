@@ -137,9 +137,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       if (note.pitch) {
         synth.volume.value = note.volume;
         // midi to frequency for note.pitch
-        // note that we're currently rounding to the nearest midi note
-        // this seems reasonable imo but something to consider
-        const frequency = Tone.Frequency(Math.round(note.pitch), 'midi').toFrequency();
+        const frequency = Tone.Frequency(note.pitch, 'midi').toFrequency();
         synth.triggerAttackRelease(frequency, note.duration);
       } else {
         noiseSynth.volume.value = note.volume;
@@ -152,7 +150,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
         noiseSynth.triggerRelease();
         setInternalSynthState('isNoisePlaying', false);
         // midi to frequency for note.pitch
-        const frequency = Tone.Frequency(Math.round(note.pitch), 'midi').toFrequency();
+        const frequency = Tone.Frequency(note.pitch, 'midi').toFrequency();
         if (!internalSynthState.isSynthPlaying) {
           // trigger synth
           synth.volume.value = note.volume;
