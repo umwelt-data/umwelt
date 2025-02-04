@@ -47,7 +47,7 @@ export function UploadData(props: UploadDataProps) {
     <>
       <details>
         <summary>Accepted file formats</summary>
-        <p>A JSON file should be an array of objects where each object represents a row of data. Example:</p>
+        <p>A JSON file should be an array of objects where each object represents a row of data.</p>
         <pre>
           <code>
             {JSON.stringify(
@@ -60,7 +60,7 @@ export function UploadData(props: UploadDataProps) {
             )}
           </code>
         </pre>
-        <p>A CSV file should have a header row with column names. Example:</p>
+        <p>A CSV file should have a header row with column names.</p>
         <pre>
           <code>{`name,age\nAlice,34\nBob,56`}</code>
         </pre>

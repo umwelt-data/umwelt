@@ -2,6 +2,7 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { aggregateOps, EncodingFieldDef, EncodingRef, FieldDef, FieldName, isAudioProp, isVisualProp, NONE, timeUnits, UmweltAggregateOp, UmweltTimeUnit } from '../../types';
 import { getFieldDef } from '../../util/spec';
 import { For, Show } from 'solid-js';
+import { InputRow } from '../ui/styled';
 
 interface FieldTransformsProps {
   fieldName: string;
@@ -89,7 +90,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
   const AggregateInput = () => {
     return (
       <Show when={canAggregateField(spec.key, fieldDef())}>
-        <div>
+        <InputRow>
           <label>
             Aggregate
             <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingOrTraversalDef()?.aggregate : fieldDef()?.aggregate ?? NONE} onChange={(e) => setAggregate(e.target.value as UmweltAggregateOp)}>
@@ -100,7 +101,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
               <For each={aggregateOps}>{(aggregateOp) => <option value={aggregateOp}>{aggregateOp}</option>}</For>
             </select>
           </label>
-        </div>
+        </InputRow>
       </Show>
     );
   };
@@ -108,12 +109,12 @@ export function FieldTransforms(props: FieldTransformsProps) {
   const BinInput = () => {
     return (
       <Show when={canBinField(fieldDef())}>
-        <div>
+        <InputRow>
           <label>
             Bin
             <input aria-describedby={props.fieldLabelId} type="checkbox" checked={encodingOrTraversalDef()?.bin ?? fieldDef()?.bin} onChange={(e) => setBin(e.target.checked)} />
           </label>
-        </div>
+        </InputRow>
       </Show>
     );
   };
@@ -121,7 +122,7 @@ export function FieldTransforms(props: FieldTransformsProps) {
   const TimeUnitInput = () => {
     return (
       <Show when={canTimeUnitField(fieldDef())}>
-        <div>
+        <InputRow>
           <label>
             Time unit
             <select aria-describedby={props.fieldLabelId} value={props.encoding ? encodingOrTraversalDef()?.timeUnit : fieldDef()?.timeUnit ?? NONE} onChange={(e) => setTimeUnit(e.target.value as UmweltTimeUnit)}>
@@ -132,16 +133,19 @@ export function FieldTransforms(props: FieldTransformsProps) {
               <For each={timeUnits}>{(timeUnit) => <option value={timeUnit}>{timeUnit}</option>}</For>
             </select>
           </label>
-        </div>
+        </InputRow>
       </Show>
     );
   };
 
   return (
-    <>
-      <AggregateInput />
-      <BinInput />
-      <TimeUnitInput />
-    </>
+    <Show when={canAggregateField(spec.key, fieldDef()) || canBinField(fieldDef()) || canTimeUnitField(fieldDef())}>
+      <details>
+        <summary>Additional options</summary>
+        <AggregateInput />
+        <BinInput />
+        <TimeUnitInput />
+      </details>
+    </Show>
   );
 }

@@ -1,9 +1,10 @@
-import { Show } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioPropName, AudioUnitSpec, audioPropNames, isAudioProp, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
 import { TraversalDefinition } from './traversalDefinition';
 import ReorderableList from '../ui/ReorderableList';
+import { EnumeratedItem, InputRow } from '../ui/styled';
 
 export type AudioUnitProps = {
   unitSpec: AudioUnitSpec;
@@ -24,29 +25,36 @@ export function AudioUnit(props: AudioUnitProps) {
   };
 
   return (
-    <div>
+    <EnumeratedItem>
       {spec.audio.units.length > 1 ? (
         <div>
           <h3 id={`unit-${props.unitSpec.name}`}>{props.unitSpec.name}</h3>
-          <label>
-            Unit name
-            <input
-              value={props.unitSpec.name}
-              onChange={(e) => {
-                specActions.renameUnit(props.unitSpec.name, e.currentTarget.value);
-              }}
-            ></input>
-          </label>
+          <InputRow>
+            <label>
+              Unit name
+              <input
+                value={props.unitSpec.name}
+                onChange={(e) => {
+                  specActions.renameUnit(props.unitSpec.name, e.currentTarget.value);
+                }}
+              ></input>
+            </label>
+          </InputRow>
         </div>
       ) : null}
       <div>
         <h4>Encodings</h4>
         <div>
-          {getEncodings().map(([propName, encoding]) => {
-            if (encoding && isAudioProp(propName)) {
-              return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
-            }
-          })}
+          <Show when={getEncodings().length} fallback={'No encodings'}>
+            <For each={getEncodings()}>
+              {([propName, encoding]) => {
+                if (encoding && isAudioProp(propName)) {
+                  return <EncodingDefinition property={propName} encoding={encoding} unit={props.unitSpec.name} />;
+                }
+                return null;
+              }}
+            </For>
+          </Show>
         </div>
       </div>
       <div>
@@ -64,6 +72,6 @@ export function AudioUnit(props: AudioUnitProps) {
         </div>
       </div>
       {spec.audio.units.length > 1 ? <button onClick={() => specActions.removeAudioUnit(props.unitSpec.name)}>Remove unit</button> : null}
-    </div>
+    </EnumeratedItem>
   );
 }

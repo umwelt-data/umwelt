@@ -6,10 +6,34 @@ import { isString } from 'vega';
 import { isNumeric } from 'vega-lite';
 import { FieldTransforms } from './fieldTransforms';
 import { resolveFieldDef } from '../../util/spec';
+import { EnumeratedItem, InputRow, MONOSPACE } from '../ui/styled';
+import { styled } from 'solid-styled-components';
 
 export type FieldDefinitionProps = {
   field: FieldDef;
 };
+
+const FieldName = styled.h4`
+  ${MONOSPACE}
+`;
+
+const EncodingContainer = styled.div`
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 25% auto;
+  gap: 1rem;
+`;
+
+const EncodingColumn = styled.div`
+  > * {
+    margin-bottom: 3px;
+  }
+`;
+
+const EncodingRow = styled.div`
+  display: flex;
+  gap: 3px;
+`;
 
 export function FieldDefinition(props: FieldDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
@@ -80,29 +104,31 @@ export function FieldDefinition(props: FieldDefinitionProps) {
   const fieldLabelId = `label-${field.name}`;
 
   return (
-    <div>
-      <h4 id={fieldLabelId}>{field.name}</h4>
-      <label>
-        Type
-        <select
-          aria-describedby={fieldLabelId}
-          value={field.type}
-          onChange={(e) => {
-            specActions.setFieldType(field.name, e.target.value as MeasureType);
-          }}
-        >
-          {assignableMtypes(field).map((mtype) => {
-            return (
-              <option value={mtype} selected={mtype === field.type}>
-                {mtype}
-              </option>
-            );
-          })}
-        </select>
-      </label>
-      <div>
+    <EnumeratedItem>
+      <FieldName id={fieldLabelId}>{field.name}</FieldName>
+      <InputRow>
+        <label>
+          Type
+          <select
+            aria-describedby={fieldLabelId}
+            value={field.type}
+            onChange={(e) => {
+              specActions.setFieldType(field.name, e.target.value as MeasureType);
+            }}
+          >
+            {assignableMtypes(field).map((mtype) => {
+              return (
+                <option value={mtype} selected={mtype === field.type}>
+                  {mtype}
+                </option>
+              );
+            })}
+          </select>
+        </label>
+      </InputRow>
+      <EncodingContainer>
         <div>Encodings</div>
-        <div>
+        <EncodingColumn>
           {field.encodings.length < propertyNames.length ? (
             <button aria-describedby={fieldLabelId} onClick={() => addEncoding(field)}>
               Add encoding
@@ -110,7 +136,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
           ) : null}
           {field.encodings.map((encodingRef) => {
             return (
-              <div>
+              <EncodingRow>
                 <select
                   aria-describedby={fieldLabelId}
                   value={encodingRef.property}
@@ -156,12 +182,12 @@ export function FieldDefinition(props: FieldDefinitionProps) {
                 >
                   Remove encoding
                 </button>
-              </div>
+              </EncodingRow>
             );
           })}
-        </div>
-      </div>
+        </EncodingColumn>
+      </EncodingContainer>
       <FieldTransforms fieldName={field.name} fieldLabelId={fieldLabelId} />
-    </div>
+    </EnumeratedItem>
   );
 }

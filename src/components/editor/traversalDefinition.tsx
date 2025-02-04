@@ -1,3 +1,4 @@
+import { styled } from 'solid-styled-components';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioTraversalFieldDef } from '../../types';
 import { FieldTransforms } from './fieldTransforms';
@@ -7,13 +8,24 @@ export type TraversalDefinitionProps = {
   traversal: AudioTraversalFieldDef;
 };
 
+const EncodingColumn = styled.div`
+  > * {
+    margin-bottom: 3px;
+  }
+`;
+
+const EncodingRow = styled.div`
+  display: flex;
+  gap: 3px;
+`;
+
 export function TraversalDefinition(props: TraversalDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
 
   return (
-    <div>
+    <EncodingColumn>
       {/* <h5>{props.traversal.field}</h5> */}
-      <div>
+      <EncodingRow>
         <select value={props.traversal.field} onChange={(e) => {}}>
           {spec.fields
             .filter((f) => f.active)
@@ -26,8 +38,8 @@ export function TraversalDefinition(props: TraversalDefinitionProps) {
             })}
         </select>
         <button onClick={() => {}}>Remove traversal</button>
-        <FieldTransforms fieldName={props.traversal.field} traversal={{ unit: props.unit }} />
-      </div>
-    </div>
+      </EncodingRow>
+      <FieldTransforms fieldName={props.traversal.field} traversal={{ unit: props.unit }} />
+    </EncodingColumn>
   );
 }

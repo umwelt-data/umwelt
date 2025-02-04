@@ -18,6 +18,7 @@ const RenderItem = styled('div')`
 `;
 
 const ReorderControls = styled('div')`
+  margin-left: 3px;
   flex: 0 0 auto;
 `;
 

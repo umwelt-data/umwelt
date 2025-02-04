@@ -1,4 +1,4 @@
-import { createSignal, ValidComponent } from 'solid-js';
+import { createEffect, createSignal, ValidComponent } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { Data } from './data';
 import { Fields } from './fields';
@@ -7,12 +7,19 @@ import { Audio } from './audio';
 
 import styles from '../../App.module.css';
 import { Dynamic } from 'solid-js/web';
+import { createStoredSignal } from '../../util/solid';
 
 type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
 
 export function Editor() {
   const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createSignal<EditorTab>(spec.data.values.length && spec.fields.length ? 'fields' : 'data');
+  const [currentTab, setCurrentTab] = createStoredSignal<EditorTab>('umwelt-tab', spec.data.values.length && spec.fields.length ? 'fields' : 'data');
+
+  createEffect(() => {
+    if (!(spec.data.values.length && spec.fields.length)) {
+      setCurrentTab('data');
+    }
+  });
 
   const onFocus = (e: FocusEvent) => {};
 

@@ -8,15 +8,15 @@ import { Sonification } from './sonification';
 
 import { styled } from 'solid-styled-components';
 
+const ExportUrlInput = styled('input')`
+  width: 100%;
+`;
+const ExportSpecTextarea = styled('textarea')`
+  width: 100%;
+`;
+
 export function Viewer() {
   const [spec, setSpec] = useUmweltSpec();
-
-  const ExportUrlInput = styled('input')`
-    width: 100%;
-  `;
-  const ExportSpecTextarea = styled('textarea')`
-    width: 100%;
-  `;
 
   return (
     <div class={styles.Viewer}>

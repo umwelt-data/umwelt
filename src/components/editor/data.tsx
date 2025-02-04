@@ -4,14 +4,21 @@ import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { UploadData } from './dataUpload';
 import { fmtValue } from '../../util/description';
-import { getFieldDef } from '../../util/spec';
+import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { UmweltDatastore, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 import { createStoredSignal } from '../../util/solid';
+import { styled } from 'solid-styled-components';
+import { MONOSPACE } from '../ui/styled';
 
 const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
 const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
 
 const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
+
+const StyledTable = styled('table')`
+  border: 1px solid #ccc;
+  ${MONOSPACE}
+`;
 
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
@@ -63,7 +70,7 @@ export function Data() {
   const DataTable = () => {
     return (
       <Show when={spec.data && spec.data.name && spec.data.values.length} fallback={'No dataset loaded'}>
-        <table>
+        <StyledTable>
           <thead>
             <tr>
               <For each={Object.keys(spec.data.values[0])}>{(key) => <th>{key}</th>}</For>
@@ -73,12 +80,21 @@ export function Data() {
             <For each={spec.data.values}>
               {(row) => (
                 <tr>
-                  <For each={Object.entries(row)}>{([fieldName, value]) => <td>{getFieldDef(spec, fieldName) ? fmtValue(value, getFieldDef(spec, fieldName)) : String(value)}</td>}</For>
+                  <For each={Object.entries(row)}>
+                    {([fieldName, value]) => {
+                      const fieldDef = getFieldDef(spec, fieldName);
+                      if (!fieldDef) {
+                        return <td>{String(value)}</td>;
+                      }
+                      const resolvedDef = resolveFieldDef(fieldDef);
+                      return <td>{fmtValue(value, resolvedDef)}</td>;
+                    }}
+                  </For>
                 </tr>
               )}
             </For>
           </tbody>
-        </table>
+        </StyledTable>
       </Show>
     );
   };
