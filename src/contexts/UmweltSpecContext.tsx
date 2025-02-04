@@ -4,7 +4,7 @@ import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, M
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
-import { exportableSpec, validateSpec } from '../util/spec';
+import { compressedSpec, exportableSpec, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
 import { cleanData, typeCoerceData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
@@ -86,7 +86,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
       if (searchParams.spec) {
-        setSearchParams({ spec: LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec))) });
+        setSearchParams({ spec: compressedSpec(spec) });
       }
     },
     detectKey: async () => {

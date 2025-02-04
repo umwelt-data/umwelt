@@ -252,8 +252,12 @@ export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {
   return JSON.stringify(spec, null, 2);
 }
 
+export function compressedSpec(spec: UmweltSpec): string {
+  return LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec)));
+}
+
 export function shareSpecURL(spec: UmweltSpec): string {
-  const specString = LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec)));
+  const specString = compressedSpec(spec);
   const url = new URL(window.location.origin);
   url.searchParams.set('spec', specString);
   return url.toString();
