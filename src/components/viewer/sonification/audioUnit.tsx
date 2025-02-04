@@ -7,24 +7,42 @@ import { AudioScalesProvider } from '../../../contexts/sonification/AudioScalesC
 import { AudioUnitPlaybackControl } from './audioUnitPlaybackControl';
 import { describeField } from '../../../util/description';
 import { getFieldDef, resolveFieldDef } from '../../../util/spec';
+import { EnumeratedItem, InputRow } from '../../ui/styled';
+import { styled } from 'solid-styled-components';
 
 export type AudioUnitProps = {
   audioUnitSpec: AudioUnitSpec;
 };
 
+const EncodingsContainer = styled.div`
+  margin-bottom: 1em;
+`;
+
 export function AudioUnit(props: AudioUnitProps) {
   const [spec] = useUmweltSpec();
 
   function AudioUnitEncodings() {
-    return Object.entries(props.audioUnitSpec.encoding).map(([propName, encoding]) => {
-      if (encoding) {
-        const fieldDef = getFieldDef(spec, encoding.field);
-        if (fieldDef) {
-          const resolvedFieldDef = resolveFieldDef(fieldDef, encoding);
-          return <div>{`${propName}: ${describeField(resolvedFieldDef)}`}</div>;
-        }
-      }
-    });
+    return (
+      <EncodingsContainer>
+        <For each={Object.entries(props.audioUnitSpec.encoding)}>
+          {([propName, encoding]) => {
+            if (encoding) {
+              const fieldDef = getFieldDef(spec, encoding.field);
+              if (fieldDef) {
+                const resolvedFieldDef = resolveFieldDef(fieldDef, encoding);
+                return (
+                  <InputRow>
+                    <label>
+                      {propName} <input readonly value={describeField(resolvedFieldDef)} />
+                    </label>
+                  </InputRow>
+                );
+              }
+            }
+          }}
+        </For>
+      </EncodingsContainer>
+    );
   }
 
   function AudioUnitDescription() {
@@ -32,19 +50,23 @@ export function AudioUnit(props: AudioUnitProps) {
 
     return (
       <p>
-        {audioUnitStateActions.describeEncodings()}, playing {audioUnitStateActions.describePlaybackOrder()}
+        {audioUnitStateActions.describeEncodings()}
+        <br />
+        playing {audioUnitStateActions.describePlaybackOrder()}
       </p>
     );
   }
 
   return (
-    <AudioScalesProvider encoding={props.audioUnitSpec.encoding}>
-      <AudioUnitStateProvider audioUnitSpec={props.audioUnitSpec}>
-        <AudioUnitDescription />
-        <AudioUnitEncodings />
-        <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
-        <AudioUnitPlaybackControl unitName={props.audioUnitSpec.name} />
-      </AudioUnitStateProvider>
-    </AudioScalesProvider>
+    <EnumeratedItem>
+      <AudioScalesProvider encoding={props.audioUnitSpec.encoding}>
+        <AudioUnitStateProvider audioUnitSpec={props.audioUnitSpec}>
+          <AudioUnitDescription />
+          <AudioUnitEncodings />
+          <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
+          <AudioUnitPlaybackControl unitName={props.audioUnitSpec.name} />
+        </AudioUnitStateProvider>
+      </AudioScalesProvider>
+    </EnumeratedItem>
   );
 }

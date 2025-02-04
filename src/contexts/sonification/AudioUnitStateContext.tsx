@@ -241,11 +241,11 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       let label = '';
 
       if (domain.length > 1) {
-        label = `${fmtValue(domain[0], resolvedDef)} to ${fmtValue(domain[domain.length - 1], resolvedDef)}`;
+        label = `${describeField(resolvedDef)} from ${fmtValue(domain[0], resolvedDef)} to ${fmtValue(domain[domain.length - 1], resolvedDef)}`;
       } else if (domain.length === 1) {
-        label = fmtValue(domain[0], resolvedDef);
+        label = `${describeField(resolvedDef)} equals ${fmtValue(domain[0], resolvedDef)}`;
       } else {
-        label = innerTraversal.field;
+        label = describeField(resolvedDef);
       }
 
       const additionalFields = props.audioUnitSpec.traversal.slice(0, -1).map((t) => {

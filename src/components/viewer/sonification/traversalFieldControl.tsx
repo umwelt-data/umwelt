@@ -6,6 +6,7 @@ import { getFieldDef, resolveFieldDef } from '../../../util/spec';
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { useAudioEngine } from '../../../contexts/sonification/AudioEngineContext';
 import { derivedFieldNameBinStartEnd } from '../../../util/transforms';
+import { InputRow } from '../../ui/styled';
 
 export type TraversalFieldControlProps = {
   traversalFieldDef: AudioTraversalFieldDef;
@@ -30,7 +31,7 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
   const selectedValue = () => audioUnitStateActions.getDomainValue(props.traversalFieldDef.field, selectedIdx());
 
   return (
-    <div>
+    <InputRow>
       <label>
         <span>{describeField(resolvedFieldDef())}</span>
         <Switch>
@@ -40,11 +41,13 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
             </select>
           </Match>
           <Match when={resolvedFieldDef().type !== 'nominal'}>
-            <input aria-live="assertive" aria-valuetext={fmtValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
-            {fmtValue(selectedValue(), resolvedFieldDef())}
+            <div>
+              <input aria-live="assertive" aria-valuetext={fmtValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
+              <span>{fmtValue(selectedValue(), resolvedFieldDef())}</span>
+            </div>
           </Match>
         </Switch>
       </label>
-    </div>
+    </InputRow>
   );
 }
