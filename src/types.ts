@@ -175,7 +175,7 @@ export interface UmweltSpec {
 
 export type ExportableFieldDef = Omit<FieldDef, 'encodings'>;
 
-export interface ExportableSpec extends Omit<UmweltSpec, 'data'> {
+export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data'> {
   data: { name?: string };
   fields: ExportableFieldDef[];
 }
