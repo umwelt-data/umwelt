@@ -5,6 +5,7 @@ import { TransportClass } from 'tone/build/esm/core/clock/Transport';
 import { EncodedNote, TraversalState } from './AudioUnitStateContext';
 import { set } from 'vega-lite/src/log';
 import { getUserSettings, setUserSettings } from '../../util/localStorage';
+import { clamp } from '../../util/values';
 
 export interface SonifierNote extends EncodedNote {
   time: number; // elapsed time when should play in transport, in seconds
@@ -110,13 +111,14 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
     },
     setSpeechRate: (rate) => {
+      const clampedRate = clamp(rate, 1, 100);
       setUserSettings({ speechRate: rate });
       setAudioEngineState((prev) => {
         return { ...prev, speechRate: rate };
       });
     },
     setPlaybackRate: (rate) => {
-      const clampedRate = Math.max(0.1, Math.min(2, rate));
+      const clampedRate = clamp(rate, 0.1, 2);
       setUserSettings({ playbackRate: clampedRate });
       setAudioEngineState((prev) => {
         return { ...prev, playbackRate: clampedRate };
