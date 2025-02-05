@@ -51,17 +51,6 @@ export function editLinePointConditionalBehavior(vgSpec: VgSpec): VgSpec {
 
 export function renderVegaLite(vlSpec: VlSpec, domSelector: string) {
   let vgSpec = compile(vlSpec).spec;
-  // const dataset = vgSpec.data[vgSpec.data.length - 1].name;
-  // vgSpec.data.push({
-  //   "name": "brush_materialized",
-  //   "source": dataset,
-  //   "transform": [{"type": "filter", "expr": "!length(data(\"brush_store\")) || vlSelectionTest(\"brush_store\", datum)"}]
-  // })
-  // vgSpec.data.push({
-  //   "name": "external_state_materialized",
-  //   "source": dataset,
-  //   "transform": [{"type": "filter", "expr": "!length(data(\"external_state_store\")) || vlSelectionTest(\"external_state_store\", datum)"}]
-  // })
   vgSpec.signals = (vgSpec.signals || [])
     .map((signal) => {
       if (signal.name === 'external_state_modify') {

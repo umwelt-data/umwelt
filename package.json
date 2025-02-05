@@ -29,6 +29,7 @@
     "vitest": "^3.0.2"
   },
   "dependencies": {
+    "@solid-primitives/scheduled": "^1.5.0",
     "@solidjs/router": "^0.8.3",
     "@types/d3-scale": "^4.0.8",
     "@types/papaparse": "^5.3.14",

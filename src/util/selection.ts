@@ -1,7 +1,8 @@
 import { isDate, toNumber, isArray, inrange } from 'vega';
 import { LogicalAnd, LogicalComposition } from 'vega-lite/src/logical';
-import { FieldPredicate, FieldEqualPredicate } from 'vega-lite/src/predicate';
+import { FieldPredicate, FieldEqualPredicate, FieldRangePredicate } from 'vega-lite/src/predicate';
 import { EncodingFieldDef, FieldDef, UmweltDataset, UmweltDatum, UmweltPredicate, UmweltValue } from '../types';
+import { TraversalState } from '../contexts/sonification/AudioUnitStateContext';
 
 export type VlSelectionTuple = { unit: string; fields: any; values: any };
 export type VlSelectionStore = VlSelectionTuple[];
@@ -190,22 +191,6 @@ function testPoint(datum: { [x: string]: any }, entry: { fields: any; values: an
   });
 }
 
-export function datumToPredicate(datum: UmweltDatum, fields: (FieldDef | EncodingFieldDef)[]): LogicalAnd<FieldEqualPredicate> {
-  const fieldNames = fields.flatMap((f) => {
-    if ('field' in f) return [f.field];
-    if ('name' in f) return [f.name];
-    return [];
-  });
-  return {
-    and: fieldNames.map((field) => {
-      return {
-        field: field,
-        equal: datum[field] as any,
-      };
-    }),
-  };
-}
-
 export function predicateToFields(predicate: UmweltPredicate): string[] {
   if ('and' in predicate) {
     return predicate.and.flatMap((p) => predicateToFields(p));
@@ -217,4 +202,25 @@ export function predicateToFields(predicate: UmweltPredicate): string[] {
     return predicateToFields(predicate.not);
   }
   return [predicate.field];
+}
+
+export function audioStateToPredicate(indices: TraversalState, domains: Record<string, UmweltValue[]>): UmweltPredicate {
+  return {
+    and: Object.entries(indices).map(([field, idx]) => {
+      const value = domains[field][idx];
+      const lastIndex = domains[field].length - 1;
+      if (Array.isArray(value)) {
+        return {
+          field,
+          range: value,
+          inclusive: idx === lastIndex,
+        } as FieldRangePredicate;
+      } else {
+        return {
+          field,
+          equal: value,
+        } as FieldEqualPredicate;
+      }
+    }),
+  };
 }

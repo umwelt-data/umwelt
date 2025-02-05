@@ -991,6 +991,11 @@
   resolved "https://registry.npmjs.org/@solid-primitives/scheduled/-/scheduled-1.4.1.tgz"
   integrity sha512-OLcNXwYpX7HUOEqNPcmR31dkyI1E2imkMDBRlqsGT0ZhJV1L2g0TEREpo4nm/kUhh8LVQzkfnxS+GONx9kh90A==
 
+"@solid-primitives/scheduled@^1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/scheduled/-/scheduled-1.5.0.tgz#a4f0977549df4a946f42c3131b9545fb721dccde"
+  integrity sha512-RVw24IRNh1FQ4DCMb3OahB70tXIwc5vH8nhR4nNPsXwUPQeuOkLsDI5BlxaPk0vyZgqw9lDpufgI3HnPwplgDw==
+
 "@solid-primitives/static-store@^0.0.4":
   version "0.0.4"
   resolved "https://registry.npmjs.org/@solid-primitives/static-store/-/static-store-0.0.4.tgz"

@@ -7,6 +7,7 @@ import { exportableSpec, prettyPrintSpec, shareSpecURL } from '../../util/spec';
 import { Sonification } from './sonification';
 
 import { styled } from 'solid-styled-components';
+import { UmweltSelectionProvider } from '../../contexts/UmweltSelectionContext';
 
 const ExportUrlInput = styled('input')`
   width: 100%;
@@ -36,15 +37,16 @@ export function Viewer() {
           </ExportSpecTextarea>
         </label>
       </details>
+      <UmweltSelectionProvider>
+        <h2>Visualization</h2>
+        <Visualization />
 
-      <h2>Visualization</h2>
-      <Visualization />
+        <h2>Description</h2>
+        <TextualStructure />
 
-      <h2>Description</h2>
-      <TextualStructure />
-
-      <h2>Sonification</h2>
-      <Sonification />
+        <h2>Sonification</h2>
+        <Sonification />
+      </UmweltSelectionProvider>
     </div>
   );
 }

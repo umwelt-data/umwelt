@@ -4,7 +4,7 @@ import { AudioEncoding, audioPropNames, AudioUnitSpec, ResolvedFieldDef, UmweltD
 import { LogicalAnd } from 'vega-lite/src/logical';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
-import { selectionTest } from '../../util/selection';
+import { audioStateToPredicate, selectionTest } from '../../util/selection';
 import { useUmweltSpec } from '../UmweltSpecContext';
 import { FieldEqualPredicate } from 'vega-lite/src/predicate';
 import { getBinnedDomain, getDomain } from '../../util/domain';
@@ -15,6 +15,7 @@ import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
 import { derivedDataset, derivedFieldName, derivedFieldNameBinStartEnd } from '../../util/transforms';
 import { describeField, fmtValue, makeCommaSeparatedString } from '../../util/description';
+import { useUmweltSelection } from '../UmweltSelectionContext';
 
 export interface EncodedNote {
   duration: number; // duration in seconds
@@ -55,6 +56,7 @@ const AudioUnitStateContext = createContext<[AudioUnitState, AudioUnitStateActio
 
 export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const [spec] = useUmweltSpec();
+  const [selection, selectionActions] = useUmweltSelection();
   const [scales, scaleActions] = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
@@ -68,6 +70,11 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       ),
     };
   };
+
+  createEffect(() => {
+    const predicate = audioStateToPredicate(audioUnitState.traversalState, getFieldDomains());
+    selectionActions.setSelection({ source: 'sonification', predicate });
+  });
 
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
 

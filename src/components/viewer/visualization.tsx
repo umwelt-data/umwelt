@@ -1,13 +1,45 @@
-import { Accessor, createEffect, onCleanup } from 'solid-js';
+import { Accessor, createEffect, createSignal, onCleanup } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { umweltToVegaLiteSpec } from '../../util/spec';
 import { UmweltDataset } from '../../types';
 import { renderVegaLite } from '../../util/vega';
+import { debounce } from '@solid-primitives/scheduled';
+import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
+import { predicateToSelectionStore, selectionStoreToSelection, VlSelectionStore } from '../../util/selection';
 
 export type VisualizationProps = {};
 
 export function Visualization(props: VisualizationProps) {
   const [spec, specActions] = useUmweltSpec();
+  const [selection, selectionActions] = useUmweltSelection();
+  const [isMouseOver, setIsMouseOver] = createSignal(false);
+
+  const onSelectionStore = debounce((store: VlSelectionStore) => {
+    // Update the selection when the brush store changes
+    if (isMouseOver()) {
+      const predicate = selectionStoreToSelection(store);
+      selectionActions.setSelection({ source: 'visualization', predicate });
+    }
+  }, 250);
+
+  createEffect(() => {
+    // Update the view when the selection changes
+    const sel = selection();
+    const view = (window as any).view;
+    if (!sel) {
+      if (view) {
+        view.data('external_state_store', undefined).run();
+      }
+      return;
+    }
+
+    if (!view) return;
+
+    if (sel.source === 'sonification' || sel.source === 'text-navigation') {
+      const store = predicateToSelectionStore(sel.predicate);
+      view.data('external_state_store', store).run();
+    }
+  });
 
   createEffect(() => {
     const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
@@ -16,9 +48,9 @@ export function Visualization(props: VisualizationProps) {
       try {
         const view = renderVegaLite(vlSpec, '#vl-container');
 
-        // view.addDataListener('brush_store', (_: any, value: any) => {
-        //   updateValue(value);
-        // });
+        view.addDataListener('brush_store', (_: any, value: VlSelectionStore) => {
+          onSelectionStore(value);
+        });
 
         (window as any).view = view;
       } catch (e) {
@@ -32,7 +64,19 @@ export function Visualization(props: VisualizationProps) {
     });
   });
 
-  const handleMouseMove = (e: MouseEvent) => {};
+  const onMouseEnter = () => {
+    setIsMouseOver(true);
+  };
+  const onMouseLeave = () => {
+    setIsMouseOver(false);
+  };
 
-  return <div id="vl-container" onMouseMove={handleMouseMove}></div>;
+  return (
+    <>
+      <div id="vl-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></div>
+      <pre>
+        <code>{JSON.stringify(selection(), null, 2)}</code>
+      </pre>
+    </>
+  );
 }
