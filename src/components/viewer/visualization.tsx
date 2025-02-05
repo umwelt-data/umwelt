@@ -71,12 +71,5 @@ export function Visualization(props: VisualizationProps) {
     setIsMouseOver(false);
   };
 
-  return (
-    <>
-      <div id="vl-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></div>
-      <pre>
-        <code>{JSON.stringify(selection(), null, 2)}</code>
-      </pre>
-    </>
-  );
+  return <div id="vl-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></div>;
 }
