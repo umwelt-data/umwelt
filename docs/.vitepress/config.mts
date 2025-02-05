@@ -4,11 +4,14 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'Umwelt',
   description: 'Accessible multimodal data representations',
+  base: '/umwelt/',
   themeConfig: {
+    externalLinkIcon: true,
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Examples', link: '/markdown-examples' },
+      { text: 'Editor', link: 'https://umwelt-data.github.io/umwelt/editor' },
     ],
 
     sidebar: [

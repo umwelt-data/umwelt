@@ -34,3 +34,7 @@ Runs the docs in dev mode with live reload at [http://localhost:5173](http://loc
 ### `yarn docs:build`
 
 Builds vitepress docs to `docs/.vitepress/dist`.
+
+### `yarn docs:preview`
+
+Previews the build output from `docs/.vitepress/dist` at [http://localhost:4173](http://localhost:4173).
