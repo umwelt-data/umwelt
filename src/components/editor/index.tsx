@@ -9,14 +9,21 @@ import styles from '../../App.module.css';
 import { Dynamic } from 'solid-js/web';
 import { createStoredSignal } from '../../util/solid';
 
-type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
+const editorTabs = ['data', 'fields', 'visual', 'audio'] as const;
+type EditorTab = (typeof editorTabs)[number];
 
 export function Editor() {
   const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createStoredSignal<EditorTab>('umwelt-tab', spec.data.values.length && spec.fields.length ? 'fields' : 'data');
+  const [currentTab, setCurrentTab] = createStoredSignal<EditorTab>('umweltTab', spec.data.values.length && spec.fields.length ? 'fields' : 'data');
 
   createEffect(() => {
     if (!(spec.data.values.length && spec.fields.length)) {
+      setCurrentTab('data');
+    }
+  });
+
+  createEffect(() => {
+    if (!editorTabs.includes(currentTab())) {
       setCurrentTab('data');
     }
   });
