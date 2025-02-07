@@ -4,16 +4,17 @@ import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
 import { AudioUnit } from './audioUnit';
 import { AudioEngineProvider } from '../../../contexts/sonification/AudioEngineContext';
 import { AudioEngineControl } from './audioEngineControl';
+import { UmweltSpec } from '../../../types';
 
-export type SonificationProps = {};
+export type SonificationProps = {
+  spec: UmweltSpec;
+};
 
 export function Sonification(props: SonificationProps) {
-  const [spec] = useUmweltSpec();
-
   return (
     <SonificationStateProvider>
       <AudioEngineProvider>
-        <For each={spec.audio.units}>{(audioUnitSpec) => <AudioUnit audioUnitSpec={audioUnitSpec} />}</For>
+        <For each={props.spec.audio.units}>{(audioUnitSpec) => <AudioUnit spec={props.spec} audioUnitSpec={audioUnitSpec} />}</For>
         <AudioEngineControl />
       </AudioEngineProvider>
     </SonificationStateProvider>

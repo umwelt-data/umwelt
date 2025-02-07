@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
-import { AudioUnitSpec } from '../../../types';
+import { AudioUnitSpec, UmweltSpec } from '../../../types';
 import { TraversalFieldControl } from './traversalFieldControl';
 import { AudioUnitStateProvider, useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { AudioScalesProvider } from '../../../contexts/sonification/AudioScalesContext';
@@ -11,6 +11,7 @@ import { EnumeratedItem, InputRow } from '../../ui/styled';
 import { styled } from 'solid-styled-components';
 
 export type AudioUnitProps = {
+  spec: UmweltSpec;
   audioUnitSpec: AudioUnitSpec;
 };
 
@@ -19,15 +20,13 @@ const EncodingsContainer = styled.div`
 `;
 
 export function AudioUnit(props: AudioUnitProps) {
-  const [spec] = useUmweltSpec();
-
   function AudioUnitEncodings() {
     return (
       <EncodingsContainer>
         <For each={Object.entries(props.audioUnitSpec.encoding)}>
           {([propName, encoding]) => {
             if (encoding) {
-              const fieldDef = getFieldDef(spec, encoding.field);
+              const fieldDef = getFieldDef(props.spec, encoding.field);
               if (fieldDef) {
                 const resolvedFieldDef = resolveFieldDef(fieldDef, encoding);
                 return (
@@ -63,7 +62,7 @@ export function AudioUnit(props: AudioUnitProps) {
         <AudioUnitStateProvider audioUnitSpec={props.audioUnitSpec}>
           <AudioUnitDescription />
           <AudioUnitEncodings />
-          <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl traversalFieldDef={traversalFieldDef} />}</For>
+          <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl spec={props.spec} traversalFieldDef={traversalFieldDef} />}</For>
           <AudioUnitPlaybackControl unitName={props.audioUnitSpec.name} />
         </AudioUnitStateProvider>
       </AudioScalesProvider>

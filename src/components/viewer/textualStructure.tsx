@@ -1,20 +1,21 @@
 import { Accessor, createEffect, createSignal } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { umweltToOlliSpec, umweltToVegaLiteSpec } from '../../util/spec';
-import { UmweltDataset } from '../../types';
+import { UmweltDataset, UmweltSpec } from '../../types';
 import { renderVegaLite } from '../../util/vega';
 import { olli, OlliGlobalState } from 'olli';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 
-export type VisualizationProps = {};
+export type VisualizationProps = {
+  spec: UmweltSpec;
+};
 
 export function TextualStructure(props: VisualizationProps) {
-  const [spec, specActions] = useUmweltSpec();
   const [selection, selectionActions] = useUmweltSelection();
   const [olliContainerRef, setOlliContainerRef] = createSignal<HTMLDivElement | null>(null);
 
   createEffect(() => {
-    umweltToOlliSpec(spec, spec.data.values).then((olliSpec) => {
+    umweltToOlliSpec(props.spec, props.spec.data.values).then((olliSpec) => {
       if (olliSpec) {
         if (((window as any)._olli as OlliGlobalState)?.instancesOnPage) {
           // TODO we should fix this jank in olli

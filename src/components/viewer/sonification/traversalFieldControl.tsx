@@ -1,6 +1,6 @@
 import { createMemo, For, Match, Switch } from 'solid-js';
 import { useUmweltSpec } from '../../../contexts/UmweltSpecContext';
-import { AudioTraversalFieldDef, UmweltPredicate } from '../../../types';
+import { AudioTraversalFieldDef, UmweltPredicate, UmweltSpec } from '../../../types';
 import { describeField, fmtValue } from '../../../util/description';
 import { getFieldDef, resolveFieldDef } from '../../../util/spec';
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
@@ -9,16 +9,16 @@ import { derivedFieldNameBinStartEnd } from '../../../util/transforms';
 import { InputRow } from '../../ui/styled';
 
 export type TraversalFieldControlProps = {
+  spec: UmweltSpec;
   traversalFieldDef: AudioTraversalFieldDef;
   selection?: UmweltPredicate;
 };
 
 export function TraversalFieldControl(props: TraversalFieldControlProps) {
-  const [spec] = useUmweltSpec();
   const [_, audioUnitStateActions] = useAudioUnitState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
 
-  const fieldDef = () => getFieldDef(spec, props.traversalFieldDef.field);
+  const fieldDef = () => getFieldDef(props.spec, props.traversalFieldDef.field);
 
   const resolvedFieldDef = () => resolveFieldDef(fieldDef()!, props.traversalFieldDef);
 

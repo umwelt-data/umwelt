@@ -72,8 +72,10 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   };
 
   createEffect(() => {
-    const predicate = audioStateToPredicate(audioUnitState.traversalState, getFieldDomains());
-    selectionActions.setSelection({ source: 'sonification', predicate });
+    if (audioEngine.isPlaying) {
+      const predicate = audioStateToPredicate(audioUnitState.traversalState, getFieldDomains());
+      selectionActions.setSelection({ source: 'sonification', predicate });
+    }
   });
 
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());

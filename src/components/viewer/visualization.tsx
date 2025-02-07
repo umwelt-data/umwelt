@@ -1,16 +1,17 @@
 import { Accessor, createEffect, createSignal, onCleanup } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { umweltToVegaLiteSpec } from '../../util/spec';
-import { UmweltDataset } from '../../types';
+import { UmweltDataset, UmweltSpec } from '../../types';
 import { renderVegaLite } from '../../util/vega';
 import { debounce } from '@solid-primitives/scheduled';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 import { predicateToSelectionStore, selectionStoreToSelection, VlSelectionStore } from '../../util/selection';
 
-export type VisualizationProps = {};
+export type VisualizationProps = {
+  spec: UmweltSpec;
+};
 
 export function Visualization(props: VisualizationProps) {
-  const [spec, specActions] = useUmweltSpec();
   const [selection, selectionActions] = useUmweltSelection();
   const [isMouseOver, setIsMouseOver] = createSignal(false);
 
@@ -42,7 +43,7 @@ export function Visualization(props: VisualizationProps) {
   });
 
   createEffect(() => {
-    const vlSpec = umweltToVegaLiteSpec(spec, spec.data.values);
+    const vlSpec = umweltToVegaLiteSpec(props.spec, props.spec.data.values);
 
     if (vlSpec) {
       try {
