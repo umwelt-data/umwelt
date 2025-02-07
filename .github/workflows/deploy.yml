@@ -1,4 +1,4 @@
-name: Deploy Vite Project and VitePress docs to Pages
+name: Deploy Vite Project packages/umwelt-solid and VitePress docs/ to Pages
 
 on:
   push:
@@ -35,18 +35,16 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build main project
-        run: yarn build
+      - name: Build umwelt-solid package
+        run: yarn workspace umwelt-solid build
 
       - name: Build VitePress docs
-        run: yarn docs:build
+        run: yarn workspace docs build
 
       - name: Prepare combined output
         run: |
-          # Create the editor directory inside the docs output
           mkdir -p docs/.vitepress/dist/editor
-          # Move the main project build output into the editor subdirectory
-          cp -r dist/* docs/.vitepress/dist/editor/
+          cp -r packages/umwelt-solid/dist/* docs/.vitepress/dist/editor/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
