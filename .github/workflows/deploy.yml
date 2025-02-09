@@ -42,7 +42,7 @@ jobs:
         run: yarn workspace umwelt-docs install
 
       - name: Build VitePress docs
-        run: yarn workspace umwelt-docs docs:build"
+        run: yarn workspace umwelt-docs docs:build
 
       - name: Prepare combined output
         run: |
