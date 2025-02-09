@@ -18,5 +18,7 @@ export default defineConfig(({ command }) => ({
       fileName: "index",
     },
   },
-  plugins: [solidPlugin(), dts()]
+  plugins: [solidPlugin(), dts({
+    outDir: 'dist',
+  })]
 }));

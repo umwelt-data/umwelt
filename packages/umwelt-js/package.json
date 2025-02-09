@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && cp dist/index.js ../../docs/index.js",
     "start": "vite",
     "dev": "vite",
     "serve": "vite preview"

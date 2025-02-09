@@ -25,7 +25,9 @@ features:
 
 <script setup>
 import UmweltWrapper from './UmweltWrapper.vue'
- const spec = {
+import { ref } from 'vue'
+
+ const spec = ref({
       "data": {
           "values": [
               {
@@ -2915,7 +2917,7 @@ import UmweltWrapper from './UmweltWrapper.vue'
           ],
           "composition": "concat"
       }
-  };
+  });
 </script>
 
 <ClientOnly>

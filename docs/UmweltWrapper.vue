@@ -1,28 +1,23 @@
 <!-- UmweltWrapper.vue -->
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
-import { UmweltViewer, render } from '../packages/umwelt-js/src/index'
+import { onMounted, ref } from 'vue'
 
 const props = defineProps(['spec'])
-let cleanup = null
+const container = ref(null)
 
-onMounted(() => {
-  const container = document.getElementById('umwelt-container')
-  cleanup = render(() => UmweltViewer({spec: props.spec}), container)
-})
-
-onUnmounted(() => {
-  if (cleanup) cleanup()
+onMounted(async () => {
+  // Dynamically import browser-dependent code
+  const { UmweltViewer, render } = await import('./index.js')
+  container.value && render(() => UmweltViewer({spec: props.spec}), container.value)
 })
 </script>
 
 <template>
-  <div id="umwelt-container"></div>
+  <div ref="container"></div>
 </template>
 
-
 <style>
-#umwelt-container {
+.umwelt-container {
   h2 {
     border: none;
     margin: inherit;
