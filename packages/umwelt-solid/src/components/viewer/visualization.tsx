@@ -11,20 +11,20 @@ export type VisualizationProps = {
 };
 
 export function Visualization(props: VisualizationProps) {
-  const [selection, selectionActions] = useUmweltSelection();
+  const [umweltSelection, umweltSelectionActions] = useUmweltSelection();
   const [isMouseOver, setIsMouseOver] = createSignal(false);
 
   const onSelectionStore = debounce((store: VlSelectionStore) => {
     // Update the selection when the brush store changes
     if (isMouseOver()) {
       const predicate = selectionStoreToSelection(store);
-      selectionActions.setSelection({ source: 'visualization', predicate });
+      umweltSelectionActions.setSelection({ source: 'visualization', predicate });
     }
   }, 250);
 
   createEffect(() => {
     // Update the view when the selection changes
-    const sel = selection();
+    const sel = umweltSelection();
     const view = (window as any).view;
     if (!sel) {
       if (view) {
@@ -36,8 +36,12 @@ export function Visualization(props: VisualizationProps) {
     if (!view) return;
 
     if (sel.source === 'sonification' || sel.source === 'text-navigation') {
-      const store = predicateToSelectionStore(sel.predicate);
-      view.data('external_state_store', store).run();
+      if (sel.predicate) {
+        const store = predicateToSelectionStore(sel.predicate);
+        view.data('external_state_store', store).run();
+      } else {
+        view.data('external_state_store', undefined).run();
+      }
     }
   });
 

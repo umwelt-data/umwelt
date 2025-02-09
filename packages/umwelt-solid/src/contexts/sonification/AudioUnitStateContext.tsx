@@ -4,12 +4,12 @@ import { AudioEncoding, audioPropNames, AudioUnitSpec, ResolvedFieldDef, UmweltD
 import { LogicalAnd } from 'vega-lite/src/logical';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
-import { audioStateToPredicate, selectionTest } from '../../util/selection';
+import { selectionTest } from '../../util/selection';
 import { useUmweltSpec } from '../UmweltSpecContext';
-import { FieldEqualPredicate } from 'vega-lite/src/predicate';
+import { FieldEqualPredicate, FieldRangePredicate } from 'vega-lite/src/predicate';
 import { getBinnedDomain, getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
-import { SonifierNote, useAudioEngine } from './AudioEngineContext';
+import { DEFAULT_TONE_BPM, SonifierNote, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
@@ -56,7 +56,7 @@ export interface AudioUnitState {
 const AudioUnitStateContext = createContext<[AudioUnitState, AudioUnitStateActions]>();
 
 export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
-  const [selection, selectionActions] = useUmweltSelection();
+  const [_, umweltSelectionActions] = useUmweltSelection();
   const [scales, scaleActions] = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
@@ -72,9 +72,52 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   };
 
   createEffect(() => {
+    // update umwelt selection when audio is playing
     if (audioEngine.isPlaying) {
-      const predicate = audioStateToPredicate(audioUnitState.traversalState, getFieldDomains());
-      selectionActions.setSelection({ source: 'sonification', predicate });
+      const predicate = getPredicateForState();
+      umweltSelectionActions.setSelection({ source: 'sonification', predicate });
+    }
+  });
+
+  createEffect((prev?: Record<string, UmweltValue[]>) => {
+    // when sonification selection changes, update traversal state and transport
+    const domains = getFieldDomains();
+    const currentTraversalState = { ...audioUnitState.traversalState };
+    let needsUpdate = false;
+    const newTraversalState = { ...currentTraversalState };
+
+    Object.entries(domains).forEach(([field, domain]) => {
+      const currentIndex = currentTraversalState[field];
+      const prevDomain = prev?.[field] ?? domain;
+      const oldValue = prevDomain[currentIndex];
+
+      if (oldValue !== undefined) {
+        const newIndex = domain.findIndex((value) => value === oldValue);
+        if (newIndex !== currentIndex) {
+          newTraversalState[field] = newIndex !== -1 ? newIndex : 0;
+          needsUpdate = true;
+        }
+      }
+    });
+
+    if (needsUpdate) {
+      setAudioUnitState((prev) => ({
+        ...prev,
+        traversalState: newTraversalState,
+      }));
+
+      if (sonificationState.activeUnitName === props.audioUnitSpec.name) {
+        actions.setupTransportSequence();
+      }
+    }
+
+    return domains;
+  });
+
+  createEffect(() => {
+    // when this unit becomes active unit, setup transport sequence
+    if (sonificationState.activeUnitName === props.audioUnitSpec.name) {
+      actions.setupTransportSequence();
     }
   });
 
@@ -88,8 +131,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     });
   });
   const getDerivedData = createMemo(() => {
-    const data = derivedDataset(props.spec.data.values, getResolvedFields()); // TODO global selection
-    return data;
+    const data = sonificationState.selection ? selectionTest(props.spec.data.values, sonificationState.selection) : props.spec.data.values;
+    const derived = derivedDataset(data, getResolvedFields()); // TODO global selection
+    return derived;
   });
   const getFieldDomains = createMemo(() => {
     return Object.fromEntries(
@@ -110,6 +154,39 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       })
     );
   });
+  const getDomainValue = (field: string, idx: number): UmweltValue | [UmweltValue, UmweltValue] => {
+    const fieldDef = getFieldDef(props.spec, field)!;
+    const resolvedFieldDef = resolveFieldDef(fieldDef, props.audioUnitSpec.traversal.find((f) => f.field === field)!);
+    const domain = getFieldDomains()[field];
+    if (resolvedFieldDef.bin && !resolvedFieldDef.aggregate) {
+      const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef);
+      const startValue = domain[idx];
+      const endValue = getDerivedData().find((d) => d[startField] === startValue)![endField];
+      return [startValue, endValue];
+    } else {
+      return domain[idx];
+    }
+  };
+  const getPredicateForState = createMemo(() => {
+    return {
+      and: Object.entries(audioUnitState.traversalState).map(([field, idx]) => {
+        const value = getDomainValue(field, idx);
+        const lastIndex = getFieldDomains()[field].length - 1;
+        if (Array.isArray(value)) {
+          return {
+            field,
+            range: value,
+            inclusive: idx === lastIndex,
+          } as FieldRangePredicate;
+        } else {
+          return {
+            field,
+            equal: value,
+          } as FieldEqualPredicate;
+        }
+      }),
+    };
+  });
 
   const actions: AudioUnitStateActions = {
     setTraversalIndex: (field, index) => {
@@ -117,7 +194,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       setAudioUnitState((prev) => {
         return { ...prev, traversalState: { ...prev.traversalState, [field]: index } };
       });
-      actions.setupTransportSequence();
+      sonificationStateActions.setActiveUnit(props.audioUnitSpec.name);
+      const predicate = getPredicateForState();
+      umweltSelectionActions.setSelection({ source: 'sonification', predicate });
       const note = internalActions.getNoteFromState(audioUnitState.traversalState);
       if (note) {
         audioEngine.transport.seconds = note?.time;
@@ -128,69 +207,71 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return audioUnitState.traversalState[field];
     },
     setupTransportSequence: () => {
-      if (sonificationState.activeUnitName !== props.audioUnitSpec.name) {
-        // update active unit
-        sonificationStateActions.setActiveUnit(props.audioUnitSpec.name);
-        // Clear previous sequence
-        audioEngine.transport.cancel();
+      // Clear previous sequence
+      audioEngine.transport.cancel();
 
-        const notes = getSonifierNotes();
+      // timing is relative to bpm at time of scheduling, so set it to default
+      // and then set it to the scaled value after scheduling
+      audioEngine.transport.bpm.value = DEFAULT_TONE_BPM;
 
-        // Schedule notes in the transport
-        notes.forEach((note, idx) => {
-          // if note.state is the same as the current traversal state, set the time to the note time
-          if (Object.entries(note.state).every(([field, index]) => audioUnitState.traversalState[field] === index)) {
-            audioEngine.transport.seconds = note.time;
-          }
+      const notes = getSonifierNotes();
 
-          audioEngine.transport.schedule(() => {
-            if (audioEngine.isPlaying) {
-              // isPlaying check needed to avoid race conditions because of async scheduling
+      // Schedule notes in the transport
+      notes.forEach((note, idx) => {
+        // if note.state is the same as the current traversal state, set the time to the note time
+        if (Object.entries(note.state).every(([field, index]) => audioUnitState.traversalState[field] === index)) {
+          audioEngine.transport.seconds = note.time;
+        }
 
-              setAudioUnitState((prev) => {
-                return { ...prev, traversalState: note.state };
-              });
+        audioEngine.transport.schedule(() => {
+          if (audioEngine.isPlaying) {
+            // isPlaying check needed to avoid race conditions because of async scheduling
 
-              if (note.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
-                audioEngine.transport.pause();
-                audioEngineActions.releaseSynth();
-                speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(note.speakBefore);
-                utterance.rate = audioEngine.speechRate / 25;
-                utterance.onend = () => {
-                  if (audioEngine.isPlaying) {
-                    // play note
-                    if (note.ramp) {
-                      audioEngineActions.startOrRampSynth(note);
-                    } else {
-                      audioEngineActions.playNote(note);
-                    }
-                    audioEngine.transport.start();
+            setAudioUnitState((prev) => {
+              return { ...prev, traversalState: note.state };
+            });
+
+            if (note.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
+              audioEngine.transport.pause();
+              audioEngineActions.releaseSynth();
+              speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(note.speakBefore);
+              utterance.rate = audioEngine.speechRate / 25;
+              utterance.onend = () => {
+                if (audioEngine.isPlaying) {
+                  // play note
+                  if (note.ramp) {
+                    audioEngineActions.startOrRampSynth(note);
+                  } else {
+                    audioEngineActions.playNote(note);
                   }
-                };
-                speechSynthesis.speak(utterance);
-              } else {
-                if (note.ramp) {
-                  audioEngineActions.startOrRampSynth(note);
-                } else {
-                  audioEngineActions.playNote(note);
+                  audioEngine.transport.start();
                 }
+              };
+              speechSynthesis.speak(utterance);
+            } else {
+              if (note.ramp) {
+                audioEngineActions.startOrRampSynth(note);
+              } else {
+                audioEngineActions.playNote(note);
               }
             }
-          }, note.time);
-          if (note.pauseAfter) {
-            audioEngine.transport.schedule(() => {
-              audioEngineActions.releaseSynth();
-            }, note.time + note.duration);
           }
-          // if it's the last note, pause the transport
-          if (idx === notes.length - 1) {
-            audioEngine.transport.schedule(() => {
-              audioEngineActions.stopTransport();
-            }, note.time + note.duration);
-          }
-        });
-      }
+        }, note.time);
+        if (note.pauseAfter) {
+          audioEngine.transport.schedule(() => {
+            audioEngineActions.releaseSynth();
+          }, note.time + note.duration);
+        }
+        // if it's the last note, pause the transport
+        if (idx === notes.length - 1) {
+          audioEngine.transport.schedule(() => {
+            audioEngineActions.stopTransport();
+          }, note.time + note.duration);
+        }
+      });
+
+      audioEngine.transport.bpm.value = DEFAULT_TONE_BPM * audioEngine.playbackRate;
     },
     getFieldDomains,
     getDerivedData,
@@ -205,19 +286,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
         audioEngine.transport.seconds = 0;
       }
     },
-    getDomainValue: (field, idx) => {
-      const fieldDef = getFieldDef(props.spec, field)!;
-      const resolvedFieldDef = resolveFieldDef(fieldDef, props.audioUnitSpec.traversal.find((f) => f.field === field)!);
-      const domain = getFieldDomains()[field];
-      if (resolvedFieldDef.bin && !resolvedFieldDef.aggregate) {
-        const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef);
-        const startValue = domain[idx];
-        const endValue = getDerivedData().find((d) => d[startField] === startValue)![endField];
-        return [startValue, endValue];
-      } else {
-        return domain[idx];
-      }
-    },
+    getDomainValue,
     describeEncodings: () => {
       return makeCommaSeparatedString(
         Object.entries(props.audioUnitSpec.encoding)

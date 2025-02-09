@@ -31,7 +31,7 @@ export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): 
   if (!(spec.fields && spec.fields.length)) {
     return undefined;
   }
-  const data = spec.data?.values ?? datastore[spec.data.name];
+  const data = datastore[spec.data.name];
   if (!data || !data.length) {
     return undefined;
   }

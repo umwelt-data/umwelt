@@ -6,14 +6,13 @@ export type UmweltSelectionProviderProps = ParentProps<{}>;
 
 export type UmweltSelectionActions = {
   setSelection: (selection: UmweltSelection) => void;
-  clearSelection: () => void;
 };
 
 export type UmweltSelectionSource = 'visualization' | 'text-navigation' | 'text-filter' | 'sonification';
 
 export interface UmweltSelection {
   source: UmweltSelectionSource;
-  predicate: UmweltPredicate;
+  predicate: UmweltPredicate | undefined;
 }
 
 const UmweltSelectionContext = createContext<[Accessor<UmweltSelection | undefined>, UmweltSelectionActions]>();
@@ -23,10 +22,10 @@ export function UmweltSelectionProvider(props: UmweltSelectionProviderProps) {
 
   const actions: UmweltSelectionActions = {
     setSelection: (newSelection) => {
+      if (newSelection && newSelection.predicate && 'and' in newSelection.predicate && newSelection.predicate.and.length === 0) {
+        newSelection.predicate = undefined;
+      }
       setSelection(newSelection);
-    },
-    clearSelection: () => {
-      setSelection(undefined);
     },
   };
 

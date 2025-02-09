@@ -203,24 +203,3 @@ export function predicateToFields(predicate: UmweltPredicate): string[] {
   }
   return [predicate.field];
 }
-
-export function audioStateToPredicate(indices: TraversalState, domains: Record<string, UmweltValue[]>): UmweltPredicate {
-  return {
-    and: Object.entries(indices).map(([field, idx]) => {
-      const value = domains[field][idx];
-      const lastIndex = domains[field].length - 1;
-      if (Array.isArray(value)) {
-        return {
-          field,
-          range: value,
-          inclusive: idx === lastIndex,
-        } as FieldRangePredicate;
-      } else {
-        return {
-          field,
-          equal: value,
-        } as FieldEqualPredicate;
-      }
-    }),
-  };
-}

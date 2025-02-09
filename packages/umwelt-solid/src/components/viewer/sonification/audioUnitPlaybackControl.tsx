@@ -10,11 +10,11 @@ export type AudioUnitPlaybackControlProps = {
 export function AudioUnitPlaybackControl(props: AudioUnitPlaybackControlProps) {
   const [_, audioUnitStateActions] = useAudioUnitState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
-  const [sonificationState] = useSonificationState();
+  const [sonificationState, sonificationStateActions] = useSonificationState();
 
   function play() {
     audioEngineActions.startAudioContext();
-    audioUnitStateActions.setupTransportSequence();
+    sonificationStateActions.setActiveUnit(props.unitName);
     audioUnitStateActions.resetTraversalIfEnd();
     audioEngineActions.startTransport();
   }

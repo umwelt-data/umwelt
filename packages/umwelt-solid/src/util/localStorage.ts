@@ -24,7 +24,7 @@ const userStorage = () => {
 
 export const getUserSettings = () => userStorage().read();
 export const setUserSettings = (settings: Partial<UmweltUserSettings>) => {
-  const currentSettings = getUserSettings() || defaultSettings;
+  const currentSettings = getUserSettings() ?? defaultSettings;
   userStorage().write({
     ...currentSettings,
     ...settings,

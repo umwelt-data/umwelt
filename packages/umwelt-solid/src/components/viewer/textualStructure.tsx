@@ -9,7 +9,7 @@ export type VisualizationProps = {
 };
 
 export function TextualStructure(props: VisualizationProps) {
-  const [selection, selectionActions] = useUmweltSelection();
+  const [umweltSelection, umweltSelectionActions] = useUmweltSelection();
   const [olliContainerRef, setOlliContainerRef] = createSignal<HTMLDivElement | null>(null);
 
   createEffect(() => {
@@ -23,14 +23,14 @@ export function TextualStructure(props: VisualizationProps) {
           onFocus: (_, node) => {
             if (node.fullPredicate.and && node.fullPredicate.and.length > 0) {
               //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
-              selectionActions.setSelection({ source: 'text-navigation', predicate: node.fullPredicate });
+              umweltSelectionActions.setSelection({ source: 'text-navigation', predicate: node.fullPredicate });
             } else {
-              selectionActions.clearSelection();
+              umweltSelectionActions.setSelection({ source: 'text-navigation', predicate: undefined });
             }
           },
           onSelection: (predicate) => {
             //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
-            selectionActions.setSelection({ source: 'text-filter', predicate });
+            umweltSelectionActions.setSelection({ source: 'text-filter', predicate });
           },
         });
         olliContainerRef()?.replaceChildren(elem);
@@ -39,7 +39,7 @@ export function TextualStructure(props: VisualizationProps) {
   });
 
   createEffect(() => {
-    const sel = selection();
+    const sel = umweltSelection();
     if (sel && sel.source === 'visualization') {
       //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
       ((window as any)._olli as OlliGlobalState).instancesOnPage[0].setSelection(sel.predicate);
