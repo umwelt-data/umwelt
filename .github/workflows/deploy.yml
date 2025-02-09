@@ -33,13 +33,10 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: yarn workspace umwelt-solid install
+        run: yarn install
 
       - name: Build umwelt-solid package
         run: yarn workspace umwelt-solid build
-
-      - name: Install docs dependencies
-        run: yarn workspace umwelt-docs install
 
       - name: Build VitePress docs
         run: yarn workspace umwelt-docs docs:build
