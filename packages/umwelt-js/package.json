@@ -30,7 +30,6 @@
   },
   "dependencies": {
     "solid-js": "^1.7.12",
-    "umwelt-solid": "workspace:*",
     "vite-plugin-dts": "^4.5.0"
   }
 }
