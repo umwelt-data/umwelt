@@ -38,6 +38,9 @@ jobs:
       - name: Build umwelt-solid package
         run: yarn workspace umwelt-solid build
 
+      - name: Build umwelt-js package
+        run: yarn workspace umwelt-js build
+
       - name: Build VitePress docs
         run: yarn workspace umwelt-docs docs:build
 
