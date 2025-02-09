@@ -38,8 +38,11 @@ jobs:
       - name: Build umwelt-solid package
         run: yarn workspace umwelt-solid build
 
+      - name: Install docs dependencies
+        run: yarn workspace umwelt-docs install
+
       - name: Build VitePress docs
-        run: yarn workspace docs build
+        run: yarn workspace umwelt-docs docs:build"
 
       - name: Prepare combined output
         run: |
