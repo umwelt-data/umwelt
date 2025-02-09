@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import styles from '../App.module.scss';
 
 import { UmweltViewer } from './viewer';
 import { UmweltEditor } from './editor';
@@ -9,8 +10,14 @@ export const Umwelt: Component = () => {
 
   return (
     <>
-      <UmweltEditor />
-      <UmweltViewer spec={spec} />
+      <div class={styles.column}>
+        <h1>Editor</h1>
+        <UmweltEditor />
+      </div>
+      <div class={styles.column}>
+        <h1>Viewer</h1>
+        <UmweltViewer spec={spec} />
+      </div>
     </>
   );
 };

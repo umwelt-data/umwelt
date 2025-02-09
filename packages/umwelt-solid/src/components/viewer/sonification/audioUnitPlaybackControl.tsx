@@ -14,7 +14,10 @@ export function AudioUnitPlaybackControl(props: AudioUnitPlaybackControlProps) {
 
   function play() {
     audioEngineActions.startAudioContext();
-    sonificationStateActions.setActiveUnit(props.unitName);
+    if (sonificationState.activeUnitName !== props.unitName) {
+      sonificationStateActions.setActiveUnit(props.unitName);
+      audioUnitStateActions.setupTransportSequence();
+    }
     audioUnitStateActions.resetTraversalIfEnd();
     audioEngineActions.startTransport();
   }

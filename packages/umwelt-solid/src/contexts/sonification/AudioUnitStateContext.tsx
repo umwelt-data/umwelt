@@ -114,13 +114,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     return domains;
   });
 
-  createEffect(() => {
-    // when this unit becomes active unit, setup transport sequence
-    if (sonificationState.activeUnitName === props.audioUnitSpec.name) {
-      actions.setupTransportSequence();
-    }
-  });
-
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
 
   // derived state
@@ -194,9 +187,14 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       setAudioUnitState((prev) => {
         return { ...prev, traversalState: { ...prev.traversalState, [field]: index } };
       });
-      sonificationStateActions.setActiveUnit(props.audioUnitSpec.name);
+      if (sonificationState.activeUnitName === props.audioUnitSpec.name) {
+        sonificationStateActions.setActiveUnit(props.audioUnitSpec.name);
+        actions.setupTransportSequence();
+      }
+      // update umwelt selection
       const predicate = getPredicateForState();
       umweltSelectionActions.setSelection({ source: 'sonification', predicate });
+      // play note
       const note = internalActions.getNoteFromState(audioUnitState.traversalState);
       if (note) {
         audioEngine.transport.seconds = note?.time;
@@ -207,6 +205,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return audioUnitState.traversalState[field];
     },
     setupTransportSequence: () => {
+      console.log('Setting up transport sequence');
       // Clear previous sequence
       audioEngine.transport.cancel();
 
@@ -371,11 +370,18 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return note;
     },
     countEndingSectionsOfState: (state: TraversalState) => {
-      const traversalFields = [...props.audioUnitSpec.traversal.map((f) => f.field)];
-      const domains = getFieldDomains();
-      return traversalFields.reduce((count, field) => {
-        return state[field] === domains[field].length - 1 ? count + 1 : count;
-      }, 0);
+      const ends = Object.entries(state)
+        .map(([field, index]) => {
+          return index === getFieldDomains()[field].length - 1 ? 1 : 0;
+        })
+        .reverse();
+      let endCount = 0;
+      for (let x of ends) {
+        if (x) {
+          endCount++;
+        } else break;
+      }
+      return endCount;
     },
     getNoteFromState: (state: TraversalState) => {
       const notes = getSonifierNotes();

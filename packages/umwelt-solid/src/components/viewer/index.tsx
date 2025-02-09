@@ -20,8 +20,7 @@ export function UmweltViewer(props: UmweltViewerProps) {
 
   return (
     <div class={styles.Viewer}>
-      <h1 id="header-viewer">Viewer</h1>
-      <div class="uw-viewer" role="region" aria-labelledby="header-viewer">
+      <div class="uw-viewer" role="region" aria-label="Umwelt Viewer">
         <UmweltSelectionProvider>
           <h2>Visualization</h2>
           <Visualization spec={spec()} />

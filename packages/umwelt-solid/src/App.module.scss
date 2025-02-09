@@ -1,63 +1,77 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
 }
 
 .App {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   display: flex;
   flex-direction: row;
 
-  .Editor, .Viewer {
+  .column {
     flex: 1;
     padding: 1em;
   }
+
+  h1 {
+    margin-top: 0;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
 }
 
-h1 {
-  margin-top: 0;
-}
+.Editor, .Viewer {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
-h2, h3, h4, h5 {
-  margin-bottom: 0.5em;
-}
+  h1 {
+    margin-top: 0;
+  }
 
-h3 {
-  margin-top: 1.5em;
-}
+  h2, h3, h4, h5 {
+    margin-bottom: 0.5em;
+  }
 
-table {
-  display: block;
-  width: 100%;
-  max-height: 200px;
-  overflow: auto;
-}
+  h3 {
+    margin-top: 1.5em;
+  }
 
-td, th {
-  text-align: left;
-  padding-right: 5px;
-}
+  table {
+    display: block;
+    width: 100%;
+    max-height: 200px;
+    overflow: auto;
+  }
 
-details > summary {
-  cursor: pointer;
-}
+  td, th {
+    text-align: left;
+    padding-right: 5px;
+  }
 
-input[type=checkbox], input[type=radio] {
-  margin: 0;
-  margin-right: 0.5em;
-  position: relative;
-  top: 1px;
-}
+  details > summary {
+    cursor: pointer;
+  }
 
-ol {
-  list-style: decimal;
-  padding-left: 1.2em;
+  input[type=checkbox], input[type=radio] {
+    margin: 0;
+    margin-right: 0.5em;
+    position: relative;
+    top: 1px;
+  }
+
+  ol {
+    list-style: decimal;
+    padding-left: 1.2em;
+  }
+
 }
