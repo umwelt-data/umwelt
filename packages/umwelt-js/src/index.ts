@@ -18,9 +18,11 @@ export const UmweltViewer: {
   (props: UmweltViewerProps, children?: Child | Child[]): HyperScriptReturn;
   (children: Child | Child[]): HyperScriptReturn;
 } = (...args: any[]) => {
+  console.log('UmweltViewer', args);
   return h(UmweltViewerSolid, ...args);
 };
 
 export const render = (code: () => Child | Child[], element: MountableElement) => {
+  console.log('rendering', code);
   return solidRender(() => code() as unknown as JSX.Element, element);
 };

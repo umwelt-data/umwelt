@@ -12,15 +12,14 @@ code {
     monospace;
 }
 
-
 .App {
   display: flex;
-}
+  flex-direction: row;
 
-.Editor, .Viewer {
-  flex: 1;
-  max-width: 50%;
-  padding: 15px;
+  .Editor, .Viewer {
+    flex: 1;
+    padding: 1em;
+  }
 }
 
 h1 {
