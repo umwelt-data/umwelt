@@ -30,7 +30,7 @@ export function UmweltEditor() {
 
   return (
     <div class={styles.Editor}>
-      <div class="uw-editor" role="region" aria-label="Uwmelt Editor">
+      <div class="uw-editor" role="region" aria-label="Umwelt Editor">
         <div role="tablist">
           <button role="tab" id="tab-data" aria-controls="tabpanel-data" aria-selected={currentTab() === 'data'} onClick={() => setCurrentTab('data')}>
             Data
