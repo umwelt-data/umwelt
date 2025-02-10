@@ -1,11 +1,10 @@
 import { createContext, useContext, ParentProps, createMemo, createEffect } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncoding, audioPropNames, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltSpec, UmweltValue } from '../../types';
+import { AudioEncoding, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { LogicalAnd } from 'vega-lite/src/logical';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
 import { selectionTest } from '../../util/selection';
-import { useUmweltSpec } from '../UmweltSpecContext';
 import { FieldEqualPredicate, FieldRangePredicate } from 'vega-lite/src/predicate';
 import { getBinnedDomain, getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
@@ -112,6 +111,15 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     }
 
     return domains;
+  });
+
+  createEffect((prev) => {
+    // when props update setup transport
+    if (prev !== props.audioUnitSpec) {
+      actions.setupTransportSequence();
+    }
+
+    return props.audioUnitSpec;
   });
 
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
