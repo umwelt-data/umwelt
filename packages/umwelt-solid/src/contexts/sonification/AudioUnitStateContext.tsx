@@ -403,6 +403,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   };
 
   const shouldRamp = createMemo(() => {
+    if (props.audioUnitSpec.traversal.length === 0) {
+      return false;
+    }
     const innermostField = props.audioUnitSpec.traversal[props.audioUnitSpec.traversal.length - 1].field;
     const fieldDef = getFieldDef(props.spec, innermostField);
     return fieldDef?.type === 'quantitative' || fieldDef?.type === 'temporal';

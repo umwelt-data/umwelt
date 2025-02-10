@@ -55,6 +55,10 @@ export function AudioUnit(props: AudioUnitProps) {
     );
   }
 
+  if (Object.keys(props.audioUnitSpec.encoding).length === 0) {
+    return null;
+  }
+
   return (
     <EnumeratedItem>
       <AudioScalesProvider spec={props.spec} encoding={props.audioUnitSpec.encoding}>

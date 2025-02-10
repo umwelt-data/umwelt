@@ -33,6 +33,7 @@ export type UmweltSpecActions = {
   addAudioUnit: () => void;
   removeAudioUnit: (unit: string) => void;
   renameUnit: (oldName: string, newName: string) => void;
+  setComposition: (modality: 'visual' | 'audio', composition: ViewComposition) => void;
   reorderTraversal: (unit: string, field: string, newIndex: number) => void;
   setFieldAggregate: (field: string, aggregate: UmweltAggregateOp | 'undefined') => void;
   setFieldBin: (field: string, bin: boolean) => void;
@@ -362,6 +363,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         internalActions.updateSearchParams();
       }
+    },
+    setComposition: (modality: 'visual' | 'audio', composition: ViewComposition) => {
+      setSpec(modality, 'composition', composition);
+      internalActions.updateSearchParams();
     },
     reorderTraversal: (unit, field, newIndex) => {
       const unitDef = spec.audio.units.find((u) => u.name === unit);

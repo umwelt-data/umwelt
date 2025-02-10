@@ -26,7 +26,7 @@ export function Audio() {
           <InputRow>
             <label>
               Composition
-              <select value={spec.audio.composition}>
+              <select value={spec.audio.composition} onChange={(e) => specActions.setComposition('audio', e.currentTarget.value)}>
                 {viewCompositions.map((composition) => {
                   return <option value={composition}>{composition}</option>;
                 })}

@@ -25,7 +25,7 @@ export function Visual() {
           <InputRow>
             <label>
               Composition
-              <select value={spec.visual.composition}>
+              <select value={spec.visual.composition} onChange={(e) => specActions.setComposition('visual', e.currentTarget.value)}>
                 <For each={viewCompositions}>{(composition) => <option value={composition}>{composition}</option>}</For>
               </select>
             </label>
