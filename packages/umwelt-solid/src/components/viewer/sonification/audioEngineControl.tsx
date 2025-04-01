@@ -19,7 +19,7 @@ export function AudioEngineControl(props: AudioEngineControlProps) {
     <AudioEngineControlContainer>
       <div>
         <label>
-          Playback rate <input type="number" min="0.1" max="2" value={audioEngine.playbackRate} step={0.1} id="rate" onChange={(e) => audioEngineActions.setPlaybackRate(Number(e.target.value))} />x
+          Playback rate <input type="number" min="0.1" max="4" value={audioEngine.playbackRate} step={0.1} id="rate" onChange={(e) => audioEngineActions.setPlaybackRate(Number(e.target.value))} />x
         </label>
       </div>
       <SpeakAxisTicksRow>

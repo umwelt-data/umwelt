@@ -54,19 +54,22 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
   // Create synths lazily when needed
   const [synth, setSynth] = createSignal<Tone.Synth | null>(null);
   const [noiseSynth, setNoiseSynth] = createSignal<Tone.NoiseSynth | null>(null);
+  const [noiseGain, setNoiseGain] = createSignal<Tone.Gain | null>(null);
 
   const initializeSynths = () => {
+    const envelope = {
+      attack: 0.01,
+      decay: 0,
+      sustain: 1,
+      release: 0.01,
+    };
+
     if (!synth()) {
       const newSynth = new Tone.Synth({
         oscillator: {
           type: 'triangle',
         },
-        envelope: {
-          attack: 0.01,
-          decay: 0,
-          sustain: 1,
-          release: 0.01,
-        },
+        envelope,
       }).toDestination();
       setSynth(newSynth);
     }
@@ -76,13 +79,10 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
         noise: {
           type: 'pink',
         },
-        envelope: {
-          attack: 0.01,
-          decay: 0,
-          sustain: 0.2,
-          release: 0.01,
-        },
-      }).toDestination();
+        envelope,
+      });
+      const noiseGain = new Tone.Gain(0.3).toDestination();
+      newNoiseSynth.connect(noiseGain);
       setNoiseSynth(newNoiseSynth);
     }
   };
@@ -104,6 +104,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       // Dispose of synths and transport events
       synth()?.dispose();
       noiseSynth()?.dispose();
+      noiseGain()?.dispose(); // Add this line
       setSynth(null);
       setNoiseSynth(null);
 
@@ -165,7 +166,7 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
     },
     setPlaybackRate: (rate) => {
-      const clampedRate = clamp(rate, 0.1, 2);
+      const clampedRate = clamp(rate, 0.1, 4);
       setUserSettings({ playbackRate: clampedRate });
       setAudioEngineState((prev) => {
         return { ...prev, playbackRate: clampedRate };
