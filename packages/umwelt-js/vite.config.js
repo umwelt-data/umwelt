@@ -17,8 +17,28 @@ export default defineConfig(({ command }) => ({
       name: "umwelt",
       fileName: "index",
     },
+    rollupOptions: {
+      external: [], // Bundle SolidJS and dependencies
+      output: {
+        globals: {
+          // No externals to define since we're bundling everything
+        }
+      }
+    }
   },
-  plugins: [solidPlugin(), dts({
-    outDir: 'dist',
-  })]
+  plugins: [
+    solidPlugin(), 
+    dts({
+      outDir: 'dist',
+      entryRoot: 'src',
+      include: ['src/**/*'],
+      exclude: ['**/*.test.*', '**/*.spec.*']
+    })
+  ],
+  resolve: {
+    alias: {
+      // Ensure we can resolve the umwelt-solid package during development
+      "../../umwelt-solid/src": resolve(__dirname, "../umwelt-solid/src")
+    }
+  }
 }));

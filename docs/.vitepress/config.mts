@@ -39,6 +39,7 @@ export default defineConfig({
           text: 'Examples & Tutorials',
           items: [
             { text: 'Overview', link: '/examples/' },
+            { text: 'Stocks', link: '/examples/stocks' },
             { text: 'Basic Chart', link: '/examples/basic-chart' },
             { text: 'Time Series', link: '/examples/time-series' },
             { text: 'Multivariate Data', link: '/examples/multivariate' },

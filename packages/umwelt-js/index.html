@@ -2893,9 +2893,16 @@
 
 
 
-  import { UmweltViewer, render } from './src/index';
+  import { createViewer } from './src/index';
 
-  render(() => UmweltViewer({spec}), document.getElementById("app"));
+  // Create the viewer with the new API
+  const viewer = createViewer(spec, document.getElementById("app"));
+  
+  // Example of how to update the spec later
+  // viewer.updateSpec(newSpec);
+  
+  // Example of cleanup
+  // viewer.destroy();
 
   </script>
 

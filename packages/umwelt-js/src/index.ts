@@ -1,28 +1,110 @@
-import { Component, JSX, createComponent } from 'solid-js';
+import { UmweltViewer as SolidViewer } from '../../umwelt-solid/src/components/viewer';
+import { render } from 'solid-js/web';
+import { UmweltSpec } from '../../umwelt-solid/src/types';
 
-export function component<P extends Record<string, any>>(fn: Component<P>) {
-  return (props?: P) => createComponent(fn, props || ({} as P));
+// Re-export types that consumers might need
+export type { UmweltSpec, UmweltDataset, UmweltDatum, UmweltValue } from '../../umwelt-solid/src/types';
+
+export interface UmweltViewerOptions {
+  spec: UmweltSpec;
+  container: HTMLElement;
 }
 
-import { UmweltViewer as UmweltViewerSolid, UmweltViewerProps } from '../../umwelt-solid/src/components/viewer';
-import { render as solidRender, MountableElement } from 'solid-js/web';
-import h from 'solid-js/h';
+/**
+ * Framework-agnostic Umwelt viewer that can be embedded in any web application.
+ * Internally uses SolidJS but exposes a simple JavaScript API.
+ */
+export class UmweltViewer {
+  private disposal?: () => void;
+  private isDestroyed = false;
+  
+  constructor(private options: UmweltViewerOptions) {
+    this.mount();
+  }
+  
+  private mount() {
+    if (this.isDestroyed) {
+      throw new Error('Cannot mount a destroyed UmweltViewer. Create a new instance.');
+    }
+    
+    this.disposal = render(
+      () => SolidViewer({ spec: this.options.spec }),
+      this.options.container
+    );
+  }
+  
+  /**
+   * Update the viewer with a new specification.
+   * This will re-render the entire viewer with the new data and configuration.
+   */
+  updateSpec(newSpec: UmweltSpec): void {
+    if (this.isDestroyed) {
+      throw new Error('Cannot update a destroyed UmweltViewer.');
+    }
+    
+    this.cleanup();
+    this.options.spec = newSpec;
+    this.mount();
+  }
+  
+  /**
+   * Get the current specification.
+   */
+  getSpec(): UmweltSpec {
+    return this.options.spec;
+  }
+  
+  /**
+   * Get the container element.
+   */
+  getContainer(): HTMLElement {
+    return this.options.container;
+  }
+  
+  private cleanup() {
+    if (this.disposal) {
+      this.disposal();
+      this.disposal = undefined;
+    }
+  }
+  
+  /**
+   * Destroy the viewer and clean up all resources.
+   * The viewer cannot be used after calling this method.
+   */
+  destroy(): void {
+    this.cleanup();
+    this.isDestroyed = true;
+  }
+  
+  /**
+   * Check if the viewer has been destroyed.
+   */
+  getIsDestroyed(): boolean {
+    return this.isDestroyed;
+  }
+}
 
-export type ExpandableNode = Node & {
-  [key: string]: any;
-};
-export type HyperScriptReturn = () => ExpandableNode | ExpandableNode[];
-export type Child = JSX.Element | HyperScriptReturn;
-
-export const UmweltViewer: {
-  (props: UmweltViewerProps, children?: Child | Child[]): HyperScriptReturn;
-  (children: Child | Child[]): HyperScriptReturn;
-} = (...args: any[]) => {
-  console.log('UmweltViewer', args);
-  return h(UmweltViewerSolid, ...args);
-};
-
-export const render = (code: () => Child | Child[], element: MountableElement) => {
-  console.log('rendering', code);
-  return solidRender(() => code() as unknown as JSX.Element, element);
-};
+/**
+ * Convenience function to create and mount an Umwelt viewer.
+ * 
+ * @param spec The Umwelt specification defining the data and visualizations
+ * @param container The DOM element to render the viewer into
+ * @returns A new UmweltViewer instance
+ * 
+ * @example
+ * ```javascript
+ * import { createViewer } from 'umwelt-js';
+ * 
+ * const viewer = createViewer(mySpec, document.getElementById('viewer'));
+ * 
+ * // Later update the data
+ * viewer.updateSpec(newSpec);
+ * 
+ * // Clean up when done
+ * viewer.destroy();
+ * ```
+ */
+export function createViewer(spec: UmweltSpec, container: HTMLElement): UmweltViewer {
+  return new UmweltViewer({ spec, container });
+}
