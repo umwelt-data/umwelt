@@ -5,22 +5,25 @@ layout: home
 hero:
   name: 'Umwelt'
   text: 'Accessible multimodal data representations'
-  tagline: Explore data with visualization, text, and sonification
+  tagline: Create accessible data experiences with visualization, sonification, and interactive text
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: User Guide
+      link: /user-guide/
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Developer Reference
+      link: /reference/
+    - theme: alt
+      text: Live Examples
+      link: /examples/
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Visual & Audio
+    details: Create coordinated visualizations and sonifications from the same data
+  - title: Accessibility First
+    details: Built-in screen reader support and alternative data representations
+  - title: Specification Driven
+    details: Declarative specs enable programmatic generation and sharing
 ---
 
 <script setup>
