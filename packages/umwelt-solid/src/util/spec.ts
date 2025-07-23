@@ -1,5 +1,5 @@
 import { VegaLiteAdapter } from 'olli-adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isUmweltURLDataSource, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
@@ -35,6 +35,16 @@ export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): 
   if (!data || !data.length) {
     return undefined;
   }
+  const umweltSpec = elaborateExportableSpec(spec);
+  const validatedSpec: UmweltSpec = {
+    ...umweltSpec,
+    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, umweltSpec.fields), umweltSpec.fields) },
+  };
+  return validatedSpec;
+}
+
+export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
+  // add encoding refs back to fields
   const fields: FieldDef[] = spec.fields.map((field) => {
     const encodings: EncodingRef[] = [];
     spec.visual.units.forEach((unit) => {
@@ -53,10 +63,20 @@ export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): 
     });
     return { ...field, encodings };
   });
+  // if datasets don't have names, add them
+  let name = 'dataset';
+  if (isExportableUmweltURLDataSource(spec.data)) {
+    name = spec.data.url.split('/').pop() || name;
+  }
+  const data = {
+    ...spec.data,
+    name: spec.data.name || name,
+  } as UmweltDataSource;
+
   const newSpec: UmweltSpec = {
     ...spec,
+    data,
     fields,
-    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, fields), fields) },
   };
   return newSpec;
 }
@@ -240,12 +260,12 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
 }
 
 export function exportableSpec(spec: UmweltSpec): ExportableSpec {
-  const { data, fields, ...rest } = spec;
+  const { fields, ...rest } = spec;
   const exportableFields: ExportableFieldDef[] = fields.map((field) => {
     const { encodings, ...rest } = field;
     return rest;
   });
-  return { ...rest, fields: exportableFields, data: { name: data.name } };
+  return { ...rest, fields: exportableFields };
 }
 
 export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {

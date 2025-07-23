@@ -39,10 +39,44 @@ type ScaleRange = {
 
 export type MeasureType = Exclude<Type, 'geojson'>;
 
-export interface UmweltDataSource {
+export interface UmweltValuesDataSource {
+  name: string;
+  values: UmweltDataset;
+}
+
+export function isUmweltValuesDataSource(dataSource: any): dataSource is UmweltValuesDataSource {
+  return dataSource && typeof dataSource.name === 'string' && Array.isArray(dataSource.values);
+}
+
+export interface ExportableUmweltValuesDataSource {
   name?: string;
   values: UmweltDataset;
 }
+
+export function isExportableUmweltValuesDataSource(dataSource: any): dataSource is ExportableUmweltValuesDataSource {
+  return dataSource && (typeof dataSource.name === 'string' || dataSource.name === undefined) && Array.isArray(dataSource.values);
+}
+
+export interface UmweltURLDataSource {
+  name: string;
+  values: UmweltDataset;
+}
+
+export function isUmweltURLDataSource(dataSource: any): dataSource is UmweltURLDataSource {
+  return dataSource && typeof dataSource.name === 'string' && typeof dataSource.url === 'string';
+}
+
+export interface ExportableUmweltURLDataSource {
+  name?: string;
+  url: string;
+}
+
+export function isExportableUmweltURLDataSource(dataSource: any): dataSource is ExportableUmweltURLDataSource {
+  return dataSource && (typeof dataSource.name === 'string' || dataSource.name === undefined) && typeof dataSource.url === 'string';
+}
+
+export type UmweltDataSource = UmweltValuesDataSource | UmweltURLDataSource;
+export type ExportableUmweltDataSource = ExportableUmweltValuesDataSource | ExportableUmweltURLDataSource;
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
@@ -176,6 +210,6 @@ export interface UmweltSpec {
 export type ExportableFieldDef = Omit<FieldDef, 'encodings'>;
 
 export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data'> {
-  data: { name?: string };
+  data: ExportableUmweltDataSource;
   fields: ExportableFieldDef[];
 }
