@@ -39,3 +39,54 @@ export const ErrorText = styled('div')`
   color: red;
   font-size: 14px;
 `;
+
+// Encoding and layout components
+export const EncodingContainer = styled('div')`
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: 25% auto;
+  gap: 1rem;
+
+  h5 {
+    margin: 0;
+  }
+`;
+
+export const EncodingColumn = styled('div')`
+  > * {
+    margin-bottom: 3px;
+  }
+`;
+
+export const EncodingRow = styled('div')`
+  display: flex;
+  gap: 3px;
+`;
+
+export const RowMargin = styled('div')`
+  margin-top: 1em;
+`;
+
+// Semantic components
+export const FieldName = styled('h4')`
+  ${MONOSPACE}
+`;
+
+export const MonospaceText = styled('div')`
+  ${MONOSPACE}
+`;
+
+export const StyledTable = styled('table')`
+  border: 1px solid #ccc;
+  ${MONOSPACE}
+`;
+
+export const RemoveUnitButton = styled('button')`
+  margin-top: 1rem;
+`;
+
+export const LabelButtonRow = styled('div')`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;

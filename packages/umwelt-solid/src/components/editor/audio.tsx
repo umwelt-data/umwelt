@@ -1,13 +1,11 @@
 import { styled } from 'solid-styled-components';
+import { RowMargin } from '../ui/styled';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { viewCompositions } from '../../types';
 import { InputRow } from '../ui/styled';
 import { AudioUnit } from './audioUnit';
 import { Show } from 'solid-js';
 
-const RowMargin = styled.div`
-  margin-top: 1em;
-`;
 
 export function Audio() {
   const [spec, specActions] = useUmweltSpec();

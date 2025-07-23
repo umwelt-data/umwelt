@@ -6,7 +6,7 @@ import { isString } from 'vega';
 import { isNumeric } from 'vega-lite';
 import { FieldTransforms } from './fieldTransforms';
 import { resolveFieldDef } from '../../util/spec';
-import { EnumeratedItem, InputRow, MONOSPACE } from '../ui/styled';
+import { EnumeratedItem, InputRow, MONOSPACE, EncodingContainer, EncodingColumn, EncodingRow, FieldName } from '../ui/styled';
 import { styled } from 'solid-styled-components';
 import { useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 
@@ -14,27 +14,6 @@ export type FieldDefinitionProps = {
   field: FieldDef;
 };
 
-const FieldName = styled.h4`
-  ${MONOSPACE}
-`;
-
-const EncodingContainer = styled.div`
-  margin-top: 0.5rem;
-  display: grid;
-  grid-template-columns: 25% auto;
-  gap: 1rem;
-`;
-
-const EncodingColumn = styled.div`
-  > * {
-    margin-bottom: 3px;
-  }
-`;
-
-const EncodingRow = styled.div`
-  display: flex;
-  gap: 3px;
-`;
 
 export function FieldDefinition(props: FieldDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();

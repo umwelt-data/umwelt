@@ -4,10 +4,8 @@ import { VisualUnit } from './visualUnit';
 import { viewCompositions } from '../../types';
 import { InputRow } from '../ui/styled';
 import { styled } from 'solid-styled-components';
+import { RowMargin } from '../ui/styled';
 
-const RowMargin = styled.div`
-  margin-top: 1em;
-`;
 
 export function Visual() {
   const [spec, specActions] = useUmweltSpec();

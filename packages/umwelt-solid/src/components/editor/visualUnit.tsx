@@ -5,14 +5,12 @@ import { EncodingDefinition } from './encodingDefinition';
 import { For, Show } from 'solid-js';
 import { EnumeratedItem, InputRow } from '../ui/styled';
 import { styled } from 'solid-styled-components';
+import { RemoveUnitButton } from '../ui/styled';
 
 export type VisualUnitProps = {
   unitSpec: VisualUnitSpec;
 };
 
-const RemoveUnitButton = styled.button`
-  margin-top: 1rem;
-`;
 
 export function VisualUnit(props: VisualUnitProps) {
   const [spec, specActions] = useUmweltSpec();

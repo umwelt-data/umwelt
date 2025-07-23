@@ -1,4 +1,5 @@
 import { styled } from 'solid-styled-components';
+import { EncodingColumn, EncodingRow } from '../ui/styled';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioTraversalFieldDef } from '../../types';
 import { FieldTransforms } from './fieldTransforms';
@@ -8,16 +9,6 @@ export type TraversalDefinitionProps = {
   traversal: AudioTraversalFieldDef;
 };
 
-const EncodingColumn = styled.div`
-  > * {
-    margin-bottom: 3px;
-  }
-`;
-
-const EncodingRow = styled.div`
-  display: flex;
-  gap: 3px;
-`;
 
 export function TraversalDefinition(props: TraversalDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();

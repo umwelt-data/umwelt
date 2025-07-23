@@ -3,6 +3,7 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { EncodingFieldDef, EncodingPropName } from '../../types';
 import { FieldTransforms } from './fieldTransforms';
 import { styled } from 'solid-styled-components';
+import { EncodingContainer, EncodingColumn, EncodingRow } from '../ui/styled';
 
 export type EncodingDefinitionProps = {
   unit: string;
@@ -10,27 +11,6 @@ export type EncodingDefinitionProps = {
   encoding: EncodingFieldDef;
 };
 
-const EncodingContainer = styled.div`
-  margin-top: 0.5rem;
-  display: grid;
-  grid-template-columns: 25% auto;
-  gap: 1rem;
-
-  h5 {
-    margin: 0;
-  }
-`;
-
-const EncodingColumn = styled.div`
-  > * {
-    margin-bottom: 3px;
-  }
-`;
-
-const EncodingRow = styled.div`
-  display: flex;
-  gap: 3px;
-`;
 
 export function EncodingDefinition(props: EncodingDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();

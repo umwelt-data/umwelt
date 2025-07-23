@@ -46,7 +46,7 @@ export function LoadDataFromURL(props: LoadDataFromURLProps) {
           onLoadFromURL();
         }}
       >
-        <FlexInput type="url" placeholder="Enter URL to JSON or CSV data..." value={url()} onInput={(e) => setUrl(e.target.value)} disabled={loading()} />
+        <FlexInput type="url" placeholder="Enter URL to JSON or CSV data" value={url()} onInput={(e) => setUrl(e.target.value)} disabled={loading()} />
         <button type="submit" disabled={loading() || !url().trim()}>
           {loading() ? 'Loading...' : 'Load'}
         </button>
@@ -54,12 +54,11 @@ export function LoadDataFromURL(props: LoadDataFromURLProps) {
       {error() && <ErrorText>{error()}</ErrorText>}
       <details>
         <summary>Supported URL formats</summary>
-        <p>URLs should point to JSON or CSV data files. Examples:</p>
-        <ul>
-          <li>JSON: Array of objects with consistent structure</li>
-          <li>CSV: File with header row containing column names</li>
-        </ul>
-        <p>The data will be fetched and loaded into your visualization.</p>
+        <p>URLs should point to JSON or CSV data files.</p>
+        <p>
+          Example: <code>https://example.com/data.json</code> or <code>https://example.com/data.csv</code>
+        </p>
+        <p>Ensure the URL is accessible and returns valid data.</p>
       </details>
     </div>
   );

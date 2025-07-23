@@ -3,11 +3,8 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { FieldDefinition } from './fieldDefinition';
 import ReorderableList from '../ui/ReorderableList';
 import { styled } from 'solid-styled-components';
-import { MONOSPACE } from '../ui/styled';
+import { MONOSPACE, MonospaceText } from '../ui/styled';
 
-const FieldName = styled.div`
-  ${MONOSPACE}
-`;
 
 export function Fields() {
   const [spec, specActions] = useUmweltSpec();
@@ -19,7 +16,7 @@ export function Fields() {
       <h3>Select fields</h3>
       <For each={spec.fields}>
         {(field) => (
-          <FieldName>
+          <MonospaceText>
             <label>
               <input
                 type="checkbox"
@@ -30,7 +27,7 @@ export function Fields() {
               />
               {field.name}
             </label>
-          </FieldName>
+          </MonospaceText>
         )}
       </For>
 

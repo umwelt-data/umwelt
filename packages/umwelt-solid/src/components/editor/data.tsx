@@ -9,17 +9,13 @@ import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { UmweltDatastore, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 import { createStoredSignal } from '../../util/solid';
 import { styled } from 'solid-styled-components';
-import { MONOSPACE } from '../ui/styled';
+import { MONOSPACE, StyledTable, LabelButtonRow } from '../ui/styled';
 
 const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
 const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
 
 const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
 
-const StyledTable = styled('table')`
-  border: 1px solid #ccc;
-  ${MONOSPACE}
-`;
 
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
@@ -120,13 +116,13 @@ export function Data() {
       <Show when={recentFiles().length > 0} fallback={'No files uploaded.'}>
         <For each={recentFiles()}>
           {(filename) => (
-            <div>
+            <LabelButtonRow>
               <label>
                 <input type="radio" name="recent_files" checked={filename === spec.data.name} onChange={(e) => loadDataFromRecentFile(e.target.value)} value={filename} />
                 {filename}
               </label>
               <button onClick={() => setRecentFiles(recentFiles().filter((f) => f !== filename))}>Remove {filename}</button>
-            </div>
+            </LabelButtonRow>
           )}
         </For>
       </Show>
