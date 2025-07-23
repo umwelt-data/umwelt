@@ -1,6 +1,6 @@
 import { createEffect, For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { getData } from '../../util/datasets';
+import { DEFAULT_DATASET_NAME, getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { UploadData } from './dataUpload';
 import { LoadDataFromURL } from './dataURL';
@@ -16,7 +16,6 @@ const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datase
 
 const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
 
-
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
   const [datastore, datastoreActions] = useUmweltDatastore();
@@ -27,7 +26,7 @@ export function Data() {
 
   // if spec.data is not set, initialize with most recently uploaded file or example dataset
   createEffect(() => {
-    if (!spec.data.name) {
+    if (!spec.data.name || spec.data.name === DEFAULT_DATASET_NAME) {
       const recent = recentFiles();
       if (recent.length && datastore()[recent[0]]) {
         specActions.initializeData(recent[0]);
