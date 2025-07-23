@@ -5,7 +5,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
 import LZString from 'lz-string';
 import { UmweltDatastore } from '../contexts/UmweltDatastoreContext';
-import { cleanData, typeCoerceData } from './datasets';
+import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData } from './datasets';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -64,7 +64,7 @@ export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
     return { ...field, encodings };
   });
   // if datasets don't have names, add them
-  let name = 'dataset';
+  let name = DEFAULT_DATASET_NAME;
   if (isExportableUmweltURLDataSource(spec.data)) {
     name = spec.data.url.split('/').pop() || name;
   }

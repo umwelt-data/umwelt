@@ -6,6 +6,8 @@ import { isNumber, isString } from 'vega';
 import { isNumeric } from './values';
 import cloneDeep from 'lodash.clonedeep';
 
+export const DEFAULT_DATASET_NAME = 'dataset';
+
 export const getData = moize.promise(async (url: string): Promise<UmweltDataset> => {
   const vlSpec = {
     data: {

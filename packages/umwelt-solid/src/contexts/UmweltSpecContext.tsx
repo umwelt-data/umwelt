@@ -6,7 +6,7 @@ import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
 import { compressedSpec, exportableSpec, validateSpec } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
-import { cleanData, typeCoerceData } from '../util/datasets';
+import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
 import { getDefaultSpec } from '../util/heuristics';
 
@@ -65,6 +65,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
     }
     return {
       data: {
+        name: DEFAULT_DATASET_NAME,
         values: [],
       },
       fields: [],

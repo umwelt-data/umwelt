@@ -1,15 +1,5 @@
-import { createContext, useContext, ParentProps, createSignal, Accessor } from 'solid-js';
-import { SetStoreFunction, createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, MeasureType, UmweltDataset, UmweltSpec, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
-import { detectKey, elaborateFields } from '../util/inference';
-import { useParams, useSearchParams } from '@solidjs/router';
-import LZString from 'lz-string';
-import { exportableSpec, validateSpec } from '../util/spec';
-import { Mark } from 'vega-lite/src/mark';
-import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
-import { TimeUnit } from 'vega';
-import { cleanData, typeCoerceData } from '../util/datasets';
-import { set } from 'vega-lite/src/log';
+import { createContext, useContext, ParentProps, Accessor } from 'solid-js';
+import { UmweltDataset } from '../types';
 import { createStoredSignal } from '../util/solid';
 
 export type UmweltDatastoreProviderProps = ParentProps<{}>;
