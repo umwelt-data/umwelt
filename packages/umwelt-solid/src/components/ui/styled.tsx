@@ -24,3 +24,18 @@ export const EnumeratedItem = styled('div')`
   border-left: 1px solid #ccc;
   padding-left: 1rem;
 `;
+
+export const FormRow = styled('form')`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+`;
+
+export const FlexInput = styled('input')`
+  flex: 1;
+`;
+
+export const ErrorText = styled('div')`
+  color: red;
+  font-size: 14px;
+`;

@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { AudioUnitSpec, UmweltSpec } from '../../../types';
+import { AudioUnitSpec, UmweltDataset, UmweltSpec } from '../../../types';
 import { TraversalFieldControl } from './traversalFieldControl';
 import { AudioUnitStateProvider, useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { AudioScalesProvider } from '../../../contexts/sonification/AudioScalesContext';
@@ -11,6 +11,7 @@ import { styled } from 'solid-styled-components';
 
 export type AudioUnitProps = {
   spec: UmweltSpec;
+  data: UmweltDataset;
   audioUnitSpec: AudioUnitSpec;
 };
 
@@ -61,8 +62,8 @@ export function AudioUnit(props: AudioUnitProps) {
 
   return (
     <EnumeratedItem>
-      <AudioScalesProvider spec={props.spec} encoding={props.audioUnitSpec.encoding}>
-        <AudioUnitStateProvider spec={props.spec} audioUnitSpec={props.audioUnitSpec}>
+      <AudioScalesProvider spec={props.spec} data={props.data} encoding={props.audioUnitSpec.encoding}>
+        <AudioUnitStateProvider spec={props.spec} data={props.data} audioUnitSpec={props.audioUnitSpec}>
           <AudioUnitDescription />
           <AudioUnitEncodings />
           <For each={props.audioUnitSpec.traversal}>{(traversalFieldDef) => <TraversalFieldControl spec={props.spec} traversalFieldDef={traversalFieldDef} />}</For>

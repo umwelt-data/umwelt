@@ -1,7 +1,6 @@
-import { UmweltViewer as SolidViewer } from '../../umwelt-solid/src/components/viewer';
+import { UmweltViewerWrapper } from '../../umwelt-solid/src/components/viewer/UmweltViewerWrapper';
 import { render } from 'solid-js/web';
 import { ExportableSpec } from '../../umwelt-solid/src/types';
-import { elaborateExportableSpec } from '../../umwelt-solid/src/util/spec';
 
 // Re-export types that consumers might need
 export type { ExportableSpec as UmweltSpec, UmweltDataset, UmweltDatum, UmweltValue } from '../../umwelt-solid/src/types';
@@ -28,8 +27,7 @@ export class UmweltViewer {
       throw new Error('Cannot mount a destroyed UmweltViewer. Create a new instance.');
     }
 
-    const umweltSpec = elaborateExportableSpec(this.options.spec);
-    this.disposal = render(() => SolidViewer({ spec: umweltSpec }), this.options.container);
+    this.disposal = render(() => UmweltViewerWrapper({ exportableSpec: this.options.spec }), this.options.container);
   }
 
   /**

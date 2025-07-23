@@ -1,11 +1,11 @@
 import { VegaLiteAdapter } from 'olli-adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isUmweltURLDataSource, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
 import LZString from 'lz-string';
-import { UmweltDatastore } from '../contexts/UmweltDatastoreContext';
-import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData } from './datasets';
+import { UmweltDatastore, UmweltDatastoreEntry } from '../contexts/UmweltDatastoreContext';
+import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, getData } from './datasets';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -31,16 +31,54 @@ export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): 
   if (!(spec.fields && spec.fields.length)) {
     return undefined;
   }
-  const data = datastore[spec.data.name];
-  if (!data || !data.length) {
+  const entry = datastore[spec.data.name];
+  if (!entry || !entry.data || !entry.data.length) {
     return undefined;
   }
   const umweltSpec = elaborateExportableSpec(spec);
-  const validatedSpec: UmweltSpec = {
-    ...umweltSpec,
-    data: { name: spec.data.name, values: cleanData(typeCoerceData(data, umweltSpec.fields), umweltSpec.fields) },
-  };
-  return validatedSpec;
+  return umweltSpec;
+}
+
+export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltDatastore, setDataset: (name: string, data: UmweltDataset, sourceUrl?: string) => void): Promise<UmweltSpec | undefined> {
+  if (!spec.data) {
+    return undefined;
+  }
+  if (!(spec.fields && spec.fields.length)) {
+    return undefined;
+  }
+
+  // First check if data is already in datastore
+  let dataName = spec.data.name;
+  if (dataName && datastore[dataName] && datastore[dataName].data && datastore[dataName].data.length > 0) {
+    const umweltSpec = elaborateExportableSpec(spec);
+    return umweltSpec;
+  }
+
+  // Try to load data from the data source
+  if (isExportableUmweltValuesDataSource(spec.data)) {
+    dataName = spec.data.name || DEFAULT_DATASET_NAME;
+    setDataset(dataName, spec.data.values);
+  } else if (isExportableUmweltURLDataSource(spec.data)) {
+    dataName = spec.data.name || spec.data.url.split('/').pop() || DEFAULT_DATASET_NAME;
+    try {
+      const data = await getData(spec.data.url);
+      setDataset(dataName, data, spec.data.url);
+    } catch (error) {
+      console.error('Failed to load data from URL:', spec.data.url, error);
+      return undefined;
+    }
+  } else {
+    return undefined;
+  }
+
+  // Now validate with the loaded data
+  const entry = datastore[dataName];
+  if (!entry || !entry.data || !entry.data.length) {
+    return undefined;
+  }
+
+  const umweltSpec = elaborateExportableSpec(spec);
+  return umweltSpec;
 }
 
 export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
@@ -63,19 +101,11 @@ export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
     });
     return { ...field, encodings };
   });
-  // if datasets don't have names, add them
-  let name = DEFAULT_DATASET_NAME;
-  if (isExportableUmweltURLDataSource(spec.data)) {
-    name = spec.data.url.split('/').pop() || name;
-  }
-  const data = {
-    ...spec.data,
-    name: spec.data.name || name,
-  } as UmweltDataSource;
-
   const newSpec: UmweltSpec = {
     ...spec,
-    data,
+    data: {
+      name: spec.data.name || (isExportableUmweltURLDataSource(spec.data) ? spec.data.url.split('/').pop() : DEFAULT_DATASET_NAME) || DEFAULT_DATASET_NAME,
+    },
     fields,
   };
   return newSpec;
@@ -259,25 +289,32 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
   return olliSpec;
 }
 
-export function exportableSpec(spec: UmweltSpec): ExportableSpec {
+export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): ExportableSpec {
   const { fields, ...rest } = spec;
   const exportableFields: ExportableFieldDef[] = fields.map((field) => {
     const { encodings, ...rest } = field;
     return rest;
   });
-  return { ...rest, fields: exportableFields };
+  
+  // Check if we have a source URL for the dataset
+  const entry = datastore[spec.data.name];
+  const data = entry?.sourceUrl 
+    ? { name: spec.data.name, url: entry.sourceUrl }
+    : { name: spec.data.name, values: entry?.data || [] };
+  
+  return { ...rest, fields: exportableFields, data };
 }
 
 export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {
   return JSON.stringify(spec, null, 2);
 }
 
-export function compressedSpec(spec: UmweltSpec): string {
-  return LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec)));
+export function compressedSpec(spec: UmweltSpec, datastore: UmweltDatastore): string {
+  return LZString.compressToEncodedURIComponent(JSON.stringify(exportableSpec(spec, datastore)));
 }
 
-export function shareSpecURL(spec: UmweltSpec): string {
-  const specString = compressedSpec(spec);
+export function shareSpecURL(spec: UmweltSpec, datastore: UmweltDatastore): string {
+  const specString = compressedSpec(spec, datastore);
   const url = new URL(window.location.origin);
   url.searchParams.set('spec', specString);
   return url.toString();

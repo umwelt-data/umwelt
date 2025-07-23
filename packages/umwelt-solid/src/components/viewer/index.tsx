@@ -4,34 +4,30 @@ import { TextualStructure } from './textualStructure';
 import { Sonification } from './sonification';
 
 import { UmweltSelectionProvider } from '../../contexts/UmweltSelectionContext';
-import { UmweltSpec } from '../../types';
-import { cleanData, typeCoerceData } from '../../util/datasets';
-import { createMemo } from 'solid-js';
+import { UmweltDataset, UmweltSpec } from '../../types';
 
 export interface UmweltViewerProps {
   spec: UmweltSpec;
+  data: UmweltDataset;
 }
 
 export function UmweltViewer(props: UmweltViewerProps) {
-  const spec = createMemo(() => {
-    const data = cleanData(typeCoerceData(props.spec.data.values, props.spec.fields), props.spec.fields);
-    return { ...props.spec, data: { ...props.spec.data, values: data } };
-  });
-
   return (
     <div class={styles.Viewer}>
       <div class="uw-viewer" role="region" aria-label="Umwelt Viewer">
         <UmweltSelectionProvider>
           <h2>Visualization</h2>
-          <Visualization spec={spec()} />
+          <Visualization spec={props.spec} data={props.data} />
 
           <h2>Description</h2>
-          <TextualStructure spec={spec()} />
+          <TextualStructure spec={props.spec} data={props.data} />
 
           <h2>Sonification</h2>
-          <Sonification spec={spec()} />
+          <Sonification spec={props.spec} data={props.data} />
         </UmweltSelectionProvider>
       </div>
     </div>
   );
 }
+
+export { UmweltViewerWrapper } from './UmweltViewerWrapper';

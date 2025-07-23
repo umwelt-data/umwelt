@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup } from 'solid-js';
 import { umweltToVegaLiteSpec } from '../../util/spec';
-import { UmweltSpec } from '../../types';
+import { UmweltDataset, UmweltSpec } from '../../types';
 import { renderVegaLite } from '../../util/vega';
 import { debounce } from '@solid-primitives/scheduled';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
@@ -8,6 +8,7 @@ import { predicateToSelectionStore, selectionStoreToSelection, VlSelectionStore 
 
 export type VisualizationProps = {
   spec: UmweltSpec;
+  data: UmweltDataset;
 };
 
 export function Visualization(props: VisualizationProps) {
@@ -46,7 +47,7 @@ export function Visualization(props: VisualizationProps) {
   });
 
   createEffect(() => {
-    const vlSpec = umweltToVegaLiteSpec(props.spec, props.spec.data.values);
+    const vlSpec = umweltToVegaLiteSpec(props.spec, props.data);
 
     if (vlSpec) {
       try {

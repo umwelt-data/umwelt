@@ -39,13 +39,8 @@ type ScaleRange = {
 
 export type MeasureType = Exclude<Type, 'geojson'>;
 
-export interface UmweltValuesDataSource {
+export interface UmweltDataSource {
   name: string;
-  values: UmweltDataset;
-}
-
-export function isUmweltValuesDataSource(dataSource: any): dataSource is UmweltValuesDataSource {
-  return dataSource && typeof dataSource.name === 'string' && Array.isArray(dataSource.values);
 }
 
 export interface ExportableUmweltValuesDataSource {
@@ -57,15 +52,6 @@ export function isExportableUmweltValuesDataSource(dataSource: any): dataSource 
   return dataSource && (typeof dataSource.name === 'string' || dataSource.name === undefined) && Array.isArray(dataSource.values);
 }
 
-export interface UmweltURLDataSource {
-  name: string;
-  values: UmweltDataset;
-}
-
-export function isUmweltURLDataSource(dataSource: any): dataSource is UmweltURLDataSource {
-  return dataSource && typeof dataSource.name === 'string' && typeof dataSource.url === 'string';
-}
-
 export interface ExportableUmweltURLDataSource {
   name?: string;
   url: string;
@@ -75,7 +61,6 @@ export function isExportableUmweltURLDataSource(dataSource: any): dataSource is 
   return dataSource && (typeof dataSource.name === 'string' || dataSource.name === undefined) && typeof dataSource.url === 'string';
 }
 
-export type UmweltDataSource = UmweltValuesDataSource | UmweltURLDataSource;
 export type ExportableUmweltDataSource = ExportableUmweltValuesDataSource | ExportableUmweltURLDataSource;
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;

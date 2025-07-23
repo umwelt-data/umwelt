@@ -1,12 +1,12 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, isAudioProp, isVisualProp } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltDataset, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, isAudioProp, isVisualProp, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, ExportableUmweltDataSource } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
-import { compressedSpec, exportableSpec, validateSpec } from '../util/spec';
+import { compressedSpec, exportableSpec, validateSpec, validateSpecAsync } from '../util/spec';
 import { Mark } from 'vega-lite/src/mark';
-import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData } from '../util/datasets';
+import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, getData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
 import { getDefaultSpec } from '../util/heuristics';
 
@@ -21,7 +21,7 @@ export type UmweltSpecInternalActions = {
 };
 
 export type UmweltSpecActions = {
-  initializeData: (name: string) => void;
+  initializeData: (name: string) => Promise<void>;
   setFieldActive: (field: string, active: boolean) => void;
   reorderKeyField: (field: string, newIndex: number) => void;
   setFieldType: (field: string, type: MeasureType) => void;
@@ -49,7 +49,7 @@ const UmweltSpecContext = createContext<[UmweltSpec, UmweltSpecActions]>();
 
 export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [datastore, _] = useUmweltDatastore();
+  const [datastore, datastoreActions] = useUmweltDatastore();
 
   const getInitialSpec = (): UmweltSpec => {
     if (searchParams.spec) {
@@ -59,42 +59,46 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         if (maybeSpec) {
           return maybeSpec;
         }
+        // If validation failed, return a default spec with the expected data name
+        // initializeData will handle loading the data asynchronously
+        if (exportedSpec.data) {
+          const dataName = exportedSpec.data.name || (isExportableUmweltURLDataSource(exportedSpec.data) ? exportedSpec.data.url.split('/').pop() : DEFAULT_DATASET_NAME) || DEFAULT_DATASET_NAME;
+          return {
+            data: { name: dataName },
+            fields: [],
+            key: [],
+            visual: { units: [], composition: 'layer' },
+            audio: { units: [], composition: 'concat' },
+          };
+        }
       } catch (e) {
         console.warn(e);
       }
     }
     return {
-      data: {
-        name: DEFAULT_DATASET_NAME,
-        values: [],
-      },
+      data: { name: DEFAULT_DATASET_NAME },
       fields: [],
       key: [],
-      visual: {
-        units: [],
-        composition: 'layer',
-      },
-      audio: {
-        units: [],
-        composition: 'concat',
-      },
+      visual: { units: [], composition: 'layer' },
+      audio: { units: [], composition: 'concat' },
     };
   };
 
   const [spec, setSpec] = createStore(getInitialSpec());
+  const data = () => datastore()[spec.data.name]?.data || [];
   const [visualUnitCount, setVisualUnitCount] = createSignal<number>(0);
   const [audioUnitCount, setAudioUnitCount] = createSignal<number>(0);
 
   const internalActions: UmweltSpecInternalActions = {
     updateSearchParams: () => {
       if (searchParams.spec) {
-        setSearchParams({ spec: compressedSpec(spec) });
+        setSearchParams({ spec: compressedSpec(spec, datastore()) });
       }
     },
     detectKey: async () => {
       const key = await detectKey(
         spec.fields.filter((f) => f.active),
-        spec.data.values
+        data()
       );
       setSpec('key', key);
       // check for default visual and audio units
@@ -107,7 +111,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           // initialize default visual and audio units
           const keyFieldDefs = spec.fields.filter((field) => field.active && spec.key.includes(field.name));
           const valueFieldDefs = spec.fields.filter((field) => field.active && !spec.key.includes(field.name));
-          const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, spec.data.values);
+          const defaultSpec = getDefaultSpec(keyFieldDefs, valueFieldDefs, data());
           setSpec('visual', defaultSpec.visual);
           setSpec('audio', defaultSpec.audio);
           // update encoding refs to match new spec
@@ -185,8 +189,32 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
   };
 
   const actions: UmweltSpecActions = {
-    initializeData: (name: string) => {
-      const data = datastore()[name];
+    initializeData: async (name: string) => {
+      let entry = datastore()[name];
+      let data = entry?.data;
+
+      // If data not found and we have search params, try to load from URL using validateSpecAsync
+      if (!data && searchParams.spec) {
+        try {
+          const exportedSpec: ExportableSpec = JSON.parse(LZString.decompressFromEncodedURIComponent(searchParams.spec));
+          const validatedSpec = await validateSpecAsync(exportedSpec, datastore(), datastoreActions.setDataset);
+          if (validatedSpec && validatedSpec.data.name === name) {
+            entry = datastore()[name];
+            data = entry?.data;
+            // Update the spec with the validated spec from URL parameters
+            batch(() => {
+              setSpec('fields', validatedSpec.fields);
+              setSpec('key', validatedSpec.key);
+              setSpec('visual', validatedSpec.visual);
+              setSpec('audio', validatedSpec.audio);
+              internalActions.updateSearchParams();
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to load data from search params:', e);
+        }
+      }
+
       if (data && data.length) {
         batch(() => {
           setSpec('data', 'name', name);
@@ -212,7 +240,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           // type and clean data
           const typedData = typeCoerceData(data, spec.fields);
           const cleanedData = cleanData(typedData, spec.fields);
-          setSpec('data', 'values', cleanedData);
+          datastoreActions.setDataset(name, cleanedData);
           internalActions.updateSearchParams();
         });
         // detect key

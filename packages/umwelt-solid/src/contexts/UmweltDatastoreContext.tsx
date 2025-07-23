@@ -1,16 +1,21 @@
 import { createContext, useContext, ParentProps, Accessor } from 'solid-js';
-import { UmweltDataset } from '../types';
+import { UmweltDataset, ExportableUmweltDataSource } from '../types';
 import { createStoredSignal } from '../util/solid';
 
 export type UmweltDatastoreProviderProps = ParentProps<{}>;
 
 export type UmweltDatastoreActions = {
-  setDataset: (name: string, data: UmweltDataset) => void;
+  setDataset: (name: string, data: UmweltDataset, sourceUrl?: string) => void;
   removeDataset: (name: string) => void;
 };
 
+export interface UmweltDatastoreEntry {
+  data: UmweltDataset;
+  sourceUrl?: string;
+}
+
 export interface UmweltDatastore {
-  [name: string]: UmweltDataset;
+  [name: string]: UmweltDatastoreEntry;
 }
 
 const UmweltDatastoreContext = createContext<[Accessor<UmweltDatastore>, UmweltDatastoreActions]>();
@@ -19,9 +24,9 @@ export function UmweltDatastoreProvider(props: UmweltDatastoreProviderProps) {
   const [datastore, setDatastore] = createStoredSignal<UmweltDatastore>('umweltDatastore', {});
 
   const actions: UmweltDatastoreActions = {
-    setDataset: (name, data) => {
+    setDataset: (name, data, sourceUrl) => {
       setDatastore((prev) => {
-        return { ...prev, [name]: data };
+        return { ...prev, [name]: { data, sourceUrl } };
       });
     },
     removeDataset: (name) => {

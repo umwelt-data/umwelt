@@ -8,15 +8,18 @@ import { Audio } from './audio';
 import styles from '../../App.module.scss';
 import { Dynamic } from 'solid-js/web';
 import { createStoredSignal } from '../../util/solid';
+import { useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 
 type EditorTab = 'data' | 'fields' | 'visual' | 'audio';
 
 export function UmweltEditor() {
-  const [spec, _] = useUmweltSpec();
-  const [currentTab, setCurrentTab] = createStoredSignal<EditorTab>('umweltTab', spec.data.values.length && spec.fields.length ? 'fields' : 'data');
+  const [spec] = useUmweltSpec();
+  const [datastore] = useUmweltDatastore();
+  const data = () => datastore()[spec.data.name]?.data || [];
+  const [currentTab, setCurrentTab] = createStoredSignal<EditorTab>('umweltTab', data().length && spec.fields.length ? 'fields' : 'data');
 
   createEffect(() => {
-    if (!(spec.data.values.length && spec.fields.length)) {
+    if (!(data().length && spec.fields.length)) {
       setCurrentTab('data');
     }
   });
@@ -35,13 +38,13 @@ export function UmweltEditor() {
           <button role="tab" id="tab-data" aria-controls="tabpanel-data" aria-selected={currentTab() === 'data'} onClick={() => setCurrentTab('data')}>
             Data
           </button>
-          <button role="tab" id="tab-fields" aria-controls="tabpanel-fields" aria-selected={currentTab() === 'fields'} onClick={() => setCurrentTab('fields')} disabled={!(spec.data.values.length && spec.fields.length)}>
+          <button role="tab" id="tab-fields" aria-controls="tabpanel-fields" aria-selected={currentTab() === 'fields'} onClick={() => setCurrentTab('fields')} disabled={!(data().length && spec.fields.length)}>
             Fields
           </button>
-          <button role="tab" id="tab-visual" aria-controls="tabpanel-visual" aria-selected={currentTab() === 'visual'} onClick={() => setCurrentTab('visual')} disabled={!(spec.data.values.length && spec.fields.length)}>
+          <button role="tab" id="tab-visual" aria-controls="tabpanel-visual" aria-selected={currentTab() === 'visual'} onClick={() => setCurrentTab('visual')} disabled={!(data().length && spec.fields.length)}>
             Visual
           </button>
-          <button role="tab" id="tab-audio" aria-controls="tabpanel-audio" aria-selected={currentTab() === 'audio'} onClick={() => setCurrentTab('audio')} disabled={!(spec.data.values.length && spec.fields.length)}>
+          <button role="tab" id="tab-audio" aria-controls="tabpanel-audio" aria-selected={currentTab() === 'audio'} onClick={() => setCurrentTab('audio')} disabled={!(data().length && spec.fields.length)}>
             Audio
           </button>
         </div>

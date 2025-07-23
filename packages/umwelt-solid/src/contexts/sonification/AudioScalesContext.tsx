@@ -1,5 +1,5 @@
 import { createContext, useContext, ParentProps } from 'solid-js';
-import { AudioEncoding, AudioPropName, ResolvedFieldDef, UmweltSpec, UmweltValue } from '../../types';
+import { AudioEncoding, AudioPropName, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
@@ -8,6 +8,7 @@ import { getVegaAxisTicks } from '../../util/vega';
 
 export type AudioScalesProviderProps = ParentProps<{
   spec: UmweltSpec;
+  data: UmweltDataset;
   encoding: AudioEncoding;
 }>;
 
@@ -58,11 +59,11 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
       switch (fieldDef.type) {
         case 'ordinal':
         case 'nominal':
-          domain = getDomain(resolvedFieldDef, props.spec.data.values, false);
+          domain = getDomain(resolvedFieldDef, props.data, false);
           break;
         case 'quantitative':
         case 'temporal':
-          domain = getDomain(resolvedFieldDef, props.spec.data.values, false);
+          domain = getDomain(resolvedFieldDef, props.data, false);
           domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
           break;
         default:
@@ -122,7 +123,7 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
       }
     }
 
-    let domain = getDomain(resolvedFieldDef, props.spec.data.values);
+    let domain = getDomain(resolvedFieldDef, props.data);
     if (fieldDef.type === 'ordinal' || fieldDef.type === 'nominal') {
       return domain;
     }

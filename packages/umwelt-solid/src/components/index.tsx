@@ -4,9 +4,12 @@ import styles from '../App.module.scss';
 import { UmweltViewer } from './viewer';
 import { UmweltEditor } from './editor';
 import { useUmweltSpec } from '../contexts/UmweltSpecContext';
+import { useUmweltDatastore } from '../contexts/UmweltDatastoreContext';
 
 export const Umwelt: Component = () => {
   const [spec, _] = useUmweltSpec();
+  const [datastore] = useUmweltDatastore();
+  const data = () => datastore()[spec.data.name]?.data || [];
 
   return (
     <>
@@ -16,7 +19,7 @@ export const Umwelt: Component = () => {
       </div>
       <div class={styles.column}>
         <h1>Viewer</h1>
-        <UmweltViewer spec={spec} />
+        <UmweltViewer spec={spec} data={data()} />
       </div>
     </>
   );

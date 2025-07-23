@@ -24,6 +24,7 @@ export interface EncodedNote {
 
 export type AudioUnitStateProviderProps = ParentProps<{
   spec: UmweltSpec;
+  data: UmweltDataset;
   audioUnitSpec: AudioUnitSpec;
 }>;
 
@@ -132,7 +133,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     });
   });
   const getDerivedData = createMemo(() => {
-    const data = sonificationState.selection ? selectionTest(props.spec.data.values, sonificationState.selection) : props.spec.data.values;
+    const data = sonificationState.selection ? selectionTest(props.data, sonificationState.selection) : props.data;
     const derived = derivedDataset(data, getResolvedFields()); // TODO global selection
     return derived;
   });

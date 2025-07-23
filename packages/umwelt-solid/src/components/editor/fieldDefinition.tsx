@@ -8,6 +8,7 @@ import { FieldTransforms } from './fieldTransforms';
 import { resolveFieldDef } from '../../util/spec';
 import { EnumeratedItem, InputRow, MONOSPACE } from '../ui/styled';
 import { styled } from 'solid-styled-components';
+import { useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 
 export type FieldDefinitionProps = {
   field: FieldDef;
@@ -37,6 +38,8 @@ const EncodingRow = styled.div`
 
 export function FieldDefinition(props: FieldDefinitionProps) {
   const [spec, specActions] = useUmweltSpec();
+  const [datastore, _] = useUmweltDatastore();
+  const data = () => datastore()[spec.data.name]?.data || [];
   const { field } = props;
 
   const commonPropNames = ['x', 'y', 'color', 'pitch'].reverse();
@@ -48,7 +51,7 @@ export function FieldDefinition(props: FieldDefinitionProps) {
 
   const assignableMtypes = (field: FieldDef) => {
     const mtypes = ['nominal', 'ordinal'];
-    const domain = getDomain(resolveFieldDef(field), spec.data.values);
+    const domain = getDomain(resolveFieldDef(field), data());
     if (domain.every((v) => dayjs(v).isValid())) {
       mtypes.push('temporal');
     }

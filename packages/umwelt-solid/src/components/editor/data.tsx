@@ -3,6 +3,7 @@ import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { UploadData } from './dataUpload';
+import { LoadDataFromURL } from './dataURL';
 import { fmtValue } from '../../util/description';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { UmweltDatastore, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
@@ -23,6 +24,7 @@ const StyledTable = styled('table')`
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
   const [datastore, datastoreActions] = useUmweltDatastore();
+  const data = () => datastore()[spec.data.name]?.data || [];
 
   const [recentFiles, setRecentFiles] = createStoredSignal<string[]>('umweltRecentFiles', []);
   const [vegaDatasetsCache, setVegaDatasetsCache] = createStoredSignal<UmweltDatastore>('vegaDatasetsCache', {});
@@ -31,7 +33,7 @@ export function Data() {
   createEffect(() => {
     if (!spec.data.name) {
       const recent = recentFiles();
-      if (recent.length && recent[0] in datastore()) {
+      if (recent.length && datastore()[recent[0]]) {
         specActions.initializeData(recent[0]);
       } else {
         loadDataFromVegaDatasets(vegaDatasets[0]);
@@ -45,6 +47,13 @@ export function Data() {
     specActions.initializeData(filename);
   };
 
+  const loadDataFromURL = (url: string, data: UmweltDataset) => {
+    const filename = url.split('/').pop() || url;
+    datastoreActions.setDataset(filename, data, url);
+    setRecentFiles([filename, ...recentFiles().filter((f) => f !== filename)]);
+    specActions.initializeData(filename);
+  };
+
   const loadDataFromRecentFile = (filename: string) => {
     if (datastore()[filename]) {
       specActions.initializeData(filename);
@@ -54,13 +63,13 @@ export function Data() {
   const loadDataFromVegaDatasets = (filename: string) => {
     const cache = vegaDatasetsCache();
     if (cache[filename]) {
-      datastoreActions.setDataset(filename, cache[filename]);
+      datastoreActions.setDataset(filename, cache[filename].data);
       specActions.initializeData(filename);
       return;
     }
     getData(vegaDataUrl(filename)).then((data) => {
       if (data && data.length) {
-        setVegaDatasetsCache({ ...cache, [filename]: data });
+        setVegaDatasetsCache({ ...cache, [filename]: { data } });
         datastoreActions.setDataset(filename, data);
         specActions.initializeData(filename);
       }
@@ -69,15 +78,15 @@ export function Data() {
 
   const DataTable = () => {
     return (
-      <Show when={spec.data && spec.data.name && spec.data.values.length} fallback={'No dataset loaded'}>
+      <Show when={spec.data && spec.data.name && data().length} fallback={'No dataset loaded'}>
         <StyledTable>
           <thead>
             <tr>
-              <For each={Object.keys(spec.data.values[0])}>{(key) => <th>{key}</th>}</For>
+              <For each={Object.keys(data()[0])}>{(key) => <th>{key}</th>}</For>
             </tr>
           </thead>
           <tbody>
-            <For each={spec.data.values}>
+            <For each={data()}>
               {(row) => (
                 <tr>
                   <For each={Object.entries(row)}>
@@ -105,6 +114,8 @@ export function Data() {
       <DataTable />
       <h3>Upload JSON or CSV file</h3>
       <UploadData loadDataFromUpload={loadDataFromUpload} />
+      <h3>Load data from URL</h3>
+      <LoadDataFromURL loadDataFromURL={loadDataFromURL} />
       <h3>Recently uploaded files</h3>
       <Show when={recentFiles().length > 0} fallback={'No files uploaded.'}>
         <For each={recentFiles()}>
