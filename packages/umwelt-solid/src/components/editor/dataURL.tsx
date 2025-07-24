@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js';
 import { getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { FormRow, FlexInput, ErrorText } from '../ui/styled';
+import { VEGA_DATA_URL_PREFIX } from './data';
 
 interface LoadDataFromURLProps {
   loadDataFromURL: (url: string, data: UmweltDataset) => void;
@@ -23,9 +24,12 @@ export function LoadDataFromURL(props: LoadDataFromURLProps) {
     setError('');
 
     try {
-      const data = await getData(urlValue);
+      // If the URL is just a filename (no protocol), prepend VEGA_DATA_URL_PREFIX
+      const finalUrl = urlValue.includes('://') || urlValue.startsWith('/') ? urlValue : `${VEGA_DATA_URL_PREFIX}${urlValue}`;
+      
+      const data = await getData(finalUrl);
       if (data && data.length > 0) {
-        props.loadDataFromURL(urlValue, data);
+        props.loadDataFromURL(finalUrl, data);
         setUrl(''); // Clear the input on success
       } else {
         setError('No data found at the provided URL');

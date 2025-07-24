@@ -295,13 +295,12 @@ export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): Ex
     const { encodings, ...rest } = field;
     return rest;
   });
-  
+
   // Check if we have a source URL for the dataset
   const entry = datastore[spec.data.name];
-  const data = entry?.sourceUrl 
-    ? { name: spec.data.name, url: entry.sourceUrl }
-    : { name: spec.data.name, values: entry?.data || [] };
-  
+  console.log(entry);
+  const data = entry?.sourceUrl ? { name: spec.data.name, url: entry.sourceUrl } : { name: spec.data.name, values: entry?.data || [] };
+
   return { ...rest, fields: exportableFields, data };
 }
 

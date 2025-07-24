@@ -26,7 +26,7 @@ export function UmweltDatastoreProvider(props: UmweltDatastoreProviderProps) {
   const actions: UmweltDatastoreActions = {
     setDataset: (name, data, sourceUrl) => {
       setDatastore((prev) => {
-        return { ...prev, [name]: { data, sourceUrl } };
+        return { ...prev, [name]: { data, sourceUrl: prev[name]?.sourceUrl || sourceUrl } };
       });
     },
     removeDataset: (name) => {

@@ -12,7 +12,7 @@ import { styled } from 'solid-styled-components';
 import { MONOSPACE, StyledTable, LabelButtonRow } from '../ui/styled';
 
 const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
-const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
+export const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
 
 const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
 
@@ -58,14 +58,14 @@ export function Data() {
   const loadDataFromVegaDatasets = (filename: string) => {
     const cache = vegaDatasetsCache();
     if (cache[filename]) {
-      datastoreActions.setDataset(filename, cache[filename].data);
+      datastoreActions.setDataset(filename, cache[filename].data, filename);
       specActions.initializeData(filename);
       return;
     }
     getData(vegaDataUrl(filename)).then((data) => {
       if (data && data.length) {
-        setVegaDatasetsCache({ ...cache, [filename]: { data } });
-        datastoreActions.setDataset(filename, data);
+        setVegaDatasetsCache({ ...cache, [filename]: { data, sourceUrl: filename } });
+        datastoreActions.setDataset(filename, data, filename);
         specActions.initializeData(filename);
       }
     });
