@@ -1,10 +1,8 @@
-## Usage
-
-```bash
-$ yarn install
-```
-
 # Umwelt Editor
+
+## Using Umwelt
+
+The editor is deployed at: https://umwelt-data.github.io/umwelt/editor/
 
 ## Available Scripts
 
