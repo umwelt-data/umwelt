@@ -298,7 +298,6 @@ export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): Ex
 
   // Check if we have a source URL for the dataset
   const entry = datastore[spec.data.name];
-  console.log(entry);
   const data = entry?.sourceUrl ? { name: spec.data.name, url: entry.sourceUrl } : { name: spec.data.name, values: entry?.data || [] };
 
   return { ...rest, fields: exportableFields, data };

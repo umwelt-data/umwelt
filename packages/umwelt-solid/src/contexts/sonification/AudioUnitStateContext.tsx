@@ -228,7 +228,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       return audioUnitState.traversalState[field];
     },
     setupTransportSequence: () => {
-      console.log('Setting up transport sequence');
       // Clear previous sequence
       audioEngine.transport.cancel();
 
@@ -447,7 +446,6 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   });
   const getAnnouncementForNote = (state: TraversalState, prevState?: TraversalState) => {
     const announcement: string[] = [];
-    console.log(state);
     Object.entries(state).forEach(([field, stateIdx]) => {
       const domain = getFieldDomains()[field];
 
