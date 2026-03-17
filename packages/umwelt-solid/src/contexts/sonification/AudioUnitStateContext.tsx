@@ -1,4 +1,4 @@
-import { createContext, useContext, ParentProps, createMemo, createEffect } from 'solid-js';
+import { createContext, useContext, ParentProps, createMemo, createEffect, createSignal, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioEncoding, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { LogicalAnd } from 'vega-lite/src/logical';
@@ -60,6 +60,20 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   const [scales, scaleActions] = useAudioScales();
   const [sonificationState, sonificationStateActions] = useSonificationState();
   const [audioEngine, audioEngineActions] = useAudioEngine();
+
+  const [speechVoice, setSpeechVoice] = createSignal<SpeechSynthesisVoice | undefined>();
+
+  const resolveVoice = () => {
+    const voices = speechSynthesis.getVoices();
+    const samantha = voices.find(v => v.name === 'Samantha');
+    const localDefault = voices.find(v => v.localService && v.default);
+    const anyDefault = voices.find(v => v.default);
+    setSpeechVoice(samantha ?? localDefault ?? anyDefault);
+  };
+
+  resolveVoice();
+  speechSynthesis.addEventListener('voiceschanged', resolveVoice);
+  onCleanup(() => speechSynthesis.removeEventListener('voiceschanged', resolveVoice));
 
   const getInitialState = (): AudioUnitState => {
     return {
@@ -244,6 +258,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
               audioEngineActions.releaseSynth();
               speechSynthesis.cancel();
               const utterance = new SpeechSynthesisUtterance(note.speakBefore);
+              utterance.voice = speechVoice() ?? null;
               utterance.rate = audioEngine.speechRate / 25;
               utterance.onend = () => {
                 if (audioEngine.isPlaying) {
