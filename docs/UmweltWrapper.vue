@@ -1,14 +1,23 @@
 <!-- UmweltWrapper.vue -->
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const props = defineProps(['spec'])
 const container = ref(null)
+let viewer = null
 
 onMounted(async () => {
-  // Dynamically import browser-dependent code
-  const { UmweltViewer, render } = await import('./index.js')
-  container.value && render(() => UmweltViewer({spec: props.spec}), container.value)
+  const { createViewer } = await import('./index.js')
+  if (container.value) {
+    viewer = createViewer(props.spec, container.value)
+  }
+})
+
+onUnmounted(() => {
+  if (viewer) {
+    viewer.destroy()
+    viewer = null
+  }
 })
 </script>
 

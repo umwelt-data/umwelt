@@ -1,3 +1,40 @@
+<script setup>
+import UmweltWrapper from '../UmweltWrapper.vue'
+
+const stocksSpec = {
+  "data": {
+    "url": "https://raw.githubusercontent.com/vega/vega-datasets/refs/heads/main/data/stocks.csv"
+  },
+  "visual": {
+    "units": [
+      {
+        "mark": "line",
+        "encoding": {
+          "x": { "field": "date" },
+          "y": { "field": "price" },
+          "color": { "field": "symbol" }
+        }
+      }
+    ],
+    "composition": "layer"
+  },
+  "audio": {
+    "units": [
+      {
+        "encoding": {
+          "pitch": { "field": "price" }
+        },
+        "traversal": [
+          { "field": "symbol" },
+          { "field": "date" }
+        ]
+      }
+    ],
+    "composition": "concat"
+  }
+}
+</script>
+
 # Tech Company Stocks
 
 <UmweltWrapper :spec="stocksSpec" />

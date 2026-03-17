@@ -14,9 +14,9 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'User Guide', link: '/user-guide/' },
+      // { text: 'User Guide', link: '/user-guide/' },
       { text: 'Examples', link: '/examples/' },
-      { text: 'Reference', link: '/reference/' },
+      // { text: 'Reference', link: '/reference/' },
       { text: 'Editor', link: 'https://umwelt-data.github.io/umwelt/editor' },
     ],
 
@@ -36,15 +36,10 @@ export default defineConfig({
       ],
       '/examples/': [
         {
-          text: 'Examples & Tutorials',
+          text: 'Example Gallery',
           items: [
             { text: 'Overview', link: '/examples/' },
             { text: 'Stocks', link: '/examples/stocks' },
-            { text: 'Basic Chart', link: '/examples/basic-chart' },
-            { text: 'Time Series', link: '/examples/time-series' },
-            { text: 'Multivariate Data', link: '/examples/multivariate' },
-            { text: 'Categorical Data', link: '/examples/categorical' },
-            { text: 'Advanced Sonification', link: '/examples/advanced-sonification' },
           ],
         },
       ],
