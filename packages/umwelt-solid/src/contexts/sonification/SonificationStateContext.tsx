@@ -10,6 +10,10 @@ export type SonificationStateProviderProps = ParentProps<{}>;
 export type SonificationStateActions = {
   setActiveUnit: (name: string) => void;
   setSelection: (predicate: UmweltPredicate | undefined) => void;
+  /** Register a play callback. Pass overwrite=true to force-replace (e.g. when a unit becomes active). */
+  registerPlayCallback: (fn: () => void, overwrite?: boolean) => void;
+  /** Invoke the currently registered play callback, if any. */
+  triggerPlay: () => void;
 };
 
 export interface SonificationState {
@@ -31,6 +35,9 @@ export function SonificationStateProvider(props: SonificationStateProviderProps)
 
   const [sonificationState, setSonificationState] = createStore(getInitialState());
 
+  // Stored outside the reactive store — functions don't belong in stores.
+  let playCallback: (() => void) | null = null;
+
   createEffect(() => {
     const sel = umweltSelection();
     if (sel && sel.source !== 'sonification') {
@@ -44,6 +51,14 @@ export function SonificationStateProvider(props: SonificationStateProviderProps)
     },
     setSelection: (predicate) => {
       setSonificationState('selection', predicate);
+    },
+    registerPlayCallback: (fn, overwrite = false) => {
+      if (overwrite || playCallback === null) {
+        playCallback = fn;
+      }
+    },
+    triggerPlay: () => {
+      playCallback?.();
     },
   };
 

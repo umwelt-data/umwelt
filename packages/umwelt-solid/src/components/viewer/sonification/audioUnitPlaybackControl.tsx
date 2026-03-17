@@ -1,6 +1,6 @@
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { useAudioEngine } from '../../../contexts/sonification/AudioEngineContext';
-import { Show } from 'solid-js';
+import { Show, createEffect, onMount } from 'solid-js';
 import { useSonificationState } from '../../../contexts/sonification/SonificationStateContext';
 
 export type AudioUnitPlaybackControlProps = {
@@ -21,6 +21,16 @@ export function AudioUnitPlaybackControl(props: AudioUnitPlaybackControlProps) {
     audioUnitStateActions.resetTraversalIfEnd();
     audioEngineActions.startTransport();
   }
+
+  // Register this unit's play function so key handlers can invoke it.
+  // On mount: register only if no callback is set yet (first unit becomes the default).
+  // When this unit becomes active: always overwrite to keep the callback current.
+  onMount(() => sonificationStateActions.registerPlayCallback(play));
+  createEffect(() => {
+    if (sonificationState.activeUnitName === props.unitName) {
+      sonificationStateActions.registerPlayCallback(play, true);
+    }
+  });
 
   return (
     <div>

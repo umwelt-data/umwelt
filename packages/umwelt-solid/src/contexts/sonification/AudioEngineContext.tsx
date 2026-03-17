@@ -157,6 +157,13 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       setAudioEngineState((prev) => {
         return { ...prev, speakAxisTicks: read };
       });
+      if (!read) {
+        speechSynthesis.cancel();
+        // If transport was paused waiting for speech to finish, resume it
+        if (audioEngineState.isPlaying) {
+          Tone.getTransport().start();
+        }
+      }
     },
     setSpeechRate: (rate) => {
       const clampedRate = clamp(rate, 1, 100);
