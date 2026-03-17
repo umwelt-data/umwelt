@@ -21,7 +21,7 @@ Builds the app for production to the `dist` folder.<br>
 
 ## Deployment
 
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+Deployed automatically on push to github pages via the `.github/workflows/deploy.yml` workflow.
 
 # Documentation
 
