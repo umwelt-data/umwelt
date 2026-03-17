@@ -447,6 +447,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
   });
   const getAnnouncementForNote = (state: TraversalState, prevState?: TraversalState) => {
     const announcement: string[] = [];
+    console.log(state);
     Object.entries(state).forEach(([field, stateIdx]) => {
       const domain = getFieldDomains()[field];
 
@@ -465,18 +466,19 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     return announcement.join(', ');
   };
   const hasCrossedAxisTick = (state: TraversalState, prevState: TraversalState | undefined, resolvedDef: ResolvedFieldDef) => {
-    let domain;
-    if (resolvedDef.bin || resolvedDef.type === 'nominal' || resolvedDef.type === 'ordinal') {
-      // either already binned or is a nominal/ordinal field (no binning)
-      domain = getFieldDomains()[resolvedDef.field];
-    } else {
-      domain = getAxisTicks()[resolvedDef.field];
-    }
-
     if (!prevState) {
       // first state
       return true;
     }
+
+    if (resolvedDef.bin || resolvedDef.type === 'nominal' || resolvedDef.type === 'ordinal') {
+      // For binned/nominal/ordinal fields, each domain value is its own tick.
+      // Just check if the state index changed.
+      return state[resolvedDef.field] !== prevState[resolvedDef.field];
+    }
+
+    // For unbinned quantitative/temporal fields, check if we crossed an axis tick
+    const domain = getAxisTicks()[resolvedDef.field];
 
     const currentData = internalActions.traversalStateToData(state);
     const prevData = internalActions.traversalStateToData(prevState);

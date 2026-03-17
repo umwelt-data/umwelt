@@ -266,6 +266,23 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       const key = spec.key.filter((k) => k !== field);
       key.splice(newIndex, 0, field);
       setSpec('key', key);
+      // Sync audio unit traversal order to match new key order
+      setSpec(
+        'audio',
+        'units',
+        spec.audio.units.map((unit) => {
+          const reordered = [...unit.traversal].sort((a, b) => {
+            const aIdx = key.indexOf(a.field);
+            const bIdx = key.indexOf(b.field);
+            // Fields not in key go to the end, preserving their relative order
+            if (aIdx === -1 && bIdx === -1) return 0;
+            if (aIdx === -1) return 1;
+            if (bIdx === -1) return -1;
+            return aIdx - bIdx;
+          });
+          return { ...unit, traversal: reordered };
+        })
+      );
       internalActions.updateSearchParams();
     },
     setFieldType: (field: string, type: MeasureType) => {
