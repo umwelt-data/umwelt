@@ -40,6 +40,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/examples/' },
             { text: 'Stocks', link: '/examples/stocks' },
+            { text: 'Penguins', link: '/examples/penguins' },
           ],
         },
       ],
