@@ -58,14 +58,14 @@ export function Data() {
   const loadDataFromVegaDatasets = (filename: string) => {
     const cache = vegaDatasetsCache();
     if (cache[filename]) {
-      datastoreActions.setDataset(filename, cache[filename].data, filename);
+      datastoreActions.setDataset(filename, cache[filename].data, vegaDataUrl(filename));
       specActions.initializeData(filename);
       return;
     }
     getData(vegaDataUrl(filename)).then((data) => {
       if (data && data.length) {
-        setVegaDatasetsCache({ ...cache, [filename]: { data, sourceUrl: filename } });
-        datastoreActions.setDataset(filename, data, filename);
+        setVegaDatasetsCache({ ...cache, [filename]: { data, sourceUrl: vegaDataUrl(filename) } });
+        datastoreActions.setDataset(filename, data, vegaDataUrl(filename));
         specActions.initializeData(filename);
       }
     });

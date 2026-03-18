@@ -55,14 +55,14 @@ export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltD
   }
 
   // Try to load data from the data source
+  let loadedData: any[] | undefined;
   if (isExportableUmweltValuesDataSource(spec.data)) {
     dataName = spec.data.name || DEFAULT_DATASET_NAME;
-    setDataset(dataName, spec.data.values);
+    loadedData = spec.data.values;
   } else if (isExportableUmweltURLDataSource(spec.data)) {
     dataName = spec.data.name || spec.data.url.split('/').pop() || DEFAULT_DATASET_NAME;
     try {
-      const data = await getData(spec.data.url);
-      setDataset(dataName, data, spec.data.url);
+      loadedData = await getData(spec.data.url);
     } catch (error) {
       console.error('Failed to load data from URL:', spec.data.url, error);
       return undefined;
@@ -71,11 +71,11 @@ export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltD
     return undefined;
   }
 
-  // Now validate with the loaded data
-  const entry = datastore[dataName];
-  if (!entry || !entry.data || !entry.data.length) {
+  if (!loadedData || !loadedData.length) {
     return undefined;
   }
+
+  setDataset(dataName, loadedData, isExportableUmweltURLDataSource(spec.data) ? spec.data.url : undefined);
 
   const umweltSpec = elaborateExportableSpec(spec);
   return umweltSpec;

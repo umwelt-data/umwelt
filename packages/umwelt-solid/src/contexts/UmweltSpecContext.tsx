@@ -1,4 +1,4 @@
-import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
+import { createContext, useContext, ParentProps, createSignal, createEffect, batch } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltDataset, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, isAudioProp, isVisualProp, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, ExportableUmweltDataSource } from '../types';
 import { detectKey, elaborateFields } from '../util/inference';
@@ -201,14 +201,22 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
           if (validatedSpec && validatedSpec.data.name === name) {
             entry = datastore()[name];
             data = entry?.data;
-            // Update the spec with the validated spec from URL parameters
-            batch(() => {
-              setSpec('fields', validatedSpec.fields);
-              setSpec('key', validatedSpec.key);
-              setSpec('visual', validatedSpec.visual);
-              setSpec('audio', validatedSpec.audio);
-              internalActions.updateSearchParams();
-            });
+            if (data && data.length) {
+              // Update the spec with the validated spec from URL parameters,
+              // then type-coerce/clean data using the validated fields
+              batch(() => {
+                setSpec('data', 'name', name);
+                setSpec('fields', validatedSpec.fields);
+                setSpec('key', validatedSpec.key);
+                setSpec('visual', validatedSpec.visual);
+                setSpec('audio', validatedSpec.audio);
+                const typedData = typeCoerceData(data, validatedSpec.fields);
+                const cleanedData = cleanData(typedData, validatedSpec.fields);
+                datastoreActions.setDataset(name, cleanedData);
+                internalActions.updateSearchParams();
+              });
+              return;
+            }
           }
         } catch (e) {
           console.warn('Failed to load data from search params:', e);
@@ -509,6 +517,14 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.updateSearchParams();
     },
   };
+
+  // When a spec is loaded from URL but its dataset isn't in the datastore yet,
+  // trigger initializeData to fetch the data asynchronously
+  createEffect(() => {
+    if (searchParams.spec && spec.data.name && spec.data.name !== DEFAULT_DATASET_NAME && spec.fields.length === 0 && !datastore()[spec.data.name]?.data?.length) {
+      actions.initializeData(spec.data.name);
+    }
+  });
 
   return <UmweltSpecContext.Provider value={[spec, actions]}>{props.children}</UmweltSpecContext.Provider>;
 }
