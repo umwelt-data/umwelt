@@ -26,13 +26,14 @@ onUnmounted(() => {
 </template>
 
 <style>
-.umwelt-container {
+.uw-viewer {
   h2 {
     border: none;
     margin: inherit;
   }
   button, input, optgroup, select, textarea {
-    all: initial;
+    all: revert;
+    appearance: auto;
   }
 }
 </style>
