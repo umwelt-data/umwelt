@@ -313,7 +313,7 @@ export function compressedSpec(spec: UmweltSpec, datastore: UmweltDatastore): st
 
 export function shareSpecURL(spec: UmweltSpec, datastore: UmweltDatastore): string {
   const specString = compressedSpec(spec, datastore);
-  const url = new URL(window.location.origin);
+  const url = new URL(window.location.href);
   url.searchParams.set('spec', specString);
   return url.toString();
 }
