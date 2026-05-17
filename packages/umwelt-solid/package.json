@@ -37,6 +37,7 @@
     "d3-scale": "^4.0.2",
     "dayjs": "^1.11.10",
     "fast-cartesian": "^9.0.0",
+    "@umwelt-data/umwelt-utils": "link:../../../umwelt-utils",
     "lodash.clonedeep": "^4.5.0",
     "lz-string": "^1.5.0",
     "moize": "^6.1.6",

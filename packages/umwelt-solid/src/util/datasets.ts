@@ -1,9 +1,8 @@
 import { compile } from 'vega-lite';
-import { FieldDef, MeasureType, UmweltDataset, UmweltDatum, UmweltTransform, UmweltValue, VlSpec } from '../types';
+import { FieldDef, UmweltDataset, UmweltTransform, UmweltValue, VlSpec } from '../types';
+import { typeCoerceData as sharedTypeCoerceData } from '@umwelt-data/umwelt-utils/data';
 import { getVegaScene } from './vega';
 import moize from 'moize';
-import { isNumber, isString } from 'vega';
-import { isNumeric } from './values';
 import cloneDeep from 'lodash.clonedeep';
 
 export const DEFAULT_DATASET_NAME = 'dataset';
@@ -57,46 +56,8 @@ export const getTransformedData = moize.promise(async (data: UmweltDataset, tran
 });
 
 export function typeCoerceData(data: UmweltDataset, fields: FieldDef[]): UmweltDataset {
-  // convert temporal fields into date objects converts quantitative into numbers
-  const lookup = Object.fromEntries(fields.map((f) => [f.name, f.type]));
-
-  if (data.length === 0) return data;
-  const firstDatum = data[0];
-  const coercedFirstDatum = typeCoerceDatum(lookup, firstDatum);
-  // if firstDatum equals coercedFirstDatum, no type coercion needed
-  if (Object.entries(firstDatum).every(([field, value]) => coercedFirstDatum[field] === value)) return data;
-
-  return data.map((datum) => {
-    return typeCoerceDatum(lookup, datum);
-  });
-}
-
-function typeCoerceDatum(lookup: { [x: string]: MeasureType | undefined }, datum: UmweltDatum): UmweltDatum {
-  return Object.fromEntries(
-    Object.entries(datum).map(([field, value]: [string, UmweltValue]) => {
-      if (!lookup[field]) return [field, value];
-      if (value === null || value === undefined) return [field, value];
-      switch (lookup[field]) {
-        case 'temporal':
-          if (field.toLowerCase() === 'year') {
-            if (isNumber(value) || (isString(value) && isNumeric(String(value)))) {
-              return [field, new Date(Number(value), 0, 1)];
-            } else if (isString(value)) {
-              return [field, new Date(value)];
-            }
-          }
-          return [field, new Date(value)];
-        case 'quantitative':
-          if (value instanceof Date) {
-            return [field, value.getTime()];
-          }
-          if (isString(value) && isNumeric(String(value))) {
-            return [field, Number(value)];
-          }
-      }
-      return [field, value];
-    })
-  );
+  const fieldSpecs = fields.map((f) => ({ name: f.name, type: f.type }));
+  return sharedTypeCoerceData(data, fieldSpecs) as UmweltDataset;
 }
 
 // TODO: future support for null/undefined values in data?
