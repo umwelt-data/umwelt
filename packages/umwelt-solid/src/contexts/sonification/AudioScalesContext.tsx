@@ -4,7 +4,7 @@ import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
-import { getVegaAxisTicks } from '../../util/vega';
+import { getVegaAxisTicks } from '@umwelt-data/umwelt-utils/vega';
 
 export type AudioScalesProviderProps = ParentProps<{
   spec: UmweltSpec;
@@ -100,23 +100,12 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
     }
 
     if ('view' in window) {
-      // if we have a vega view, we can get the ticks from the axis
       const xyEncodings = fieldDef.encodings.filter((e) => e.property === 'x' || e.property === 'y');
       if (xyEncodings.length === 1) {
-        let ticks;
-        // grab ticks from vega
-        const vTicks = getVegaAxisTicks(window.view as any);
-        if (vTicks && vTicks.length) {
-          if (vTicks.length === 1) {
-            ticks = vTicks[0];
-          } else if (vTicks.length === 2) {
-            if (xyEncodings[0].property === 'x') {
-              ticks = vTicks[0];
-            } else if (xyEncodings[0].property === 'y') {
-              ticks = vTicks[1];
-            }
-          }
-        }
+        const scene = ((window.view as any).scenegraph() as any).root.items[0];
+        const vTicks = getVegaAxisTicks(scene);
+        const channel = xyEncodings[0].property as 'x' | 'y';
+        const ticks = vTicks?.[channel];
         if (ticks) {
           return ticks;
         }
