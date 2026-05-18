@@ -3,8 +3,7 @@ import { Mark } from 'vega-lite/src/mark';
 import { Spec } from 'vega';
 import { TopLevelSpec } from 'vega-lite/src/spec';
 import { Sort } from 'vega-lite/src/sort';
-import { LogicalComposition } from 'vega-lite/src/logical';
-import { FieldPredicate } from 'vega-lite/src/predicate';
+import type { LogicalComposition, FieldPredicate } from '@umwelt-data/umwelt-utils/predicate';
 import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/src/transform';
 
 export type VlSpec = TopLevelSpec;

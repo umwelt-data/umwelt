@@ -1,11 +1,10 @@
 import { createContext, useContext, ParentProps, createMemo, createEffect, createSignal, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioEncoding, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
-import { LogicalAnd } from 'vega-lite/src/logical';
+import type { LogicalAnd, FieldEqualPredicate, FieldRangePredicate } from '@umwelt-data/umwelt-utils/predicate';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '../../util/values';
 import { selectionTest } from '../../util/selection';
-import { FieldEqualPredicate, FieldRangePredicate } from 'vega-lite/src/predicate';
 import { getBinnedDomain, getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
 import { DEFAULT_TONE_BPM, SonifierNote, useAudioEngine } from './AudioEngineContext';
@@ -192,7 +191,8 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
           return {
             field,
             range: value,
-            inclusive: idx === lastIndex,
+            inclusiveLeft: true,
+            inclusiveRight: idx === lastIndex,
           } as FieldRangePredicate;
         } else {
           return {

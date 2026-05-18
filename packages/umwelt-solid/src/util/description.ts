@@ -1,6 +1,5 @@
 import { FieldDef, ResolvedFieldDef, UmweltTimeUnit, UmweltValue } from '../types';
-import { LogicalComposition } from 'vega-lite/src/logical';
-import { FieldPredicate } from 'vega-lite/src/predicate';
+import type { LogicalComposition, FieldPredicate } from '@umwelt-data/umwelt-utils/predicate';
 
 export const fmtValue = (value: any, fieldDef: ResolvedFieldDef): string => {
   if (Array.isArray(value)) {
