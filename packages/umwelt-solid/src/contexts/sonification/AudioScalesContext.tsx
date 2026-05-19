@@ -4,7 +4,7 @@ import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
-import { getVegaAxisTicks } from '@umwelt-data/umwelt-utils/vega';
+import { computeAxisTicks } from '@umwelt-data/umwelt-utils/vega';
 
 export type AudioScalesProviderProps = ParentProps<{
   spec: UmweltSpec;
@@ -91,44 +91,24 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
     }
   };
 
-  const getAxisTicks = (resolvedFieldDef: ResolvedFieldDef) => {
+  const getAxisTicks = (resolvedFieldDef: ResolvedFieldDef): UmweltValue[] => {
     const fieldDef = getFieldDef(props.spec, resolvedFieldDef.field);
     if (!fieldDef) {
-      // throw new Error(`Field ${field} not found in spec`);
       console.warn(`Field ${resolvedFieldDef.field} not found in spec`);
       return [];
     }
 
-    if ('view' in window) {
-      const xyEncodings = fieldDef.encodings.filter((e) => e.property === 'x' || e.property === 'y');
-      if (xyEncodings.length === 1) {
-        const scene = ((window.view as any).scenegraph() as any).root.items[0];
-        const vTicks = getVegaAxisTicks(scene);
-        const channel = xyEncodings[0].property as 'x' | 'y';
-        const ticks = vTicks?.[channel];
-        if (ticks) {
-          return ticks;
-        }
-      }
-    }
+    const xyEncodings = fieldDef.encodings.filter((e) => e.property === 'x' || e.property === 'y');
+    const channel = xyEncodings[0]?.property as 'x' | 'y' | undefined;
+    if (!channel) return [];
 
-    let domain = getDomain(resolvedFieldDef, props.data);
-    if (fieldDef.type === 'ordinal' || fieldDef.type === 'nominal') {
-      return domain;
-    }
-    if (fieldDef.type === 'quantitative') {
-      const scale = scaleLinear()
-        .domain(domain as number[])
-        .range([0, 1]);
-      return scale.ticks(5);
-    }
-    if (fieldDef.type === 'temporal') {
-      const scale = scaleTime()
-        .domain(domain as Date[])
-        .range([0, 1]);
-      return scale.ticks(5);
-    }
-    throw new Error(`Unsupported field type ${fieldDef.type}`);
+    const result = computeAxisTicks(props.data as Record<string, any>[], {
+      [channel]: {
+        field: resolvedFieldDef.field,
+        type: fieldDef.type as 'quantitative' | 'ordinal' | 'nominal' | 'temporal',
+      },
+    });
+    return (result[channel] as UmweltValue[]) ?? [];
   };
 
   const scales = {
