@@ -2,6 +2,7 @@ import { createEffect, createSignal, onCleanup } from 'solid-js';
 import { umweltToOlliSpec } from '../../util/spec';
 import { UmweltDataset, UmweltSpec } from '../../types';
 import { olliVis, type OlliHandle } from 'olli';
+import 'olli/styles.css';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 
 export type VisualizationProps = {
