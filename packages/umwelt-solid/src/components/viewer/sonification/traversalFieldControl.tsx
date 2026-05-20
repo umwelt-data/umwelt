@@ -1,6 +1,7 @@
 import { For, Match, Switch } from 'solid-js';
 import { AudioTraversalFieldDef, UmweltPredicate, UmweltSpec } from '../../../types';
-import { describeField, fmtValue } from '../../../util/description';
+import { fmtCompoundValue } from '../../../util/description';
+import { describeField } from '@umwelt-data/umwelt-utils/description';
 import { getFieldDef, resolveFieldDef } from '../../../util/spec';
 import { useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { useAudioEngine } from '../../../contexts/sonification/AudioEngineContext';
@@ -40,8 +41,8 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
           </Match>
           <Match when={resolvedFieldDef().type !== 'nominal'}>
             <div>
-              <input aria-live="assertive" aria-valuetext={fmtValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
-              <span>{fmtValue(selectedValue(), resolvedFieldDef())}</span>
+              <input aria-live="assertive" aria-valuetext={fmtCompoundValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
+              <span>{fmtCompoundValue(selectedValue(), resolvedFieldDef())}</span>
             </div>
           </Match>
         </Switch>

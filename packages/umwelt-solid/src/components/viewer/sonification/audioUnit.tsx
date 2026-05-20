@@ -4,7 +4,7 @@ import { TraversalFieldControl } from './traversalFieldControl';
 import { AudioUnitStateProvider, useAudioUnitState } from '../../../contexts/sonification/AudioUnitStateContext';
 import { AudioScalesProvider } from '../../../contexts/sonification/AudioScalesContext';
 import { AudioUnitPlaybackControl } from './audioUnitPlaybackControl';
-import { describeField } from '../../../util/description';
+import { describeField } from '@umwelt-data/umwelt-utils/description';
 import { getFieldDef, resolveFieldDef } from '../../../util/spec';
 import { EnumeratedItem, InputRow } from '../../ui/styled';
 import { styled } from 'solid-styled-components';

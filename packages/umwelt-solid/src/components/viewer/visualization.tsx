@@ -5,6 +5,7 @@ import { renderVegaLite } from '../../util/vega';
 import { debounce } from '@solid-primitives/scheduled';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 import { predicateToSelectionStore, selectionStoreToSelection, VlSelectionStore } from '../../util/selection';
+import type { View } from 'vega';
 
 export type VisualizationProps = {
   spec: UmweltSpec;
@@ -14,9 +15,9 @@ export type VisualizationProps = {
 export function Visualization(props: VisualizationProps) {
   const [umweltSelection, umweltSelectionActions] = useUmweltSelection();
   const [isMouseOver, setIsMouseOver] = createSignal(false);
+  const [vegaView, setVegaView] = createSignal<View | null>(null);
 
   const onSelectionStore = debounce((store: VlSelectionStore) => {
-    // Update the selection when the brush store changes
     if (isMouseOver()) {
       const predicate = selectionStoreToSelection(store);
       umweltSelectionActions.setSelection({ source: 'visualization', predicate });
@@ -24,9 +25,8 @@ export function Visualization(props: VisualizationProps) {
   }, 250);
 
   createEffect(() => {
-    // Update the view when the selection changes
     const sel = umweltSelection();
-    const view = (window as any).view;
+    const view = vegaView();
     if (!sel) {
       if (view) {
         view.data('external_state_store', undefined).run();
@@ -57,24 +57,23 @@ export function Visualization(props: VisualizationProps) {
           onSelectionStore(value);
         });
 
-        (window as any).view = view;
+        setVegaView(view);
       } catch (e) {
         console.error(e);
       }
     }
     onCleanup(() => {
-      (window as any).view?.finalize();
-      (window as any).view = null;
+      vegaView()?.finalize();
+      setVegaView(null);
       document.getElementById('vl-container')!.innerHTML = '';
     });
   });
 
-  const onMouseEnter = () => {
-    setIsMouseOver(true);
-  };
-  const onMouseLeave = () => {
-    setIsMouseOver(false);
-  };
-
-  return <div id="vl-container" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}></div>;
+  return (
+    <div
+      id="vl-container"
+      onMouseEnter={() => setIsMouseOver(true)}
+      onMouseLeave={() => setIsMouseOver(false)}
+    ></div>
+  );
 }

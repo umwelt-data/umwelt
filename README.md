@@ -8,14 +8,14 @@ The editor is deployed at: https://umwelt-data.github.io/umwelt/editor/
 
 In the project directory, you can run:
 
-### `yarn dev` or `yarn start`
+### `pnpm dev` or `pnpm start`
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.<br>
 
-### `yarn build`
+### `pnpm build`
 
 Builds the app for production to the `dist` folder.<br>
 
@@ -25,14 +25,14 @@ Deployed automatically on push to github pages via the `.github/workflows/deploy
 
 # Documentation
 
-### `yarn docs:dev`
+### `pnpm docs:dev`
 
 Runs the docs in dev mode with live reload at [http://localhost:5173](http://localhost:5173).
 
-### `yarn docs:build`
+### `pnpm docs:build`
 
 Builds vitepress docs to `docs/.vitepress/dist`.
 
-### `yarn docs:preview`
+### `pnpm docs:preview`
 
 Previews the build output from `docs/.vitepress/dist` at [http://localhost:4173](http://localhost:4173).

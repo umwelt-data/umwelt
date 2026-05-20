@@ -1,7 +1,7 @@
 import moize from 'moize';
 import { ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
 import { selectionTest } from './selection';
-import { dateToFormattedString } from './description';
+import { dateToTimeUnit } from '@umwelt-data/umwelt-utils/description';
 import { binnedFieldNames, derivedFieldName, derivedFieldNameBinStartEnd } from './transforms';
 
 export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset, derive?: boolean): UmweltValue[] => {
@@ -13,7 +13,7 @@ export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset,
     const value = d[field];
 
     if (value instanceof Date) {
-      const timeUnit = fieldDef.timeUnit ? dateToFormattedString(value, fieldDef.timeUnit) : value.getTime();
+      const timeUnit = fieldDef.timeUnit ? dateToTimeUnit(value, fieldDef.timeUnit) : value.getTime();
       if (!uniqueVals.has(timeUnit)) {
         uniqueVals.set(timeUnit, value);
       }

@@ -4,7 +4,7 @@ import { DEFAULT_DATASET_NAME, getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { UploadData } from './dataUpload';
 import { LoadDataFromURL } from './dataURL';
-import { fmtValue } from '../../util/description';
+import { fmtCompoundValue } from '../../util/description';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
 import { UmweltDatastore, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 import { createStoredSignal } from '../../util/solid';
@@ -91,7 +91,7 @@ export function Data() {
                         return <td>{String(value)}</td>;
                       }
                       const resolvedDef = resolveFieldDef(fieldDef);
-                      return <td>{fmtValue(value, resolvedDef)}</td>;
+                      return <td>{fmtCompoundValue(value, resolvedDef)}</td>;
                     }}
                   </For>
                 </tr>

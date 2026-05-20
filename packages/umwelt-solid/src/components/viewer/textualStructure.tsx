@@ -1,7 +1,7 @@
-import { createEffect, createSignal } from 'solid-js';
+import { createEffect, createSignal, onCleanup } from 'solid-js';
 import { umweltToOlliSpec } from '../../util/spec';
 import { UmweltDataset, UmweltSpec } from '../../types';
-import { olli, OlliGlobalState } from 'olli';
+import { olliVis, type OlliHandle } from 'olli';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 
 export type VisualizationProps = {
@@ -12,39 +12,49 @@ export type VisualizationProps = {
 export function TextualStructure(props: VisualizationProps) {
   const [umweltSelection, umweltSelectionActions] = useUmweltSelection();
   const [olliContainerRef, setOlliContainerRef] = createSignal<HTMLDivElement | null>(null);
+  const [olliHandle, setOlliHandle] = createSignal<OlliHandle | null>(null);
 
   createEffect(() => {
     umweltToOlliSpec(props.spec, props.data).then((olliSpec) => {
-      if (olliSpec) {
-        if (((window as any)._olli as OlliGlobalState)?.instancesOnPage) {
-          // TODO we should fix this jank in olli
-          ((window as any)._olli as OlliGlobalState).instancesOnPage = [];
+      const container = olliContainerRef();
+      if (!olliSpec || !container) return;
+
+      olliHandle()?.destroy();
+      container.innerHTML = '';
+
+      const handle = olliVis(olliSpec, container);
+
+      handle.onFocusChange((navId) => {
+        const predicate = handle.fullPredicate(navId);
+        if ('and' in predicate && predicate.and.length > 0) {
+          umweltSelectionActions.setSelection({ source: 'text-navigation', predicate });
+        } else {
+          umweltSelectionActions.setSelection({ source: 'text-navigation', predicate: undefined });
         }
-        const elem = olli(olliSpec, {
-          onFocus: (_, node) => {
-            if (node.fullPredicate.and && node.fullPredicate.and.length > 0) {
-              //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
-              umweltSelectionActions.setSelection({ source: 'text-navigation', predicate: node.fullPredicate });
-            } else {
-              umweltSelectionActions.setSelection({ source: 'text-navigation', predicate: undefined });
-            }
-          },
-          onSelection: (predicate) => {
-            //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
-            umweltSelectionActions.setSelection({ source: 'text-filter', predicate });
-          },
-        });
-        olliContainerRef()?.replaceChildren(elem);
-      }
+      });
+
+      handle.onSelectionChange((selection) => {
+        umweltSelectionActions.setSelection({ source: 'text-filter', predicate: selection });
+      });
+
+      setOlliHandle(handle);
     });
   });
 
   createEffect(() => {
     const sel = umweltSelection();
-    if (sel && sel.source === 'visualization') {
-      //@ts-ignore // TODO: this is something dumb with the types in olli and umwelt being out of sync
-      ((window as any)._olli as OlliGlobalState).instancesOnPage[0].setSelection(sel.predicate);
+    const handle = olliHandle();
+    if (sel && handle && sel.source === 'visualization') {
+      if (sel.predicate) {
+        handle.setSelection(sel.predicate);
+      } else {
+        handle.setSelection({ and: [] });
+      }
     }
+  });
+
+  onCleanup(() => {
+    olliHandle()?.destroy();
   });
 
   return <div ref={setOlliContainerRef} id="olli-container"></div>;

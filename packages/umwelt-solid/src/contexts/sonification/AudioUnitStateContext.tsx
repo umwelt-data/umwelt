@@ -12,7 +12,8 @@ import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
 import { derivedDataset, derivedFieldName, derivedFieldNameBinStartEnd } from '../../util/transforms';
-import { describeField, fmtValue, makeCommaSeparatedString } from '../../util/description';
+import { fmtCompoundValue } from '../../util/description';
+import { describeField, makeCommaSeparatedString } from '@umwelt-data/umwelt-utils/description';
 import { useUmweltSelection } from '../UmweltSelectionContext';
 
 export interface EncodedNote {
@@ -341,9 +342,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       let label = '';
 
       if (domain.length > 1) {
-        label = `${describeField(resolvedDef)} from ${fmtValue(domain[0], resolvedDef)} to ${fmtValue(domain[domain.length - 1], resolvedDef)}`;
+        label = `${describeField(resolvedDef)} from ${fmtCompoundValue(domain[0], resolvedDef)} to ${fmtCompoundValue(domain[domain.length - 1], resolvedDef)}`;
       } else if (domain.length === 1) {
-        label = `${describeField(resolvedDef)} equals ${fmtValue(domain[0], resolvedDef)}`;
+        label = `${describeField(resolvedDef)} equals ${fmtCompoundValue(domain[0], resolvedDef)}`;
       } else {
         label = describeField(resolvedDef);
       }
@@ -457,7 +458,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       const shouldAnnounce = hasCrossedAxisTick(state, prevState, resolvedDef);
 
       if (shouldAnnounce) {
-        announcement.push(fmtValue(actions.getDomainValue(field, state[field]), resolvedDef));
+        announcement.push(fmtCompoundValue(actions.getDomainValue(field, state[field]), resolvedDef));
       }
     });
 

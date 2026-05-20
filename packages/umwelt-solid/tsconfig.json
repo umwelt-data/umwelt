@@ -15,7 +15,8 @@
       "@umwelt-data/umwelt-utils/data": ["../../../umwelt-utils/dist/data/index.d.ts"],
       "@umwelt-data/umwelt-utils/predicate": ["../../../umwelt-utils/dist/predicate/index.d.ts"],
       "@umwelt-data/umwelt-utils/vl-bridge": ["../../../umwelt-utils/dist/vl-bridge/index.d.ts"],
-      "@umwelt-data/umwelt-utils/vega": ["../../../umwelt-utils/dist/vega/index.d.ts"]
+      "@umwelt-data/umwelt-utils/vega": ["../../../umwelt-utils/dist/vega/index.d.ts"],
+      "@umwelt-data/umwelt-utils/description": ["../../../umwelt-utils/dist/description/index.d.ts"]
     }
   }
 }

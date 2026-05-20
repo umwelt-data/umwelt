@@ -1,8 +1,8 @@
-import { VegaLiteAdapter } from 'olli-adapters';
+import { VegaLiteAdapter, type OlliVisSpec, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
 import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
-import { OlliSpec, OlliTimeUnit, UnitOlliSpec } from 'olli';
+import { withExternalStateParam } from '@umwelt-data/umwelt-utils/vl-bridge';
 import LZString from 'lz-string';
 import { UmweltDatastore, UmweltDatastoreEntry } from '../contexts/UmweltDatastoreContext';
 import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, getData } from './datasets';
@@ -129,10 +129,6 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
       name: 'brush',
       select: 'interval',
     },
-    {
-      name: 'external_state',
-      select: 'interval',
-    },
   ];
 
   function compileUnits(spec: UmweltSpec): any {
@@ -176,10 +172,9 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
         });
       }
       return {
-        mark: unit.mark === 'line' ? { type: 'line', point: true } : unit.mark,
+        mark: unit.mark,
         encoding: {
           ...encoding,
-          opacity: condition(encoding.opacity || { value: 1 }, 'external_state', 0.3, false),
           color: {
             ...condition({ ...(encoding.color || { value: 'navy' }), scale: unit.mark === 'area' ? { scheme: 'category20b' } : undefined }, 'brush', 'grey'),
           },
@@ -229,34 +224,35 @@ export function umweltToVegaLiteSpec(spec: UmweltSpec, data: UmweltDataset): VlS
   };
 
   const compiled = compileUnits(spec);
+  let vlSpec: VlSpec;
   if ('mark' in compiled) {
-    return cloneDeep({
+    vlSpec = cloneDeep({
       data: { values: data },
       params,
       ...compiled,
     });
   } else {
-    return cloneDeep({
+    vlSpec = cloneDeep({
       data: { values: data },
       ...compiled,
     });
   }
+  return withExternalStateParam(vlSpec as unknown as Record<string, unknown>) as unknown as VlSpec;
 }
 
-export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): Promise<OlliSpec> {
-  let olliSpec: OlliSpec;
+export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): Promise<OlliVisSpec> {
+  let olliSpec: OlliVisSpec;
   const vlSpec = umweltToVegaLiteSpec(spec, data);
   if (vlSpec) {
     olliSpec = await VegaLiteAdapter(vlSpec);
   } else {
     olliSpec = {
-      data: data as any, // TODO align the types between Umwelt and Olli
+      data: data as any,
       fields: [],
     };
   }
 
-  if ('units' in olliSpec) {
-    // multi-spec
+  if (isMultiSpec(olliSpec)) {
     olliSpec.units.forEach((unit) => {
       handleUnitSpec(unit, spec);
     });
@@ -264,7 +260,7 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
     handleUnitSpec(olliSpec, spec);
   }
 
-  function handleUnitSpec(olliSpec: UnitOlliSpec, spec: UmweltSpec) {
+  function handleUnitSpec(olliSpec: UnitOlliVisSpec, spec: UmweltSpec) {
     if (olliSpec.fields?.length === 0) {
       delete olliSpec.mark;
       delete olliSpec.axes;
