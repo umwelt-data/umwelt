@@ -11,6 +11,6 @@
     "vitepress": "^1.6.3"
   },
   "dependencies": {
-    "vite-plugin-solid": "^2.11.1"
+    "umwelt-js": "workspace:*"
   }
 }

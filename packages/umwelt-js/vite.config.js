@@ -1,44 +1,29 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
-import dts from "vite-plugin-dts";
+import { readFileSync } from "fs";
 import solidPlugin from 'vite-plugin-solid';
 
-export default defineConfig(({ command }) => ({
-  publicDir: command === "serve" ? "public" : false,
+// npm dependencies stay external (consumers install them via package.json);
+// the workspace package umwelt-solid is inlined into the bundle.
+const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf8"));
+const external = Object.keys(pkg.dependencies).map((dep) => new RegExp(`^${dep}(/|$)`));
+
+export default defineConfig({
   server: {
     port: 3000,
   },
   build: {
-    emptyOutDir: false,
     target: "esnext",
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
-      formats: ["es", "cjs", "umd"],
-      name: "umwelt",
+      formats: ["es"],
       fileName: "index",
     },
     rollupOptions: {
-      external: [], // Bundle SolidJS and dependencies
-      output: {
-        globals: {
-          // No externals to define since we're bundling everything
-        }
-      }
-    }
+      external,
+    },
   },
   plugins: [
-    solidPlugin(), 
-    dts({
-      outDir: 'dist',
-      entryRoot: 'src',
-      include: ['src/**/*'],
-      exclude: ['**/*.test.*', '**/*.spec.*']
-    })
+    solidPlugin(),
   ],
-  resolve: {
-    alias: {
-      // Ensure we can resolve the umwelt-solid package during development
-      "../../umwelt-solid/src": resolve(__dirname, "../umwelt-solid/src")
-    }
-  }
-}));
+});

@@ -1,10 +1,10 @@
-import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/src/transform';
+import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/build/src/transform';
 import { ResolvedFieldDef, isUmweltAggregateOp, isUmweltTimeUnit, UmweltDataset, UmweltDatum, UmweltTransform, UmweltValue } from '../types';
 //@ts-ignore
 import { bin } from 'vega-statistics';
 import cloneDeep from 'lodash.clonedeep';
-import { NonArgAggregateOp } from 'vega-lite/src/aggregate';
-import { TimeUnit } from 'vega-lite/src/timeunit';
+import { NonArgAggregateOp } from 'vega-lite/build/src/aggregate';
+import { TimeUnit } from 'vega-lite/build/src/timeunit';
 
 export const aggregatedFieldName = (field: string, op: NonArgAggregateOp): string => `${op}_${field}`;
 export const binnedFieldNames = (field: string): [string, string] => [`${field}_bin_start`, `${field}_bin_end`];

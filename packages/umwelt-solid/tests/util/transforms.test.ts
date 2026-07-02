@@ -1,9 +1,9 @@
 import { test, expect } from 'vitest';
-import { getTransformedData } from '../../package/umwelt-solid/src/util/datasets';
-import { aggregatedFieldName, applyTransforms, binnedFieldNames, derivedFieldName, fieldsToTransforms, timeUnitFieldName } from '../../package/umwelt-solid/src/util/transforms';
-import { aggregateOps, FieldDef, timeUnits, UmweltDataset } from '../../package/umwelt-solid/src/types';
-import { UmweltTransform } from '../../package/umwelt-solid/src/types';
-import { resolveFieldDef } from '../../package/umwelt-solid/src/util/spec';
+import { getTransformedData } from '../../src/util/datasets';
+import { aggregatedFieldName, applyTransforms, binnedFieldNames, derivedFieldName, fieldsToTransforms, timeUnitFieldName } from '../../src/util/transforms';
+import { aggregateOps, FieldDef, timeUnits, UmweltDataset } from '../../src/types';
+import { UmweltTransform } from '../../src/types';
+import { resolveFieldDef } from '../../src/util/spec';
 
 function expectToEqualWithClose(actualData: UmweltDataset, expectedData: UmweltDataset) {
   expectedData.forEach((_, i) => {

@@ -25,6 +25,8 @@ Deployed automatically on push to github pages via the `.github/workflows/deploy
 
 # Documentation
 
+The docs render examples through the `umwelt-js` package, so build it first (`pnpm --filter umwelt-js build`, or `pnpm build` at the repo root).
+
 ### `pnpm docs:dev`
 
 Runs the docs in dev mode with live reload at [http://localhost:5173](http://localhost:5173).

@@ -5,7 +5,7 @@ import { detectKey, elaborateFields } from '../util/inference';
 import { useSearchParams } from '@solidjs/router';
 import LZString from 'lz-string';
 import { compressedSpec, exportableSpec, validateSpec, validateSpecAsync } from '../util/spec';
-import { Mark } from 'vega-lite/src/mark';
+import { Mark } from 'vega-lite/build/src/mark';
 import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, getData } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
 import { getDefaultSpec } from '../util/heuristics';

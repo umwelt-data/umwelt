@@ -1,4 +1,4 @@
-import { Mark } from 'vega-lite/src/mark';
+import { Mark } from 'vega-lite/build/src/mark';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { VisualUnitSpec, isVisualProp, markTypes, visualPropNames } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';

@@ -1,6 +1,12 @@
 {
   "name": "umwelt-solid",
   "version": "0.0.1",
+  "private": true,
+  "main": "./src/lib.ts",
+  "types": "./src/lib.ts",
+  "exports": {
+    ".": "./src/lib.ts"
+  },
   "scripts": {
     "start": "vite",
     "dev": "vite",
@@ -37,11 +43,11 @@
     "d3-scale": "^4.0.2",
     "dayjs": "^1.11.10",
     "fast-cartesian": "^9.0.0",
-    "@umwelt-data/umwelt-utils": "link:../../../umwelt-utils",
+    "@umwelt-data/umwelt-utils": "^0.1.2",
     "lodash.clonedeep": "^4.5.0",
     "lz-string": "^1.5.0",
     "moize": "^6.1.6",
-    "olli": "link:../../../olli/packages/olli",
+    "olli": "^3.0.2",
     "papaparse": "^5.4.1",
     "solid-element": "^1.9.1",
     "solid-js": "^1.7.12",
@@ -50,7 +56,6 @@
     "vega": "^6.2.0",
     "vega-lite": "^5.15.0",
     "vega-statistics": "^1.9.0",
-    "versioned-storage": "^3.1.7",
-    "vite-plugin-dts": "^4.5.0"
+    "versioned-storage": "^3.1.7"
   }
 }

@@ -4,3 +4,6 @@ packages:
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@umwelt-data/umwelt-utils@0.1.1'
+  - olli@3.0.1

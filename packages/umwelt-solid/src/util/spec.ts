@@ -1,4 +1,5 @@
-import { VegaLiteAdapter, type OlliVisSpec, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
+import { type OlliVisSpec, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
+import { VegaLiteAdapter } from 'olli/adapters';
 import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';

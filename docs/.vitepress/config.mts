@@ -1,11 +1,7 @@
 import { defineConfig } from 'vitepress';
-import solidPlugin from 'vite-plugin-solid';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  vite: {
-    plugins: [solidPlugin()],
-  },
   title: 'Umwelt',
   description: 'Accessible multimodal data representations',
   base: '/umwelt/',

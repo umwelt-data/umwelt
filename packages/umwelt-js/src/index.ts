@@ -1,9 +1,9 @@
-import { UmweltViewerWrapper } from '../../umwelt-solid/src/components/viewer/UmweltViewerWrapper';
+import { UmweltViewerWrapper } from 'umwelt-solid';
 import { render } from 'solid-js/web';
-import { ExportableSpec } from '../../umwelt-solid/src/types';
+import { ExportableSpec } from 'umwelt-solid';
 
 // Re-export types that consumers might need
-export type { ExportableSpec as UmweltSpec, UmweltDataset, UmweltDatum, UmweltValue } from '../../umwelt-solid/src/types';
+export type { ExportableSpec as UmweltSpec, UmweltDataset, UmweltDatum, UmweltValue } from 'umwelt-solid';
 
 export interface UmweltViewerOptions {
   spec: ExportableSpec;

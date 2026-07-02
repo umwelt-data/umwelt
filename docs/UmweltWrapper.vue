@@ -1,13 +1,14 @@
 <!-- UmweltWrapper.vue -->
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
+import 'umwelt-js/style.css'
 
 const props = defineProps(['spec'])
 const container = ref(null)
 let viewer = null
 
 onMounted(async () => {
-  const { createViewer } = await import('./index.js')
+  const { createViewer } = await import('umwelt-js')
   if (container.value) {
     viewer = createViewer(props.spec, container.value)
   }

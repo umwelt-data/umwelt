@@ -1,9 +1,8 @@
 import { createContext, useContext, ParentProps, createEffect, createSignal, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import * as Tone from 'tone';
-import { TransportClass } from 'tone/build/esm/core/clock/Transport';
+import type { TransportClass } from 'tone/build/esm/core/clock/Transport';
 import { EncodedNote, TraversalState } from './AudioUnitStateContext';
-import { set } from 'vega-lite/src/log';
 import { getUserSettings, setUserSettings } from '../../util/localStorage';
 import { clamp } from '../../util/values';
 

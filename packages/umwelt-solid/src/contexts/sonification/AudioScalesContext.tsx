@@ -4,7 +4,7 @@ import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
-import { computeAxisTicks } from '@umwelt-data/umwelt-utils/vega';
+import { computeGuideTicks } from '@umwelt-data/umwelt-utils/vega';
 
 export type AudioScalesProviderProps = ParentProps<{
   spec: UmweltSpec;
@@ -102,13 +102,11 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
     const channel = xyEncodings[0]?.property as 'x' | 'y' | undefined;
     if (!channel) return [];
 
-    const result = computeAxisTicks(props.data as Record<string, any>[], {
-      [channel]: {
-        field: resolvedFieldDef.field,
-        type: fieldDef.type as 'quantitative' | 'ordinal' | 'nominal' | 'temporal',
-      },
+    const ticks = computeGuideTicks(props.data as Record<string, any>[], {
+      field: resolvedFieldDef.field,
+      type: fieldDef.type as 'quantitative' | 'ordinal' | 'nominal' | 'temporal',
     });
-    return (result[channel] as UmweltValue[]) ?? [];
+    return (ticks as UmweltValue[]) ?? [];
   };
 
   const scales = {

@@ -4,16 +4,14 @@
     "strict": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "types": ["vite/client"],
-    "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "declaration": true,
-    "declarationDir": "dist",
-    "declarationMap": true
+    "skipLibCheck": true,
+    "noEmit": true
   }
 }

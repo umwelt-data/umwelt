@@ -1,35 +1,55 @@
 {
   "name": "umwelt-js",
   "version": "0.0.0",
-  "description": "",
+  "description": "Render the Umwelt viewer from a spec, without touching SolidJS",
   "type": "module",
   "files": [
     "dist"
   ],
-  "main": "./dist/index.umd.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.umd.cjs"
-    }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/index.css"
   },
   "scripts": {
-    "build": "vite build && cp dist/index.js ../../docs/index.js",
+    "clean": "rm -rf dist dist-dts",
+    "build:bundle": "vite build",
+    "build:dts": "tsc -p tsconfig.dts.json && rollup -c rollup.dts.config.mjs && rm -rf dist-dts",
+    "build": "pnpm run clean && pnpm run build:bundle && pnpm run build:dts",
     "start": "vite",
     "dev": "vite",
     "serve": "vite preview"
   },
   "license": "MIT",
   "devDependencies": {
-    "solid-devtools": "^0.27.3",
+    "rollup": "^4.60.4",
+    "rollup-plugin-dts": "^6.4.1",
     "typescript": "^5.1.3",
+    "umwelt-solid": "workspace:*",
     "vite": "^6.4.1",
-    "vite-plugin-solid": "^2.7.0",
-    "vite-plugin-dts": "^4.5.0"
+    "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
-    "solid-js": "^1.7.12"
+    "@solid-primitives/scheduled": "^1.5.0",
+    "@solidjs/router": "^0.8.3",
+    "@umwelt-data/umwelt-utils": "^0.1.2",
+    "d3-scale": "^4.0.2",
+    "dayjs": "^1.11.10",
+    "fast-cartesian": "^9.0.0",
+    "lodash.clonedeep": "^4.5.0",
+    "lz-string": "^1.5.0",
+    "moize": "^6.1.6",
+    "olli": "^3.0.2",
+    "solid-js": "^1.7.12",
+    "solid-styled-components": "^0.28.5",
+    "tone": "^15.0.4",
+    "vega": "^6.2.0",
+    "vega-lite": "^5.15.0",
+    "vega-statistics": "^1.9.0",
+    "versioned-storage": "^3.1.7"
   }
 }

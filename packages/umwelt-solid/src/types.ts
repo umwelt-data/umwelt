@@ -1,10 +1,10 @@
-import { Type } from 'vega-lite/src/type';
-import { Mark } from 'vega-lite/src/mark';
+import { Type } from 'vega-lite/build/src/type';
+import { Mark } from 'vega-lite/build/src/mark';
 import { Spec } from 'vega';
-import { TopLevelSpec } from 'vega-lite/src/spec';
-import { Sort } from 'vega-lite/src/sort';
+import { TopLevelSpec } from 'vega-lite/build/src/spec';
+import { Sort } from 'vega-lite/build/src/sort';
 import type { LogicalComposition, FieldPredicate } from '@umwelt-data/umwelt-utils/predicate';
-import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/src/transform';
+import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/build/src/transform';
 
 export type VlSpec = TopLevelSpec;
 export type VgSpec = Spec;

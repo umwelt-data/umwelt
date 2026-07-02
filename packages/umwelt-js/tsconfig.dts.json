@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["src/index.ts"],
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "rootDir": "..",
+    "outDir": "dist-dts",
+    "paths": {
+      "umwelt-solid": ["../umwelt-solid/src/lib.ts"]
+    }
+  }
+}
