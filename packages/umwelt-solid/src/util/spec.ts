@@ -1,12 +1,12 @@
 import { type OlliVisSpec, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
 import { VegaLiteAdapter } from 'olli/adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, AudioSpec, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, isExportableUmweltValuesDataSource, UmweltDataSource } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { withExternalStateParam } from '@umwelt-data/umwelt-utils/vl-bridge';
 import LZString from 'lz-string';
 import { UmweltDatastore, UmweltDatastoreEntry } from '../contexts/UmweltDatastoreContext';
-import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, getData } from './datasets';
+import { DEFAULT_DATASET_NAME, EXAMPLE_DATASETS, resolveDataSource } from './datasets';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -25,19 +25,17 @@ export function resolveFieldDef(specFieldDef: FieldDef, encFieldDef?: EncodingFi
   return Object.fromEntries(Object.entries(resolvedFieldDef).filter(([k, v]) => v !== NONE)) as unknown as ResolvedFieldDef;
 }
 
-export function validateSpec(spec: ExportableSpec, datastore: UmweltDatastore): UmweltSpec | undefined {
-  if (!spec.data?.name) {
+export function decodeSpecFromString(specString: string): ExportableSpec | undefined {
+  try {
+    const decompressed = LZString.decompressFromEncodedURIComponent(specString);
+    if (!decompressed) {
+      return undefined;
+    }
+    return JSON.parse(decompressed);
+  } catch (e) {
+    console.warn('Failed to decode spec:', e);
     return undefined;
   }
-  if (!(spec.fields && spec.fields.length)) {
-    return undefined;
-  }
-  const entry = datastore[spec.data.name];
-  if (!entry || !entry.data || !entry.data.length) {
-    return undefined;
-  }
-  const umweltSpec = elaborateExportableSpec(spec);
-  return umweltSpec;
 }
 
 export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltDatastore, setDataset: (name: string, data: UmweltDataset, sourceUrl?: string) => void): Promise<UmweltSpec | undefined> {
@@ -48,38 +46,19 @@ export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltD
     return undefined;
   }
 
-  // First check if data is already in datastore
-  let dataName = spec.data.name;
-  if (dataName && datastore[dataName] && datastore[dataName].data && datastore[dataName].data.length > 0) {
-    const umweltSpec = elaborateExportableSpec(spec);
-    return umweltSpec;
+  // if this datastore already holds the data (e.g. a re-render), skip resolution
+  const dataName = spec.data.name;
+  if (dataName && datastore[dataName]?.data?.length) {
+    return elaborateExportableSpec(spec);
   }
 
-  // Try to load data from the data source
-  let loadedData: any[] | undefined;
-  if (isExportableUmweltValuesDataSource(spec.data)) {
-    dataName = spec.data.name || DEFAULT_DATASET_NAME;
-    loadedData = spec.data.values;
-  } else if (isExportableUmweltURLDataSource(spec.data)) {
-    dataName = spec.data.name || spec.data.url.split('/').pop() || DEFAULT_DATASET_NAME;
-    try {
-      loadedData = await getData(spec.data.url);
-    } catch (error) {
-      console.error('Failed to load data from URL:', spec.data.url, error);
-      return undefined;
-    }
-  } else {
+  const resolved = await resolveDataSource(spec.data);
+  if (!resolved) {
     return undefined;
   }
+  setDataset(resolved.name, resolved.data, resolved.sourceUrl);
 
-  if (!loadedData || !loadedData.length) {
-    return undefined;
-  }
-
-  setDataset(dataName, loadedData, isExportableUmweltURLDataSource(spec.data) ? spec.data.url : undefined);
-
-  const umweltSpec = elaborateExportableSpec(spec);
-  return umweltSpec;
+  return elaborateExportableSpec(spec);
 }
 
 export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
@@ -100,7 +79,7 @@ export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
         }
       });
     });
-    return { ...field, encodings };
+    return { ...field, active: true, encodings };
   });
   const newSpec: UmweltSpec = {
     ...spec,
@@ -287,15 +266,27 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
 }
 
 export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): ExportableSpec {
-  const { fields, ...rest } = spec;
-  const exportableFields: ExportableFieldDef[] = fields.map((field) => {
-    const { encodings, ...rest } = field;
-    return rest;
-  });
+  const { fields, data: _data, ...rest } = spec;
+  const exportableFields: ExportableFieldDef[] = fields
+    .filter((field) => field.active)
+    .map((field) => {
+      const { encodings, active, ...rest } = field;
+      return rest;
+    });
 
-  // Check if we have a source URL for the dataset
+  // Most compact data source that can be resolved on import:
+  // example dataset name > source URL > embedded values.
+  // Constructed so that `data` serializes last, keeping embedded values from burying the rest of the spec.
   const entry = datastore[spec.data.name];
-  const data = entry?.sourceUrl ? { name: spec.data.name, url: entry.sourceUrl } : { name: spec.data.name, values: entry?.data || [] };
+  const exampleUrl = EXAMPLE_DATASETS[spec.data.name];
+  let data: ExportableUmweltDataSource;
+  if (exampleUrl && (!entry?.sourceUrl || entry.sourceUrl === exampleUrl)) {
+    data = { name: spec.data.name };
+  } else if (entry?.sourceUrl) {
+    data = { name: spec.data.name, url: entry.sourceUrl };
+  } else {
+    data = { name: spec.data.name, values: entry?.data || [] };
+  }
 
   return { ...rest, fields: exportableFields, data };
 }
@@ -310,7 +301,8 @@ export function compressedSpec(spec: UmweltSpec, datastore: UmweltDatastore): st
 
 export function shareSpecURL(spec: UmweltSpec, datastore: UmweltDatastore): string {
   const specString = compressedSpec(spec, datastore);
+  // spec goes in the hash fragment so it is never sent to the server
   const url = new URL(window.location.href);
-  url.searchParams.set('spec', specString);
+  url.hash = `spec=${specString}`;
   return url.toString();
 }

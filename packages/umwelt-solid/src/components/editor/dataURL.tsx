@@ -1,8 +1,7 @@
 import { createSignal } from 'solid-js';
-import { getData } from '../../util/datasets';
+import { getData, VEGA_DATA_URL_PREFIX } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { FormRow, FlexInput, ErrorText } from '../ui/styled';
-import { VEGA_DATA_URL_PREFIX } from './data';
 
 interface LoadDataFromURLProps {
   loadDataFromURL: (url: string, data: UmweltDataset) => void;

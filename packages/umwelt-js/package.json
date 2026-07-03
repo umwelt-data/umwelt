@@ -35,7 +35,6 @@
   },
   "dependencies": {
     "@solid-primitives/scheduled": "^1.5.0",
-    "@solidjs/router": "^0.8.3",
     "@umwelt-data/umwelt-utils": "^0.2.0",
     "d3-scale": "^4.0.2",
     "dayjs": "^1.11.10",

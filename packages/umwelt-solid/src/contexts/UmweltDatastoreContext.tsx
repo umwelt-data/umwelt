@@ -1,12 +1,24 @@
-import { createContext, useContext, ParentProps, Accessor } from 'solid-js';
-import { UmweltDataset, ExportableUmweltDataSource } from '../types';
+import { createContext, useContext, ParentProps, Accessor, createSignal } from 'solid-js';
+import { UmweltDataset } from '../types';
 import { createStoredSignal } from '../util/solid';
 
-export type UmweltDatastoreProviderProps = ParentProps<{}>;
+export type UmweltDatastoreProviderProps = ParentProps<{
+  // when false, datasets are held in memory only and never written to
+  // localStorage/sessionStorage (used by embedded viewers)
+  persist?: boolean;
+}>;
+
+export type SetDatasetOptions = {
+  // session datasets shadow persistent ones of the same name but only last for
+  // the tab's lifetime; used for data arriving via share links so it doesn't
+  // pollute (or get silently overridden by) the recipient's local datasets
+  session?: boolean;
+};
 
 export type UmweltDatastoreActions = {
-  setDataset: (name: string, data: UmweltDataset, sourceUrl?: string) => void;
+  setDataset: (name: string, data: UmweltDataset, sourceUrl?: string, options?: SetDatasetOptions) => void;
   removeDataset: (name: string) => void;
+  removeSessionDataset: (name: string) => void;
 };
 
 export interface UmweltDatastoreEntry {
@@ -21,16 +33,34 @@ export interface UmweltDatastore {
 const UmweltDatastoreContext = createContext<[Accessor<UmweltDatastore>, UmweltDatastoreActions]>();
 
 export function UmweltDatastoreProvider(props: UmweltDatastoreProviderProps) {
-  const [datastore, setDatastore] = createStoredSignal<UmweltDatastore>('umweltDatastore', {});
+  const persist = props.persist !== false;
+  const [persistent, setPersistent] = persist ? createStoredSignal<UmweltDatastore>('umweltDatastore', {}) : createSignal<UmweltDatastore>({});
+  const [session, setSession] = persist ? createStoredSignal<UmweltDatastore>('umweltSessionDatastore', {}, sessionStorage) : createSignal<UmweltDatastore>({});
+
+  const datastore = () => ({ ...persistent(), ...session() });
 
   const actions: UmweltDatastoreActions = {
-    setDataset: (name, data, sourceUrl) => {
-      setDatastore((prev) => {
-        return { ...prev, [name]: { data, sourceUrl: prev[name]?.sourceUrl || sourceUrl } };
-      });
+    setDataset: (name, data, sourceUrl, options) => {
+      if (options?.session) {
+        setSession((prev) => {
+          return { ...prev, [name]: { data, sourceUrl } };
+        });
+      } else {
+        setPersistent((prev) => {
+          return { ...prev, [name]: { data, sourceUrl: prev[name]?.sourceUrl || sourceUrl } };
+        });
+      }
     },
     removeDataset: (name) => {
-      setDatastore((prev) => {
+      setPersistent((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+      actions.removeSessionDataset(name);
+    },
+    removeSessionDataset: (name) => {
+      setSession((prev) => {
         const next = { ...prev };
         delete next[name];
         return next;

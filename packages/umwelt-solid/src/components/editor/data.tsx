@@ -1,6 +1,6 @@
 import { createEffect, For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { DEFAULT_DATASET_NAME, getData } from '../../util/datasets';
+import { DEFAULT_DATASET_NAME, EXAMPLE_DATASETS, getData } from '../../util/datasets';
 import { UmweltDataset } from '../../types';
 import { UploadData } from './dataUpload';
 import { LoadDataFromURL } from './dataURL';
@@ -11,10 +11,7 @@ import { createStoredSignal } from '../../util/solid';
 import { styled } from 'solid-styled-components';
 import { MONOSPACE, StyledTable, LabelButtonRow } from '../ui/styled';
 
-const vegaDatasets = ['stocks.csv', 'cars.json', 'weather.csv', 'seattle-weather.csv', 'penguins.json', 'driving.json', 'barley.json', 'disasters.csv', 'gapminder.json'];
-export const VEGA_DATA_URL_PREFIX = 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/';
-
-const vegaDataUrl = (filename: string) => `${VEGA_DATA_URL_PREFIX}${filename}`;
+const vegaDataUrl = (filename: string) => EXAMPLE_DATASETS[filename];
 
 export function Data() {
   const [spec, specActions] = useUmweltSpec();
@@ -31,7 +28,7 @@ export function Data() {
       if (recent.length && datastore()[recent[0]]) {
         specActions.initializeData(recent[0]);
       } else {
-        loadDataFromVegaDatasets(vegaDatasets[0]);
+        loadDataFromVegaDatasets(Object.keys(EXAMPLE_DATASETS)[0]);
       }
     }
   });
@@ -126,7 +123,7 @@ export function Data() {
         </For>
       </Show>
       <h3>Example datasets</h3>
-      <For each={vegaDatasets.filter((name) => !recentFiles().find((n) => n === name))}>
+      <For each={Object.keys(EXAMPLE_DATASETS).filter((name) => !recentFiles().find((n) => n === name))}>
         {(filename) => {
           return (
             <div>

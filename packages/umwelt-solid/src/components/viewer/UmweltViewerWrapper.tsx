@@ -2,7 +2,7 @@ import { createEffect, createSignal } from 'solid-js';
 import { UmweltViewer } from './index';
 import { UmweltDatastoreProvider, useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 import { ExportableSpec, UmweltSpec } from '../../types';
-import { validateSpecAsync, elaborateExportableSpec } from '../../util/spec';
+import { validateSpecAsync } from '../../util/spec';
 
 interface UmweltViewerWrapperProps {
   exportableSpec: ExportableSpec;
@@ -12,6 +12,7 @@ function UmweltViewerWithDatastore(props: UmweltViewerWrapperProps) {
   const [datastore, datastoreActions] = useUmweltDatastore();
   const [spec, setSpec] = createSignal<UmweltSpec>();
   const [loading, setLoading] = createSignal<boolean>(true);
+  const [error, setError] = createSignal<string>();
 
   const data = () => {
     const currentSpec = spec();
@@ -24,22 +25,18 @@ function UmweltViewerWithDatastore(props: UmweltViewerWrapperProps) {
     // This effect will re-run whenever props.exportableSpec changes
     const currentExportableSpec = props.exportableSpec;
     setLoading(true);
+    setError(undefined);
     try {
-      // Try to validate and load the spec asynchronously (handles URL loading)
+      // Validate and load the spec asynchronously (resolves url and example-name data sources)
       const validatedSpec = await validateSpecAsync(currentExportableSpec, datastore(), datastoreActions.setDataset);
       if (validatedSpec) {
         setSpec(validatedSpec);
       } else {
-        // Fallback to basic elaboration if validation fails
-        console.warn('Failed to validate spec, falling back to basic elaboration');
-        const elaboratedSpec = elaborateExportableSpec(currentExportableSpec);
-        setSpec(elaboratedSpec);
+        setError('Failed to load Umwelt spec: the spec is invalid or its data source could not be resolved.');
       }
-    } catch (error) {
-      console.error('Error loading spec:', error);
-      // Fallback to basic elaboration
-      const elaboratedSpec = elaborateExportableSpec(currentExportableSpec);
-      setSpec(elaboratedSpec);
+    } catch (err) {
+      console.error('Error loading spec:', err);
+      setError(`Failed to load Umwelt spec: ${err}`);
     } finally {
       setLoading(false);
     }
@@ -48,7 +45,8 @@ function UmweltViewerWithDatastore(props: UmweltViewerWrapperProps) {
   return (
     <div>
       {loading() && <div>Loading...</div>}
-      {!loading() && spec() && <UmweltViewer spec={spec()!} data={data()} />}
+      {!loading() && error() && <div role="alert">{error()}</div>}
+      {!loading() && !error() && spec() && <UmweltViewer spec={spec()!} data={data()} />}
     </div>
   );
 }
@@ -59,7 +57,7 @@ function UmweltViewerWithDatastore(props: UmweltViewerWrapperProps) {
  */
 export function UmweltViewerWrapper(props: UmweltViewerWrapperProps) {
   return (
-    <UmweltDatastoreProvider>
+    <UmweltDatastoreProvider persist={false}>
       <UmweltViewerWithDatastore exportableSpec={props.exportableSpec} />
     </UmweltDatastoreProvider>
   );

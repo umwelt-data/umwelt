@@ -60,7 +60,16 @@ export function isExportableUmweltURLDataSource(dataSource: any): dataSource is 
   return dataSource && (typeof dataSource.name === 'string' || dataSource.name === undefined) && typeof dataSource.url === 'string';
 }
 
-export type ExportableUmweltDataSource = ExportableUmweltValuesDataSource | ExportableUmweltURLDataSource;
+// name-only source; resolved against the built-in example dataset registry (EXAMPLE_DATASETS)
+export interface ExportableUmweltNameDataSource {
+  name: string;
+}
+
+export function isExportableUmweltNameDataSource(dataSource: any): dataSource is ExportableUmweltNameDataSource {
+  return dataSource && typeof dataSource.name === 'string' && !isExportableUmweltValuesDataSource(dataSource) && !isExportableUmweltURLDataSource(dataSource);
+}
+
+export type ExportableUmweltDataSource = ExportableUmweltValuesDataSource | ExportableUmweltURLDataSource | ExportableUmweltNameDataSource;
 
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
@@ -191,7 +200,7 @@ export interface UmweltSpec {
   // text: OlliNode | OlliNode[] | boolean;
 }
 
-export type ExportableFieldDef = Omit<FieldDef, 'encodings'>;
+export type ExportableFieldDef = Omit<FieldDef, 'encodings' | 'active'>;
 
 export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data'> {
   data: ExportableUmweltDataSource;
