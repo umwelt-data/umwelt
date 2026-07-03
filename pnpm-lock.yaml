@@ -16,7 +16,7 @@ importers:
     devDependencies:
       vitepress:
         specifier: ^1.6.3
-        version: 1.6.4(@algolia/client-search@5.52.1)(@types/node@25.9.0)(postcss@8.5.14)(sass@1.99.0)(search-insights@2.17.3)(typescript@5.9.3)
+        version: 1.6.4(@algolia/client-search@5.52.1)(postcss@8.5.14)(sass@1.99.0)(search-insights@2.17.3)(typescript@5.9.3)
 
   packages/umwelt-js:
     dependencies:
@@ -27,8 +27,8 @@ importers:
         specifier: ^0.8.3
         version: 0.8.4(solid-js@1.9.13)
       '@umwelt-data/umwelt-utils':
-        specifier: ^0.1.2
-        version: 0.1.5
+        specifier: ^0.2.0
+        version: 0.2.0
       d3-scale:
         specifier: ^4.0.2
         version: 4.0.2
@@ -48,8 +48,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.0.2
-        version: 3.1.0(vega-lite@5.23.0(vega@6.2.0))
+        specifier: ^3.1.1
+        version: 3.1.1(vega-lite@5.23.0(vega@6.2.0))
       solid-js:
         specifier: ^1.7.12
         version: 1.9.13
@@ -86,10 +86,10 @@ importers:
         version: link:../umwelt-solid
       vite:
         specifier: ^6.4.1
-        version: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+        version: 6.4.2(sass@1.99.0)(yaml@2.9.0)
       vite-plugin-solid:
         specifier: ^2.7.0
-        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))
+        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))
 
   packages/umwelt-solid:
     dependencies:
@@ -102,12 +102,9 @@ importers:
       '@types/d3-scale':
         specifier: ^4.0.8
         version: 4.0.9
-      '@types/papaparse':
-        specifier: ^5.3.14
-        version: 5.5.2
       '@umwelt-data/umwelt-utils':
-        specifier: ^0.1.2
-        version: 0.1.5
+        specifier: ^0.2.0
+        version: 0.2.0
       babel-preset-solid:
         specifier: ^1.7.12
         version: 1.9.12(@babel/core@7.29.0)(solid-js@1.9.13)
@@ -133,11 +130,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.0.2
-        version: 3.1.0(vega-lite@5.23.0(vega@6.2.0))
-      papaparse:
-        specifier: ^5.4.1
-        version: 5.5.3
+        specifier: ^3.1.1
+        version: 3.1.1(vega-lite@5.23.0(vega@6.2.0))
       solid-element:
         specifier: ^1.9.1
         version: 1.9.1(solid-js@1.9.13)
@@ -198,7 +192,7 @@ importers:
         version: 1.99.0
       solid-devtools:
         specifier: ^0.27.3
-        version: 0.27.9(solid-js@1.9.13)(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))
+        version: 0.27.9(solid-js@1.9.13)(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))
       typescript:
         specifier: ^5.1.3
         version: 5.9.3
@@ -207,13 +201,13 @@ importers:
         version: 8.59.4(eslint@9.39.4)(typescript@5.9.3)
       vite:
         specifier: ^6.4.1
-        version: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+        version: 6.4.2(sass@1.99.0)(yaml@2.9.0)
       vite-plugin-solid:
         specifier: ^2.7.0
-        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))
+        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))
       vitest:
         specifier: ^3.0.2
-        version: 3.2.4(@types/node@25.9.0)(jsdom@26.1.0)(sass@1.99.0)(yaml@2.9.0)
+        version: 3.2.4(jsdom@26.1.0)(sass@1.99.0)(yaml@2.9.0)
 
 packages:
 
@@ -1245,12 +1239,6 @@ packages:
   '@types/mdurl@2.0.0':
     resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
 
-  '@types/node@25.9.0':
-    resolution: {integrity: sha512-AOQwYUNolgy3VosiRqXrACUXTN8nJUtPl7FJXMqZVyxiiCLhQuG3jXKvCS1ALr+Y2OmZhzzLVlYPEqJaiqkaJQ==}
-
-  '@types/papaparse@5.5.2':
-    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
-
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
@@ -1316,8 +1304,8 @@ packages:
     resolution: {integrity: sha512-U3gxVaDVnuZKhSspW/MzMxE1kq7zOdc072FcSNoqA1I9p8HyKbBFfEHoWckBAMgNMph4MamwS5iTVzFmrnt8TQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@umwelt-data/umwelt-utils@0.1.5':
-    resolution: {integrity: sha512-GX25tGmzH1qlVsjeHP+OI1ls4b/ecRh4DhX28GwRyY1uX9d33ldCeCj7HnxN83a1ls/BSskqYeJRMdpz6+Nh4w==}
+  '@umwelt-data/umwelt-utils@0.2.0':
+    resolution: {integrity: sha512-M6+w7rrjPhwzbsMK9CKJpPoc1WUi/uND04oigwhu7NQiR1CyltPrF4cBbkK+BNmXl1B8MWqdnKrlrybbxCE2qw==}
 
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
@@ -2241,8 +2229,8 @@ packages:
   nwsapi@2.2.23:
     resolution: {integrity: sha512-7wfH4sLbt4M0gCDzGE6vzQBo0bfTKjU7Sfpqy/7gs1qBfYz2vEJH6vXcBKpO3+6Yu1telwd0t9HpyOoLEQQbIQ==}
 
-  olli@3.1.0:
-    resolution: {integrity: sha512-BoUrQUlYiPDCWiTvgikNsGKSPtp2etnhQ6Xl0GTxnre7Q2HDwXSlsEB2gE++mbuBlACJNo8WsmkisFAq384ddA==}
+  olli@3.1.1:
+    resolution: {integrity: sha512-xVxohwBoLvXtHGCo7AK9NGJsWpzRdZLIvEbK+l8/JOP+hq5W8agwCeTTGQmp89mlL/Q04wNbwaVVEj0Vq6W7og==}
     peerDependencies:
       '@observablehq/plot': '>=0.6.0'
       vega-lite: ^6.4.3
@@ -2271,8 +2259,8 @@ packages:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
 
-  papaparse@5.5.3:
-    resolution: {integrity: sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A==}
+  papaparse@5.5.4:
+    resolution: {integrity: sha512-SwzWD9gl/ElwYLCI0nUja1mFJzjq2D8ziShfNBa7zCHzkOozeOGDwHWQ+tvCzEZcewecWZ5U7kUopDnG+DFYEQ==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -2631,9 +2619,6 @@ packages:
   ua-parser-js@2.0.10:
     resolution: {integrity: sha512-t+3Ktbq0Ies2vaSezfOaWiolH4OigQIO1dk+1xDpOydB1COVPocVYOrEV5rqZ0kFY9XYG1v9LutCyMgYBpABcw==}
     hasBin: true
-
-  undici-types@7.24.6:
-    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
   unist-util-is@6.0.1:
     resolution: {integrity: sha512-LsiILbtBETkDz8I9p1dQ0uyRUWuaQzd/cuEeS1hoRSyW5E5XGmTzlwY1OrNzzakGowI9Dr/I8HVaw4hTtnxy8g==}
@@ -3924,14 +3909,6 @@ snapshots:
 
   '@types/mdurl@2.0.0': {}
 
-  '@types/node@25.9.0':
-    dependencies:
-      undici-types: 7.24.6
-
-  '@types/papaparse@5.5.2':
-    dependencies:
-      '@types/node': 25.9.0
-
   '@types/unist@3.0.3': {}
 
   '@types/web-bluetooth@0.0.21': {}
@@ -4027,17 +4004,20 @@ snapshots:
       '@typescript-eslint/types': 8.59.4
       eslint-visitor-keys: 5.0.1
 
-  '@umwelt-data/umwelt-utils@0.1.5':
+  '@umwelt-data/umwelt-utils@0.2.0':
     dependencies:
       d3-array: 3.2.4
       d3-scale: 4.0.2
+      papaparse: 5.5.4
+      topojson-client: 3.1.0
       vega-expression: 6.1.0
+      vega-statistics: 2.0.0
 
   '@ungap/structured-clone@1.3.1': {}
 
-  '@vitejs/plugin-vue@5.2.4(vite@5.4.21(@types/node@25.9.0)(sass@1.99.0))(vue@3.5.34(typescript@5.9.3))':
+  '@vitejs/plugin-vue@5.2.4(vite@5.4.21(sass@1.99.0))(vue@3.5.34(typescript@5.9.3))':
     dependencies:
-      vite: 5.4.21(@types/node@25.9.0)(sass@1.99.0)
+      vite: 5.4.21(sass@1.99.0)
       vue: 3.5.34(typescript@5.9.3)
 
   '@vitest/expect@3.2.4':
@@ -4048,13 +4028,13 @@ snapshots:
       chai: 5.3.3
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.2.4(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))':
+  '@vitest/mocker@3.2.4(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -4995,10 +4975,10 @@ snapshots:
 
   nwsapi@2.2.23: {}
 
-  olli@3.1.0(vega-lite@5.23.0(vega@6.2.0)):
+  olli@3.1.1(vega-lite@5.23.0(vega@6.2.0)):
     dependencies:
-      '@umwelt-data/umwelt-utils': 0.1.5
-      papaparse: 5.5.3
+      '@umwelt-data/umwelt-utils': 0.2.0
+      papaparse: 5.5.4
       solid-js: 1.9.13
       topojson-client: 3.1.0
       ua-parser-js: 2.0.10
@@ -5034,7 +5014,7 @@ snapshots:
     dependencies:
       p-limit: 3.1.0
 
-  papaparse@5.5.3: {}
+  papaparse@5.5.4: {}
 
   parent-module@1.0.1:
     dependencies:
@@ -5217,7 +5197,7 @@ snapshots:
       is-fullwidth-code-point: 5.1.0
     optional: true
 
-  solid-devtools@0.27.9(solid-js@1.9.13)(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)):
+  solid-devtools@0.27.9(solid-js@1.9.13)(vite@6.4.2(sass@1.99.0)(yaml@2.9.0)):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
@@ -5226,7 +5206,7 @@ snapshots:
       '@solid-devtools/shared': 0.12.3(solid-js@1.9.13)
       solid-js: 1.9.13
     optionalDependencies:
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -5407,8 +5387,6 @@ snapshots:
       detect-europe-js: 0.1.2
       is-standalone-pwa: 0.1.1
       ua-is-frozen: 0.1.2
-
-  undici-types@7.24.6: {}
 
   unist-util-is@6.0.1:
     dependencies:
@@ -5707,13 +5685,13 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite-node@3.2.4(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0):
+  vite-node@3.2.4(sass@1.99.0)(yaml@2.9.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -5728,7 +5706,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-solid@2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)):
+  vite-plugin-solid@2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@6.4.2(sass@1.99.0)(yaml@2.9.0)):
     dependencies:
       '@babel/core': 7.29.0
       '@types/babel__core': 7.20.5
@@ -5736,24 +5714,23 @@ snapshots:
       merge-anything: 5.1.7
       solid-js: 1.9.13
       solid-refresh: 0.6.3(solid-js@1.9.13)
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
+      vitefu: 1.1.3(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))
     optionalDependencies:
       '@testing-library/jest-dom': 6.9.1
     transitivePeerDependencies:
       - supports-color
 
-  vite@5.4.21(@types/node@25.9.0)(sass@1.99.0):
+  vite@5.4.21(sass@1.99.0):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.5.14
       rollup: 4.60.4
     optionalDependencies:
-      '@types/node': 25.9.0
       fsevents: 2.3.3
       sass: 1.99.0
 
-  vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0):
+  vite@6.4.2(sass@1.99.0)(yaml@2.9.0):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.4)
@@ -5762,16 +5739,15 @@ snapshots:
       rollup: 4.60.4
       tinyglobby: 0.2.16
     optionalDependencies:
-      '@types/node': 25.9.0
       fsevents: 2.3.3
       sass: 1.99.0
       yaml: 2.9.0
 
-  vitefu@1.1.3(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)):
+  vitefu@1.1.3(vite@6.4.2(sass@1.99.0)(yaml@2.9.0)):
     optionalDependencies:
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
 
-  vitepress@1.6.4(@algolia/client-search@5.52.1)(@types/node@25.9.0)(postcss@8.5.14)(sass@1.99.0)(search-insights@2.17.3)(typescript@5.9.3):
+  vitepress@1.6.4(@algolia/client-search@5.52.1)(postcss@8.5.14)(sass@1.99.0)(search-insights@2.17.3)(typescript@5.9.3):
     dependencies:
       '@docsearch/css': 3.8.2
       '@docsearch/js': 3.8.2(@algolia/client-search@5.52.1)(search-insights@2.17.3)
@@ -5780,7 +5756,7 @@ snapshots:
       '@shikijs/transformers': 2.5.0
       '@shikijs/types': 2.5.0
       '@types/markdown-it': 14.1.2
-      '@vitejs/plugin-vue': 5.2.4(vite@5.4.21(@types/node@25.9.0)(sass@1.99.0))(vue@3.5.34(typescript@5.9.3))
+      '@vitejs/plugin-vue': 5.2.4(vite@5.4.21(sass@1.99.0))(vue@3.5.34(typescript@5.9.3))
       '@vue/devtools-api': 7.7.9
       '@vue/shared': 3.5.34
       '@vueuse/core': 12.8.2(typescript@5.9.3)
@@ -5789,7 +5765,7 @@ snapshots:
       mark.js: 8.11.1
       minisearch: 7.2.0
       shiki: 2.5.0
-      vite: 5.4.21(@types/node@25.9.0)(sass@1.99.0)
+      vite: 5.4.21(sass@1.99.0)
       vue: 3.5.34(typescript@5.9.3)
     optionalDependencies:
       postcss: 8.5.14
@@ -5820,11 +5796,11 @@ snapshots:
       - typescript
       - universal-cookie
 
-  vitest@3.2.4(@types/node@25.9.0)(jsdom@26.1.0)(sass@1.99.0)(yaml@2.9.0):
+  vitest@3.2.4(jsdom@26.1.0)(sass@1.99.0)(yaml@2.9.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0))
+      '@vitest/mocker': 3.2.4(vite@6.4.2(sass@1.99.0)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4
@@ -5842,11 +5818,10 @@ snapshots:
       tinyglobby: 0.2.16
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
-      vite: 6.4.2(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
-      vite-node: 3.2.4(@types/node@25.9.0)(sass@1.99.0)(yaml@2.9.0)
+      vite: 6.4.2(sass@1.99.0)(yaml@2.9.0)
+      vite-node: 3.2.4(sass@1.99.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 25.9.0
       jsdom: 26.1.0
     transitivePeerDependencies:
       - jiti

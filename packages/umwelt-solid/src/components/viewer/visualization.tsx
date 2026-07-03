@@ -4,7 +4,7 @@ import { UmweltDataset, UmweltSpec } from '../../types';
 import { renderVegaLite } from '../../util/vega';
 import { debounce } from '@solid-primitives/scheduled';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
-import { predicateToSelectionStore, selectionStoreToSelection, VlSelectionStore } from '../../util/selection';
+import { predicateToSelectionStore, selectionStoreToSelection, EXTERNAL_STATE_STORE, type VlSelectionStore } from '@umwelt-data/umwelt-utils/vl-bridge';
 import type { View } from 'vega';
 
 export type VisualizationProps = {
@@ -29,7 +29,7 @@ export function Visualization(props: VisualizationProps) {
     const view = vegaView();
     if (!sel) {
       if (view) {
-        view.data('external_state_store', undefined).run();
+        view.data(EXTERNAL_STATE_STORE, []).run();
       }
       return;
     }
@@ -37,12 +37,8 @@ export function Visualization(props: VisualizationProps) {
     if (!view) return;
 
     if (sel.source === 'sonification' || sel.source === 'text-navigation') {
-      if (sel.predicate) {
-        const store = predicateToSelectionStore(sel.predicate);
-        view.data('external_state_store', store).run();
-      } else {
-        view.data('external_state_store', undefined).run();
-      }
+      const tuple = predicateToSelectionStore(sel.predicate);
+      view.data(EXTERNAL_STATE_STORE, tuple ? [tuple] : []).run();
     }
   });
 

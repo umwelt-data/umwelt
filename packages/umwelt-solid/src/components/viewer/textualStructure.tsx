@@ -16,9 +16,15 @@ export function TextualStructure(props: VisualizationProps) {
   const [olliHandle, setOlliHandle] = createSignal<OlliHandle | null>(null);
 
   createEffect(() => {
+    // guard against out-of-order resolution: a slow spec conversion kicked
+    // off by an earlier run must not clobber the render from a newer run
+    let stale = false;
+    onCleanup(() => {
+      stale = true;
+    });
     umweltToOlliSpec(props.spec, props.data).then((olliSpec) => {
       const container = olliContainerRef();
-      if (!olliSpec || !container) return;
+      if (stale || !olliSpec || !container) return;
 
       olliHandle()?.destroy();
       container.innerHTML = '';

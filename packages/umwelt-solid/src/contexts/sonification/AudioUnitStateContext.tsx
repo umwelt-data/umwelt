@@ -1,9 +1,9 @@
 import { createContext, useContext, ParentProps, createMemo, createEffect, createSignal, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioEncoding, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
-import type { LogicalAnd, FieldEqualPredicate, FieldRangePredicate } from '@umwelt-data/umwelt-utils/predicate';
+import type { LogicalAnd, FieldEqualPredicate, FieldRangePredicate, FieldValue } from '@umwelt-data/umwelt-utils/predicate';
 import { getFieldDef, resolveFieldDef } from '../../util/spec';
-import { serializeValue } from '../../util/values';
+import { serializeValue } from '@umwelt-data/umwelt-utils/data';
 import { selectionTest } from '../../util/selection';
 import { getBinnedDomain, getDomain } from '../../util/domain';
 import fastCartesian from 'fast-cartesian';
@@ -378,7 +378,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
           const derivedField = derivedFieldName(resolvedFieldDef);
           return {
             field: derivedField,
-            equal: serializeValue(value, fieldDef),
+            equal: serializeValue(value, fieldDef) as FieldValue,
           };
         }),
       };

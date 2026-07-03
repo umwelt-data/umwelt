@@ -1,5 +1,5 @@
-import dayjs from 'dayjs';
 import { FieldDef, MeasureType, UmweltDataset, UmweltDatum } from '../types';
+import { typeInference } from '@umwelt-data/umwelt-utils/data';
 import { getTransformedData } from './datasets';
 import { fieldsToTransforms } from './transforms';
 import { resolveFieldDef } from './spec';
@@ -13,6 +13,12 @@ export function elaborateFields(fields: FieldDef[], data: UmweltDataset): FieldD
       scale: fieldDef.scale,
       encodings: fieldDef.encodings || [],
     };
+    if (!fieldDef.type && spec.name.toLowerCase() === 'year') {
+      const yearType = yearFieldType(data, spec.name);
+      if (yearType) {
+        spec.type = yearType;
+      }
+    }
     if (spec.type === 'temporal' && spec.name.toLowerCase() === 'year') {
       spec.timeUnit = 'year';
     }
@@ -20,81 +26,16 @@ export function elaborateFields(fields: FieldDef[], data: UmweltDataset): FieldD
   });
 }
 
-export function typeInference(data: UmweltDataset, field: string): MeasureType {
-  const values = data.map((datum) => datum[field]);
-
-  // this function is mostly stolen from vega/datalib except i fixed the date bug
-  function isBoolean(obj: any): obj is boolean {
-    return obj === true || obj === false || toString.call(obj) == '[object Boolean]';
-  }
-
-  function isDate(obj: any): obj is Date {
-    return toString.call(obj) === '[object Date]';
-  }
-
-  function isValid(obj: any): boolean {
-    return obj != null && obj === obj;
-  }
-
-  var TESTS = {
-    boolean: function (x: any) {
-      return x === 'true' || x === 'false' || isBoolean(x);
-    },
-    integer: function (x: any) {
-      return TESTS.number(x) && (x = +x) === ~~x;
-    },
-    number: function (x: any) {
-      return !isNaN(+x) && !isDate(x);
-    },
-    date: function (x: any) {
-      return dayjs(x).isValid();
-    },
-  };
-
-  // types to test for, in precedence order
-  var types = ['boolean' as const, 'integer' as const, 'number' as const, 'date' as const];
-
-  for (let i = 0; i < values.length; ++i) {
-    // get next value to test
-    const v = values[i];
-    // test value against remaining types
-    for (let j = 0; j < types.length; ++j) {
-      if (isValid(v) && !TESTS[types[j]](v)) {
-        types.splice(j, 1);
-        j -= 1;
-      }
-    }
-    // if no types left, return 'string'
-    if (types.length === 0) break;
-  }
-
-  const inference = types.length ? types[0] : 'string';
-
-  switch (inference) {
-    case 'boolean':
-    case 'string':
-      return 'nominal';
-    case 'integer':
-      const distinct = new Set(values).size;
-      if (field.toLowerCase() === 'year') {
-        if (distinct <= 5) {
-          return 'ordinal';
-        }
-        return 'temporal';
-      }
-      // this logic is from compass
-      const numberNominalProportion = 0.05;
-      const numberNominalLimit = 40;
-      if (distinct < numberNominalLimit && distinct / values.length < numberNominalProportion) {
-        return 'nominal';
-      } else {
-        return 'quantitative';
-      }
-    case 'number':
-      return 'quantitative';
-    case 'date':
-      return 'temporal';
-  }
+// Columns named "year" holding integers (e.g. 2001) infer as quantitative,
+// but reading them as time is almost always right: temporal, or ordinal when
+// there are only a handful of distinct years.
+function yearFieldType(data: UmweltDataset, field: string): MeasureType | undefined {
+  const values = data.map((d) => d[field]).filter((v) => v !== null && v !== undefined);
+  if (!values.length) return undefined;
+  const allIntegers = values.every((v) => !(v instanceof Date) && Number.isInteger(Number(v)));
+  if (!allIntegers) return undefined;
+  const distinct = new Set(values).size;
+  return distinct <= 5 ? 'ordinal' : 'temporal';
 }
 
 export const detectKey = async (fields: FieldDef[], data: UmweltDataset): Promise<string[]> => {

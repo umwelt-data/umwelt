@@ -1,41 +1,11 @@
 import moize from 'moize';
-import { ResolvedFieldDef, UmweltDataset, UmweltPredicate, UmweltValue } from '../types';
-import { selectionTest } from './selection';
-import { dateToTimeUnit } from '@umwelt-data/umwelt-utils/description';
-import { binnedFieldNames, derivedFieldName, derivedFieldNameBinStartEnd } from './transforms';
+import { ResolvedFieldDef, UmweltDataset, UmweltValue } from '../types';
+import { getDomain as sharedGetDomain } from '@umwelt-data/umwelt-utils/data';
+import { derivedFieldName, derivedFieldNameBinStartEnd } from './transforms';
 
 export const getDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset, derive?: boolean): UmweltValue[] => {
   const field = derive ? derivedFieldName(fieldDef) : fieldDef.field;
-
-  const uniqueVals = new Map<any, UmweltValue>();
-
-  data.forEach((d) => {
-    const value = d[field];
-
-    if (value instanceof Date) {
-      const timeUnit = fieldDef.timeUnit ? dateToTimeUnit(value, fieldDef.timeUnit) : value.getTime();
-      if (!uniqueVals.has(timeUnit)) {
-        uniqueVals.set(timeUnit, value);
-      }
-    } else if (!uniqueVals.has(value)) {
-      uniqueVals.set(value, value);
-    }
-  });
-
-  return Array.from(uniqueVals.values())
-    .filter((x) => x !== null && x !== undefined)
-    .sort((a: UmweltValue, b: UmweltValue) => {
-      if (typeof a === 'number' && typeof b === 'number') {
-        return a - b;
-      }
-      if (a instanceof Date && b instanceof Date) {
-        return a.getTime() - b.getTime();
-      }
-      if (typeof a === 'string' && typeof b === 'string') {
-        return a.localeCompare(b);
-      }
-      return 0; // Keep original order for unsupported types
-    });
+  return sharedGetDomain({ field, type: fieldDef.type, timeUnit: fieldDef.timeUnit }, data);
 });
 
 export const getBinnedDomain = moize((fieldDef: ResolvedFieldDef, data: UmweltDataset): [UmweltValue, UmweltValue][] => {

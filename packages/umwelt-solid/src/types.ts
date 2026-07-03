@@ -1,17 +1,17 @@
-import { Type } from 'vega-lite/build/src/type';
 import { Mark } from 'vega-lite/build/src/mark';
 import { Spec } from 'vega';
 import { TopLevelSpec } from 'vega-lite/build/src/spec';
 import { Sort } from 'vega-lite/build/src/sort';
 import type { LogicalComposition, FieldPredicate } from '@umwelt-data/umwelt-utils/predicate';
+import type { DataValue, Datum, Dataset, MeasureType as SharedMeasureType } from '@umwelt-data/umwelt-utils/data';
 import { AggregateTransform, BinTransform, TimeUnitTransform } from 'vega-lite/build/src/transform';
 
 export type VlSpec = TopLevelSpec;
 export type VgSpec = Spec;
 
-export type UmweltValue = string | number | Date | null;
-export type UmweltDatum = { [field: string]: UmweltValue };
-export type UmweltDataset = UmweltDatum[];
+export type UmweltValue = DataValue;
+export type UmweltDatum = Datum;
+export type UmweltDataset = Dataset;
 
 export type UmweltTransform = AggregateTransform | BinTransform | TimeUnitTransform;
 
@@ -36,7 +36,7 @@ type ScaleRange = {
   range?: number[] | string[];
 }; //  | "reverse"
 
-export type MeasureType = Exclude<Type, 'geojson'>;
+export type MeasureType = SharedMeasureType;
 
 export interface UmweltDataSource {
   name: string;

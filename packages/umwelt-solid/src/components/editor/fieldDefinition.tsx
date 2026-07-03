@@ -3,7 +3,7 @@ import { AudioPropName, EncodingPropName, FieldDef, MeasureType, VisualPropName,
 import { getDomain } from '../../util/domain';
 import dayjs from 'dayjs';
 import { isString } from 'vega';
-import { isNumeric } from 'vega-lite';
+import { isNumeric } from '@umwelt-data/umwelt-utils/data';
 import { FieldTransforms } from './fieldTransforms';
 import { resolveFieldDef } from '../../util/spec';
 import { EnumeratedItem, InputRow, MONOSPACE, EncodingContainer, EncodingColumn, EncodingRow, FieldName } from '../ui/styled';

@@ -1,33 +1,18 @@
 import { compile } from 'vega-lite';
 import { FieldDef, UmweltDataset, UmweltTransform, UmweltValue, VlSpec } from '../types';
-import { typeCoerceData as sharedTypeCoerceData } from '@umwelt-data/umwelt-utils/data';
-import { getVegaScene } from './vega';
+import { typeCoerceData as sharedTypeCoerceData, fetchAndParse } from '@umwelt-data/umwelt-utils/data';
+import { evaluateVegaData, extractOutputDatasets, type VegaDataEntry } from '@umwelt-data/umwelt-utils/vega';
 import moize from 'moize';
 import cloneDeep from 'lodash.clonedeep';
 
 export const DEFAULT_DATASET_NAME = 'dataset';
 
 export const getData = moize.promise(async (url: string): Promise<UmweltDataset> => {
-  const vlSpec = {
-    data: {
-      url,
-    },
-    mark: 'point',
-  };
-
-  const scene = await getVegaScene(compile(vlSpec as any).spec);
-
   try {
-    const datasets = (scene as any).context.data;
-    const names = Object.keys(datasets).filter((name) => {
-      return name.match(/(source)|(data)_\d/);
-    });
-    const name = names.reverse()[0]; // TODO do we know this is the right one?
-    const dataset = datasets[name].values.value;
-
-    return dataset;
+    const parsed = await fetchAndParse(url);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.warn(`No data found in the Vega scenegraph \n ${error}`);
+    console.warn(`Failed to load data from ${url} \n ${error}`);
     return [];
   }
 });
@@ -39,18 +24,15 @@ export const getTransformedData = moize.promise(async (data: UmweltDataset, tran
     mark: 'point',
   });
 
-  const scene = await getVegaScene(compile(vlSpec as any).spec);
-
   try {
-    const datasets = (scene as any).context.data;
-    const names = Object.keys(datasets).filter((name) => {
-      return name.match(/(source)|(data)_\d/);
-    });
-    const name = names.reverse()[0]; // TODO do we know this is the right one?
-    const dataset = datasets[name].values.value;
-    return dataset;
+    const vgSpec = compile(vlSpec as any).spec;
+    const dataEntries = (vgSpec.data ?? []) as VegaDataEntry[];
+    const store = evaluateVegaData(dataEntries);
+    const datasets = extractOutputDatasets(dataEntries, store);
+    // the last output dataset is the furthest through the transform pipeline
+    return (datasets[datasets.length - 1] ?? []) as UmweltDataset;
   } catch (error) {
-    console.warn(`No data found in the Vega scenegraph \n ${error}`);
+    console.warn(`Failed to evaluate transforms \n ${error}`);
     return [];
   }
 });

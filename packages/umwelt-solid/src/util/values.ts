@@ -1,28 +1,5 @@
-import { isNumeric as vlIsNumeric } from 'vega-lite';
-import { TimeUnit, isString } from 'vega';
-import { FieldDef, NONE } from '../types';
-import moize from 'moize';
-
-export function serializeValue(value: any, fieldDef: FieldDef) {
-  if (fieldDef.type === 'temporal') {
-    value = datestampToTime(value);
-  } else if (isString(value) && isNumeric(value)) {
-    value = Number(value);
-  }
-  return value;
-}
-
-export function datestampToTime(datestamp: string | string[]) {
-  if (Array.isArray(datestamp)) {
-    return datestamp.map((v) => new Date(v).getTime());
-  } else {
-    return new Date(datestamp).getTime();
-  }
-}
-
-export function isNumeric(value: string): boolean {
-  return vlIsNumeric(value.replaceAll(',', ''));
-}
+import { serializeValue } from '@umwelt-data/umwelt-utils/data';
+import { FieldDef } from '../types';
 
 export function filterObjectByKeys(object: { [s: string]: any }, keys: string[]) {
   return Object.fromEntries(Object.entries(object).filter(([key, _]) => keys.includes(key)));

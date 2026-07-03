@@ -1,7 +1,7 @@
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import Papa from 'papaparse';
+import { parseDelimited } from '@umwelt-data/umwelt-utils/data';
 import { isString } from 'vega';
-import { UmweltDataset, UmweltDatum } from '../../types';
+import { UmweltDataset } from '../../types';
 
 interface UploadDataProps {
   loadDataFromUpload: (filename: string, data: UmweltDataset) => void;
@@ -23,18 +23,12 @@ export function UploadData(props: UploadDataProps) {
             props.loadDataFromUpload(file.name, data);
           } catch (e) {
             // try to parse as csv
-            Papa.parse<UmweltDatum>(contents, {
-              header: true,
-              dynamicTyping: true,
-              skipEmptyLines: true,
-              complete: (results) => {
-                if (results.errors.length) {
-                  console.error('Errors while parsing csv:', results.errors);
-                } else {
-                  props.loadDataFromUpload(file.name, results.data);
-                }
-              },
-            });
+            const data = parseDelimited(contents);
+            if (data.length) {
+              props.loadDataFromUpload(file.name, data);
+            } else {
+              console.error('Could not parse uploaded file as JSON or CSV');
+            }
           }
         }
       };
