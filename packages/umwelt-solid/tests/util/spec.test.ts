@@ -53,6 +53,31 @@ test('exportable spec round-trips through elaboration', () => {
   expect(elaborated.data).toEqual(spec.data);
 });
 
+test('composition is omitted for single-unit modalities and restored on elaboration', () => {
+  const spec = makeSpec('mydata.json');
+  const datastore: UmweltDatastore = { 'mydata.json': { data: sampleData } };
+
+  const exported = exportableSpec(spec, datastore);
+  expect('composition' in exported.visual).toBe(false);
+  expect('composition' in exported.audio).toBe(false);
+  const elaborated = elaborateExportableSpec(exported);
+  expect(elaborated.visual.composition).toEqual('layer');
+  expect(elaborated.audio.composition).toEqual('concat');
+
+  // multi-unit modalities keep their composition
+  const multiUnit: UmweltSpec = {
+    ...spec,
+    visual: {
+      composition: 'concat',
+      units: [
+        { name: 'unit0', mark: 'line', encoding: { x: { field: 'date' }, y: { field: 'sales' } } },
+        { name: 'unit1', mark: 'point', encoding: { x: { field: 'date' }, y: { field: 'sales' } } },
+      ],
+    },
+  };
+  expect(exportableSpec(multiUnit, datastore).visual.composition).toEqual('concat');
+});
+
 test('data key serializes last so embedded values do not bury the spec', () => {
   const spec = makeSpec('mydata.json');
   const exported = exportableSpec(spec, { 'mydata.json': { data: sampleData } });

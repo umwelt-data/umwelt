@@ -1,8 +1,9 @@
 import { createSignal } from 'solid-js';
 import { styled } from 'solid-styled-components';
 import { shareSpecURL, prettyPrintSpec, exportableSpec } from '../util/spec';
-import { UmweltSpec, isExportableUmweltValuesDataSource } from '../types';
+import { isExportableUmweltValuesDataSource } from '../types';
 import { useUmweltDatastore } from '../contexts/UmweltDatastoreContext';
+import { useUmweltSpec } from '../contexts/UmweltSpecContext';
 
 const ExportUrlInput = styled('input')`
   width: 100%;
@@ -14,16 +15,13 @@ const ExportSpecTextarea = styled('textarea')`
 // beyond this, links get truncated by some chat apps and servers
 const URL_LENGTH_WARNING = 8000;
 
-export interface ExportSpecProps {
-  spec: UmweltSpec;
-}
-
-export const ExportSpec = (props: ExportSpecProps) => {
+export const ExportSpec = () => {
+  const [spec] = useUmweltSpec();
   const [datastore] = useUmweltDatastore();
   const [copied, setCopied] = createSignal(false);
 
-  const exported = () => exportableSpec(props.spec, datastore());
-  const shareUrl = () => shareSpecURL(props.spec, datastore());
+  const exported = () => exportableSpec(spec, datastore());
+  const shareUrl = () => shareSpecURL(spec, datastore());
   const embedsValues = () => isExportableUmweltValuesDataSource(exported().data);
 
   const copyUrl = async () => {
@@ -33,8 +31,8 @@ export const ExportSpec = (props: ExportSpecProps) => {
   };
 
   return (
-    <details>
-      <summary>Export</summary>
+    <div role="tabpanel" id="tabpanel-export" aria-labelledby="tab-export">
+      <h2>Export</h2>
       <label>
         Shareable Editor URL
         <ExportUrlInput readonly type="url" value={shareUrl()} />
@@ -49,6 +47,6 @@ export const ExportSpec = (props: ExportSpecProps) => {
           {prettyPrintSpec(exported())}
         </ExportSpecTextarea>
       </label>
-    </details>
+    </div>
   );
 };

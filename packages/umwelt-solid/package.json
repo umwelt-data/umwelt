@@ -36,7 +36,7 @@
   "dependencies": {
     "@solid-primitives/scheduled": "^1.5.0",
     "@types/d3-scale": "^4.0.8",
-    "@umwelt-data/umwelt-utils": "^0.2.0",
+    "@umwelt-data/umwelt-utils": "^0.2.1",
     "babel-preset-solid": "^1.7.12",
     "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
@@ -45,7 +45,7 @@
     "lodash.clonedeep": "^4.5.0",
     "lz-string": "^1.5.0",
     "moize": "^6.1.6",
-    "olli": "^3.1.1",
+    "olli": "^3.1.2",
     "solid-element": "^1.9.1",
     "solid-js": "^1.7.12",
     "solid-styled-components": "^0.28.5",

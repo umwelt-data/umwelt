@@ -87,6 +87,8 @@ export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
       name: spec.data.name || (isExportableUmweltURLDataSource(spec.data) ? spec.data.url.split('/').pop() : DEFAULT_DATASET_NAME) || DEFAULT_DATASET_NAME,
     },
     fields,
+    visual: { units: spec.visual.units, composition: spec.visual.composition || 'layer' },
+    audio: { units: spec.audio.units, composition: spec.audio.composition || 'concat' },
   };
   return newSpec;
 }
@@ -266,13 +268,17 @@ export async function umweltToOlliSpec(spec: UmweltSpec, data: UmweltDataset): P
 }
 
 export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): ExportableSpec {
-  const { fields, data: _data, ...rest } = spec;
+  const { fields, data: _data, visual, audio, ...rest } = spec;
   const exportableFields: ExportableFieldDef[] = fields
     .filter((field) => field.active)
     .map((field) => {
       const { encodings, active, ...rest } = field;
       return rest;
     });
+
+  // composition only matters with multiple units
+  const exportableVisual = visual.units.length > 1 ? visual : { units: visual.units };
+  const exportableAudio = audio.units.length > 1 ? audio : { units: audio.units };
 
   // Most compact data source that can be resolved on import:
   // example dataset name > source URL > embedded values.
@@ -288,7 +294,7 @@ export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): Ex
     data = { name: spec.data.name, values: entry?.data || [] };
   }
 
-  return { ...rest, fields: exportableFields, data };
+  return { ...rest, visual: exportableVisual, audio: exportableAudio, fields: exportableFields, data };
 }
 
 export function prettyPrintSpec(spec: UmweltSpec | ExportableSpec): string {

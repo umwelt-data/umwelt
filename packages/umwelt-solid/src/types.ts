@@ -202,7 +202,20 @@ export interface UmweltSpec {
 
 export type ExportableFieldDef = Omit<FieldDef, 'encodings' | 'active'>;
 
-export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data'> {
+// composition is only meaningful with multiple units, so it's optional here
+export interface ExportableVisualSpec {
+  units: VisualUnitSpec[];
+  composition?: ViewComposition;
+}
+
+export interface ExportableAudioSpec {
+  units: AudioUnitSpec[];
+  composition?: ViewComposition;
+}
+
+export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data' | 'visual' | 'audio'> {
   data: ExportableUmweltDataSource;
   fields: ExportableFieldDef[];
+  visual: ExportableVisualSpec;
+  audio: ExportableAudioSpec;
 }
