@@ -1,85 +1,94 @@
 import { defineConfig } from 'vitepress';
+import { galleryGroups } from '../gallery/examples/groups.js';
 
-// https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: 'Umwelt',
-  description: 'Accessible multimodal data representations',
+  description: 'An accessible editor for multimodal data representations: visualization, sonification, and structured text.',
   base: '/umwelt/',
+  cleanUrls: true,
+  lastUpdated: true,
+  lang: 'en-US',
+  appearance: false,
+
+  ignoreDeadLinks: [
+    // Dynamic gallery routes are generated at build time from [id].paths.ts;
+    // the link checker can't see them.
+    /^\/gallery\/[^/]+$/,
+  ],
+
   themeConfig: {
     externalLinkIcon: true,
-    // https://vitepress.dev/reference/default-theme-config
+
     nav: [
-      { text: 'Home', link: '/' },
-      // { text: 'User Guide', link: '/user-guide/' },
-      { text: 'Examples', link: '/examples/' },
-      // { text: 'Reference', link: '/reference/' },
-      { text: 'Editor', link: 'https://umwelt-data.github.io/umwelt/editor' },
+      { text: 'Using Umwelt', link: '/using/', activeMatch: '/using/' },
+      { text: 'Developer Docs', link: '/docs/', activeMatch: '/docs/' },
+      { text: 'Gallery', link: '/gallery/', activeMatch: '/gallery/' },
+      { text: 'Editor', link: 'https://umwelt-data.github.io/umwelt/editor/' },
     ],
 
     sidebar: {
-      '/user-guide/': [
+      '/using/': [
         {
-          text: 'User Guide',
+          text: 'Using Umwelt',
           items: [
-            { text: 'Getting Started', link: '/user-guide/' },
-            { text: 'Uploading Data', link: '/user-guide/uploading-data' },
-            { text: 'Configuring Fields', link: '/user-guide/configuring-fields' },
-            { text: 'Creating Visualizations', link: '/user-guide/creating-visualizations' },
-            { text: 'Creating Sonifications', link: '/user-guide/creating-sonifications' },
-            { text: 'Viewer Interface', link: '/user-guide/viewer-interface' },
+            { text: 'Getting Started', link: '/using/' },
+            { text: 'Loading Data', link: '/using/data' },
+            { text: 'Configuring Fields', link: '/using/fields' },
+            { text: 'Designing Visualizations', link: '/using/visual' },
+            { text: 'Designing Sonifications', link: '/using/audio' },
+            { text: 'Exploring the Viewer', link: '/using/viewer' },
+            { text: 'Sharing & Export', link: '/using/sharing' },
           ],
         },
       ],
-      '/examples/': [
+      '/docs/': [
         {
-          text: 'Example Gallery',
+          text: 'Getting Started',
           items: [
-            { text: 'Overview', link: '/examples/' },
-            { text: 'Stocks', link: '/examples/stocks' },
-            { text: 'Penguins', link: '/examples/penguins' },
+            { text: 'Overview', link: '/docs/' },
+            { text: 'Quickstart', link: '/docs/quickstart' },
+          ],
+        },
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Viewer API', link: '/docs/viewer-api' },
+            { text: 'Editor Share URLs', link: '/docs/editor-urls' },
+          ],
+        },
+        {
+          text: 'Specification',
+          items: [
+            { text: 'UmweltSpec', link: '/docs/spec' },
+            { text: 'Data', link: '/docs/spec-data' },
+            { text: 'Fields & the Key', link: '/docs/spec-fields' },
+            { text: 'Visual Units', link: '/docs/spec-visual' },
+            { text: 'Audio Units', link: '/docs/spec-audio' },
           ],
         },
       ],
-      '/reference/': [
-        {
-          text: 'Developer Reference',
-          items: [
-            { text: 'Overview', link: '/reference/' },
-            { text: 'UmweltSpec', link: '/reference/umwelt-spec' },
-            { text: 'Field Definitions', link: '/reference/field-definitions' },
-            { text: 'Visual Encodings', link: '/reference/visual-encodings' },
-            { text: 'Audio Encodings', link: '/reference/audio-encodings' },
-            { text: 'Data Types', link: '/reference/data-types' },
-            { text: 'Contexts', link: '/reference/contexts' },
-          ],
-        },
-      ],
-      '/integration/': [
-        {
-          text: 'Integration',
-          items: [
-            { text: 'Overview', link: '/integration/' },
-            { text: 'Embedding Umwelt', link: '/integration/embedding' },
-            { text: 'Custom Datasets', link: '/integration/custom-datasets' },
-            { text: 'Export & Import', link: '/integration/export-import' },
-            { text: 'Extending Umwelt', link: '/integration/extending' },
-          ],
-        },
-      ],
-      '/concepts/': [
-        {
-          text: 'Concepts',
-          items: [
-            { text: 'Overview', link: '/concepts/' },
-            { text: 'Multimodal Design', link: '/concepts/multimodal-design' },
-            { text: 'Data Sonification', link: '/concepts/data-sonification' },
-            { text: 'Accessibility First', link: '/concepts/accessibility-first' },
-            { text: 'Specification Driven', link: '/concepts/specification-driven' },
-          ],
-        },
+      '/gallery/': [
+        { text: 'Gallery', link: '/gallery/' },
+        ...galleryGroups.map((g) => ({
+          text: g.label,
+          items: g.items.map((ex) => ({ text: ex.title, link: `/gallery/${ex.id}/` })),
+        })),
       ],
     },
 
     socialLinks: [{ icon: 'github', link: 'https://github.com/umwelt-data/umwelt' }],
+
+    search: {
+      provider: 'local',
+    },
+
+    editLink: {
+      pattern: 'https://github.com/umwelt-data/umwelt/edit/main/docs/:path',
+      text: 'Edit this page on GitHub',
+    },
+
+    footer: {
+      copyright: 'Copyright © 2023-present the Umwelt contributors',
+    },
   },
 });

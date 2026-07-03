@@ -10,6 +10,9 @@ importers:
 
   docs:
     dependencies:
+      lz-string:
+        specifier: ^1.5.0
+        version: 1.5.0
       umwelt-js:
         specifier: workspace:*
         version: link:../packages/umwelt-js
@@ -17,6 +20,9 @@ importers:
       vitepress:
         specifier: ^1.6.3
         version: 1.6.4(@algolia/client-search@5.52.1)(postcss@8.5.14)(sass@1.99.0)(search-insights@2.17.3)(typescript@5.9.3)
+      vue:
+        specifier: ^3.4.0
+        version: 3.5.34(typescript@5.9.3)
 
   packages/umwelt-js:
     dependencies:
@@ -24,8 +30,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.3(solid-js@1.9.13)
       '@umwelt-data/umwelt-utils':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.2.1
+        version: 0.2.1
       d3-scale:
         specifier: ^4.0.2
         version: 4.0.2
@@ -45,8 +51,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.1.1
-        version: 3.1.1(vega-lite@5.23.0(vega@6.2.0))
+        specifier: ^3.1.2
+        version: 3.1.2(vega-lite@5.23.0(vega@6.2.0))
       solid-js:
         specifier: ^1.7.12
         version: 1.9.13
@@ -97,8 +103,8 @@ importers:
         specifier: ^4.0.8
         version: 4.0.9
       '@umwelt-data/umwelt-utils':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.2.1
+        version: 0.2.1
       babel-preset-solid:
         specifier: ^1.7.12
         version: 1.9.12(@babel/core@7.29.0)(solid-js@1.9.13)
@@ -124,8 +130,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.1.1
-        version: 3.1.1(vega-lite@5.23.0(vega@6.2.0))
+        specifier: ^3.1.2
+        version: 3.1.2(vega-lite@5.23.0(vega@6.2.0))
       solid-element:
         specifier: ^1.9.1
         version: 1.9.1(solid-js@1.9.13)
@@ -1290,8 +1296,8 @@ packages:
     resolution: {integrity: sha512-U3gxVaDVnuZKhSspW/MzMxE1kq7zOdc072FcSNoqA1I9p8HyKbBFfEHoWckBAMgNMph4MamwS5iTVzFmrnt8TQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@umwelt-data/umwelt-utils@0.2.0':
-    resolution: {integrity: sha512-M6+w7rrjPhwzbsMK9CKJpPoc1WUi/uND04oigwhu7NQiR1CyltPrF4cBbkK+BNmXl1B8MWqdnKrlrybbxCE2qw==}
+  '@umwelt-data/umwelt-utils@0.2.1':
+    resolution: {integrity: sha512-Z+yll73oEUAVFO3kGx5hD04uoF0zVYxLGoeutyXjIIP16kmEUVbhHED4KrQYUh3QF8PR4vl5f+dikbgmZc1Pww==}
 
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
@@ -2215,8 +2221,8 @@ packages:
   nwsapi@2.2.23:
     resolution: {integrity: sha512-7wfH4sLbt4M0gCDzGE6vzQBo0bfTKjU7Sfpqy/7gs1qBfYz2vEJH6vXcBKpO3+6Yu1telwd0t9HpyOoLEQQbIQ==}
 
-  olli@3.1.1:
-    resolution: {integrity: sha512-xVxohwBoLvXtHGCo7AK9NGJsWpzRdZLIvEbK+l8/JOP+hq5W8agwCeTTGQmp89mlL/Q04wNbwaVVEj0Vq6W7og==}
+  olli@3.1.2:
+    resolution: {integrity: sha512-xw1+YhuezzHhNB2pck0zZGxvbK2Btd8148xtiE9QJPc3a39MpolOgziqxaALr08zmd8mbGgcC2GwEQ2pdT8JyQ==}
     peerDependencies:
       '@observablehq/plot': '>=0.6.0'
       vega-lite: ^6.4.3
@@ -3984,7 +3990,7 @@ snapshots:
       '@typescript-eslint/types': 8.59.4
       eslint-visitor-keys: 5.0.1
 
-  '@umwelt-data/umwelt-utils@0.2.0':
+  '@umwelt-data/umwelt-utils@0.2.1':
     dependencies:
       d3-array: 3.2.4
       d3-scale: 4.0.2
@@ -4955,9 +4961,9 @@ snapshots:
 
   nwsapi@2.2.23: {}
 
-  olli@3.1.1(vega-lite@5.23.0(vega@6.2.0)):
+  olli@3.1.2(vega-lite@5.23.0(vega@6.2.0)):
     dependencies:
-      '@umwelt-data/umwelt-utils': 0.2.0
+      '@umwelt-data/umwelt-utils': 0.2.1
       papaparse: 5.5.4
       solid-js: 1.9.13
       topojson-client: 3.1.0
