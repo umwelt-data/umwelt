@@ -1,3 +1,8 @@
+// applyTransforms and getTransformedData now share one engine
+// (umwelt-utils' evaluateVegaData), so the equality assertions here guard the
+// fieldsToTransforms/naming plumbing rather than two independent
+// implementations; engine correctness is covered by umwelt-utils' dataEval
+// tests, which were validated against the real vega runtime.
 import { test, expect } from 'vitest';
 import { getTransformedData } from '../../src/util/datasets';
 import { aggregatedFieldName, applyTransforms, binnedFieldNames, derivedFieldName, fieldsToTransforms, timeUnitFieldName } from '../../src/util/transforms';

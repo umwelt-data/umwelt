@@ -1,9 +1,7 @@
-import { compile } from 'vega-lite';
-import { FieldDef, UmweltDataset, UmweltTransform, UmweltValue, VlSpec } from '../types';
+import { FieldDef, UmweltDataset, UmweltTransform, UmweltValue } from '../types';
 import { typeCoerceData as sharedTypeCoerceData, fetchAndParse } from '@umwelt-data/umwelt-utils/data';
-import { evaluateVegaData, extractOutputDatasets, type VegaDataEntry } from '@umwelt-data/umwelt-utils/vega';
+import { applyTransforms } from './transforms';
 import moize from 'moize';
-import cloneDeep from 'lodash.clonedeep';
 
 export const DEFAULT_DATASET_NAME = 'dataset';
 
@@ -18,19 +16,8 @@ export const getData = moize.promise(async (url: string): Promise<UmweltDataset>
 });
 
 export const getTransformedData = moize.promise(async (data: UmweltDataset, transforms: UmweltTransform[]): Promise<UmweltDataset> => {
-  const vlSpec: VlSpec = cloneDeep({
-    data: { values: data },
-    transform: transforms,
-    mark: 'point',
-  });
-
   try {
-    const vgSpec = compile(vlSpec as any).spec;
-    const dataEntries = (vgSpec.data ?? []) as VegaDataEntry[];
-    const store = evaluateVegaData(dataEntries);
-    const datasets = extractOutputDatasets(dataEntries, store);
-    // the last output dataset is the furthest through the transform pipeline
-    return (datasets[datasets.length - 1] ?? []) as UmweltDataset;
+    return applyTransforms(data, transforms);
   } catch (error) {
     console.warn(`Failed to evaluate transforms \n ${error}`);
     return [];

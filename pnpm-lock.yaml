@@ -150,9 +150,6 @@ importers:
       vega-lite:
         specifier: ^5.15.0
         version: 5.23.0(vega@6.2.0)
-      vega-statistics:
-        specifier: ^1.9.0
-        version: 1.9.0
       versioned-storage:
         specifier: ^3.1.7
         version: 3.1.45
