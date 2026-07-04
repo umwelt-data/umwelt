@@ -3,5 +3,5 @@ dist
 dist-dts
 .DS_Store
 
-# run-umwelt driver screenshots (UMWELT_SHOT_DIR defaults to repo root)
-umwelt-*.png
+# run-umwelt driver screenshots
+.claude/skills/run-umwelt/screenshots/

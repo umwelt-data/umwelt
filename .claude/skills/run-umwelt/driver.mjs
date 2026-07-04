@@ -4,11 +4,16 @@
 // directory (puppeteer-core) and a running dev server (`pnpm dev` in
 // packages/umwelt-solid).
 import puppeteer from 'puppeteer-core';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const HERE = dirname(fileURLToPath(import.meta.url));
 const APP_URL = process.env.UMWELT_URL ?? 'http://localhost:3000/umwelt/editor/';
 const CHROME = process.env.CHROME_PATH ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const OUT_DIR = process.env.UMWELT_SHOT_DIR ?? '.';
+// Default to a gitignored folder colocated with this driver, resolved relative
+// to the script so it lands there regardless of cwd. Override with UMWELT_SHOT_DIR.
+const OUT_DIR = process.env.UMWELT_SHOT_DIR ?? join(HERE, 'screenshots');
 
 const [, , command = 'smoke', ...args] = process.argv;
 
@@ -29,7 +34,8 @@ page.on('console', (m) => {
 page.on('pageerror', (e) => errors.push(`[pageerror] ${e.message.slice(0, 300)}`));
 
 const shot = async (name) => {
-  const path = `${OUT_DIR}/umwelt-${name}.png`;
+  mkdirSync(OUT_DIR, { recursive: true });
+  const path = join(OUT_DIR, `umwelt-${name}.png`);
   await page.screenshot({ path });
   console.log(`screenshot: ${path}`);
 };

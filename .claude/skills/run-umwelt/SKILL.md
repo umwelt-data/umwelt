@@ -43,9 +43,10 @@ olli tree AND the sonification traversal domain both filter, with no thrown
 errors. It exits nonzero (PASS/FAIL per check) if the brush→olli→sonification
 wiring regresses. Needs the dev server running, like the other commands.
 
-Screenshots land in the current directory as `umwelt-<step>.png` (override dir
-with `UMWELT_SHOT_DIR`). The driver exits nonzero if console/page errors were
-collected (AudioContext warnings are filtered — expected headless).
+Screenshots land in `.claude/skills/run-umwelt/screenshots/` (gitignored) as
+`umwelt-<step>.png` (override dir with `UMWELT_SHOT_DIR`). The driver exits
+nonzero if console/page errors were collected (AudioContext warnings are
+filtered — expected headless).
 
 What a healthy `interact` run shows: `umwelt-tree-nav.png` has the chart dimmed
 with the tree-focused subset highlighted; the brush step prints an olli root
