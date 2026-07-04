@@ -2,3 +2,6 @@ node_modules
 dist
 dist-dts
 .DS_Store
+
+# run-umwelt driver screenshots (UMWELT_SHOT_DIR defaults to repo root)
+umwelt-*.png

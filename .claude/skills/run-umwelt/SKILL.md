@@ -33,7 +33,15 @@ node .claude/skills/run-umwelt/driver.mjs smoke            # load, verify chart 
 node .claude/skills/run-umwelt/driver.mjs interact         # + keyboard-nav olli tree (chart dims/highlights), brush drag (olli updates)
 node .claude/skills/run-umwelt/driver.mjs dataset cars.json  # switch example dataset
 node .claude/skills/run-umwelt/driver.mjs eval "document.title"
+node .claude/skills/run-umwelt/driver.mjs regress          # E2E regression: brush a scatterplot, assert olli + sonification filter, no errors
 ```
+
+`regress` is the end-to-end guard for cross-view selection coordination (also
+runnable as `pnpm --filter umwelt-solid test:e2e`). It loads a fixed scatterplot
+spec via the editor's `#spec=` share link, brushes a sub-region, and asserts the
+olli tree AND the sonification traversal domain both filter, with no thrown
+errors. It exits nonzero (PASS/FAIL per check) if the brush→olli→sonification
+wiring regresses. Needs the dev server running, like the other commands.
 
 Screenshots land in the current directory as `umwelt-<step>.png` (override dir
 with `UMWELT_SHOT_DIR`). The driver exits nonzero if console/page errors were

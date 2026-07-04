@@ -112,6 +112,68 @@ const reportErrors = () => {
   return interesting.length;
 };
 
+// End-to-end regression for cross-view selection coordination: brushing the
+// scatterplot must filter BOTH the olli tree and the sonification traversal
+// domain, with no thrown errors. Guards three fixes at once:
+//   - vl-bridge normalizes inverted-scale (descending) brush ranges to ascending
+//   - getDomainValue degrades gracefully on an empty selection (no throw)
+//   - textualStructure suppresses olli's refocus so it can't clear the selection
+// Loads a fixed scatterplot spec via the editor's #spec= share link.
+const SCATTER_SPEC = {
+  data: { name: 'cars.json', url: 'https://raw.githubusercontent.com/vega/vega-datasets/master/data/cars.json' },
+  fields: [
+    { name: 'Miles_per_Gallon', type: 'quantitative' },
+    { name: 'Horsepower', type: 'quantitative' },
+    { name: 'Origin', type: 'nominal' },
+  ],
+  key: [],
+  visual: { units: [{ name: 'vis_unit_0', mark: 'point', encoding: { x: { field: 'Miles_per_Gallon' }, y: { field: 'Horsepower' }, color: { field: 'Origin' } } }] },
+  audio: {
+    units: [
+      { name: 'audio_unit_0', encoding: { pitch: { field: 'Miles_per_Gallon', aggregate: 'mean' } }, traversal: [{ field: 'Horsepower', bin: true }] },
+      { name: 'audio_unit_1', encoding: { pitch: { field: 'Horsepower', aggregate: 'mean' } }, traversal: [{ field: 'Miles_per_Gallon', bin: true }] },
+    ],
+    composition: 'concat',
+  },
+};
+
+const readCoordination = () =>
+  page.evaluate(() => ({
+    olli: document.querySelector('#olli-container')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    // sonification playback descriptions carry the traversal domain extent
+    son: [...document.querySelectorAll('.uw-viewer p')]
+      .map((p) => p.textContent.replace(/\s+/g, ' ').trim())
+      .filter((t) => /playing binned/.test(t)),
+  }));
+
+const regress = async () => {
+  const { default: LZString } = await import('../../../packages/umwelt-solid/node_modules/lz-string/libs/lz-string.js');
+  const url = `${APP_URL}#spec=${LZString.compressToEncodedURIComponent(JSON.stringify(SCATTER_SPEC))}`;
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#vl-container canvas', { timeout: 45000 });
+  await sleep(2500);
+
+  const before = await readCoordination();
+  await brush();
+  await sleep(700);
+  const after = await readCoordination();
+
+  const checks = [
+    ['olli tree filtered by brush', before.olli !== after.olli && after.olli.length > 0],
+    ['sonification domain filtered by brush', before.son.length > 0 && JSON.stringify(before.son) !== JSON.stringify(after.son)],
+  ];
+  let fails = 0;
+  for (const [name, ok] of checks) {
+    console.log(`${ok ? 'PASS' : 'FAIL'}: ${name}`);
+    if (!ok) fails++;
+  }
+  if (fails) {
+    console.log('before:', JSON.stringify(before));
+    console.log('after :', JSON.stringify(after));
+  }
+  return fails;
+};
+
 let failed = 0;
 try {
   switch (command) {
@@ -136,8 +198,12 @@ try {
       await load();
       console.log(await page.evaluate(args[0]));
       break;
+    case 'regress':
+      failed += await regress();
+      await shot('regress');
+      break;
     default:
-      console.error(`unknown command: ${command} (expected smoke | interact | dataset <name> | eval "<js>")`);
+      console.error(`unknown command: ${command} (expected smoke | interact | dataset <name> | eval "<js>" | regress)`);
       failed = 1;
   }
   failed = reportErrors() ? 1 : failed;
