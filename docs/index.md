@@ -20,9 +20,9 @@ hero:
       link: /gallery/
 ---
 
-Umwelt is an open-source editor for creating accessible, multimodal data representations. From a single specification, Umwelt produces three coordinated views of a dataset: a visualization, a sonification, and a keyboard-navigable textual structure. Blind and sighted users can author these representations non-visually or visually, starting from any modality — no representation is treated as a translation of another.
+Umwelt is an open-source editor for creating accessible, multimodal data representations. From a single specification, Umwelt produces three coordinated views of a dataset: a visualization, a sonification, and a keyboard-navigable textual structure. Blind and sighted users can author these representations starting from any modality. Rather than derive non-visual representations from a visual specification, Umwelt treats all modalities as equal outputs.
 
-**Getting started:** Open the [editor](https://umwelt-data.github.io/umwelt/editor/) in your browser — there's nothing to install. The [user guide](/using/) walks through loading data, configuring fields, and designing visual and audio representations. Or browse the [example gallery](/gallery/) and remix an example in the editor.
+**Getting started:** Open the [editor](https://umwelt-data.github.io/umwelt/editor/) in your browser. The [user guide](/using/) walks through loading data, configuring fields, and designing visual and audio representations. Or browse the [example gallery](/gallery/) and remix an example in the editor.
 
 **Developers:** Follow the [quickstart](/docs/quickstart) to embed the Umwelt viewer in your own site with `umwelt-js`, or read the [specification reference](/docs/spec) to generate Umwelt specs programmatically.
 

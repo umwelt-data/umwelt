@@ -1,6 +1,6 @@
 # Getting Started
 
-Umwelt is an editor for creating accessible, multimodal representations of data. From a single specification, it produces three coordinated views: a **visualization**, a **structured textual description** you can navigate with a keyboard or screen reader, and a **sonification** that plays your data as sound. You can author and explore these representations in any order — none of them is primary.
+Umwelt is an editor for creating accessible, multimodal representations of data. From a single specification, it produces three coordinated views: a **visualization**, a **structured textual description** you can navigate with a keyboard or screen reader, and a **sonification** that plays your data as sound. You can author and explore these representations in any order.
 
 The editor runs entirely in your browser at [umwelt-data.github.io/umwelt/editor](https://umwelt-data.github.io/umwelt/editor/). There is nothing to install, and your data never leaves your machine.
 
