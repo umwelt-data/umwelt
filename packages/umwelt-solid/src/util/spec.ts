@@ -1,12 +1,12 @@
 import { type OlliVisSpec, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
 import { VegaLiteAdapter } from 'olli/adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { withExternalStateParam } from '@umwelt-data/umwelt-utils/vl-bridge';
 import LZString from 'lz-string';
 import { UmweltDatastore, UmweltDatastoreEntry } from '../contexts/UmweltDatastoreContext';
-import { DEFAULT_DATASET_NAME, EXAMPLE_DATASETS, resolveDataSource } from './datasets';
+import { cleanData, DEFAULT_DATASET_NAME, EXAMPLE_DATASETS, resolveDataSource, typeCoerceData } from './datasets';
 
 export function getFieldDef(spec: UmweltSpec, field: string | undefined) {
   return spec.fields.find((f) => f.name === field);
@@ -23,6 +23,27 @@ export function resolveFieldDef(specFieldDef: FieldDef, encFieldDef?: EncodingFi
   // TODO fix type jank
   // remember, filter has to be after spread so that NONE can overwrite other values
   return Object.fromEntries(Object.entries(resolvedFieldDef).filter(([k, v]) => v !== NONE)) as unknown as ResolvedFieldDef;
+}
+
+// Resolve the field definitions an audio unit actually uses — one entry per
+// encoding and traversal reference, so a field encoded and traversed with
+// different transforms (e.g. count encoding + binned traversal of the same
+// field) contributes both resolutions. Unused fields must stay out of this
+// list: every untransformed field in it becomes a groupby column when the
+// unit aggregates.
+export function resolveAudioUnitFields(spec: UmweltSpec, unitSpec: AudioUnitSpec): ResolvedFieldDef[] {
+  const usages: EncodingFieldDef[] = [...Object.values(unitSpec.encoding), ...unitSpec.traversal];
+  const resolved = usages.flatMap((encFieldDef) => {
+    const fieldDef = getFieldDef(spec, encFieldDef.field);
+    return fieldDef ? [resolveFieldDef(fieldDef, encFieldDef)] : [];
+  });
+  const seen = new Set<string>();
+  return resolved.filter((def) => {
+    const key = JSON.stringify(def);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function decodeSpecFromString(specString: string): ExportableSpec | undefined {
@@ -56,9 +77,17 @@ export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltD
   if (!resolved) {
     return undefined;
   }
-  setDataset(resolved.name, resolved.data, resolved.sourceUrl);
+  // coerce and clean against the spec's field types, mirroring the editor's
+  // import path — otherwise e.g. numeric years in temporal fields stay numbers
+  const elaborated = elaborateExportableSpec(spec);
+  const typedData = typeCoerceData(resolved.data, elaborated.fields);
+  const cleanedData = cleanData(typedData, elaborated.fields);
+  if (!cleanedData.length) {
+    return undefined;
+  }
+  setDataset(resolved.name, cleanedData, resolved.sourceUrl);
 
-  return elaborateExportableSpec(spec);
+  return elaborated;
 }
 
 export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {

@@ -41,7 +41,7 @@ export function TraversalFieldControl(props: TraversalFieldControlProps) {
           </Match>
           <Match when={resolvedFieldDef().type !== 'nominal'}>
             <div>
-              <input aria-live="assertive" aria-valuetext={fmtCompoundValue(selectedValue(), resolvedFieldDef())} onChange={(e) => setSelectedIdx(e.target.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
+              <input aria-live="assertive" aria-valuetext={fmtCompoundValue(selectedValue(), resolvedFieldDef())} onInput={(e) => setSelectedIdx(e.currentTarget.valueAsNumber)} onMouseDown={() => audioEngineActions.stopTransport()} type="range" min="0" max={domain().length - 1} value={selectedIdx()}></input>
               <span>{fmtCompoundValue(selectedValue(), resolvedFieldDef())}</span>
             </div>
           </Match>

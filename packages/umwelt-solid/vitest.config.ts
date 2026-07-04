@@ -11,6 +11,9 @@ export default defineConfig({
       // Absolute path so the rewrite stays valid for imports coming from
       // linked packages (e.g. olli's dist) whose own vega-lite differs.
       { find: /^vega-lite$/, replacement: fileURLToPath(new URL('./node_modules/vega-lite/build/src/index.js', import.meta.url)) },
+      // component tests mock the `olli` module; its CSS side-effect import has no
+      // meaning in jsdom, so stub it so vite's import-analysis always resolves it
+      { find: 'olli/styles.css', replacement: fileURLToPath(new URL('./tests/stubs/empty.css', import.meta.url)) },
     ],
   },
   test: {

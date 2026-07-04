@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { compressedSpec, decodeSpecFromString, elaborateExportableSpec, exportableSpec } from '../../src/util/spec';
+import { compressedSpec, decodeSpecFromString, elaborateExportableSpec, exportableSpec, resolveAudioUnitFields } from '../../src/util/spec';
 import { EXAMPLE_DATASETS, resolveDataSource, typeCoerceData } from '../../src/util/datasets';
 import { UmweltSpec, isExportableUmweltValuesDataSource } from '../../src/types';
 import { UmweltDatastore } from '../../src/contexts/UmweltDatastoreContext';
@@ -141,4 +141,28 @@ test('temporal values survive export, transport, and re-coercion', async () => {
     expect(datum.date).toBeInstanceOf(Date);
     expect((datum.date as Date).getTime()).toEqual(sampleData[i].date.getTime());
   });
+});
+
+test('resolveAudioUnitFields resolves per usage and excludes unused fields', () => {
+  const spec = makeSpec('mydata.json');
+  spec.fields.push({ active: true, name: 'region', type: 'nominal', encodings: [] });
+
+  // same field encoded (count) and traversed (binned) — both resolutions must
+  // survive so the bin lands in the groupby while the count aggregates
+  const unit = {
+    name: 'audio0',
+    encoding: { volume: { field: 'sales', aggregate: 'count' as const } },
+    traversal: [{ field: 'sales', bin: true }],
+  };
+
+  const resolved = resolveAudioUnitFields(spec, unit);
+
+  expect(resolved).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ field: 'sales', aggregate: 'count' }),
+      expect.objectContaining({ field: 'sales', bin: true }),
+    ])
+  );
+  // 'date', 'notes', and 'region' are not referenced by the unit
+  expect(resolved).toHaveLength(2);
 });

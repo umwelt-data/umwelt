@@ -2,7 +2,7 @@ import { createContext, useContext, ParentProps, createMemo, createEffect, creat
 import { createStore } from 'solid-js/store';
 import { AudioEncoding, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import type { LogicalAnd, FieldEqualPredicate, FieldRangePredicate, FieldValue } from '@umwelt-data/umwelt-utils/predicate';
-import { getFieldDef, resolveFieldDef } from '../../util/spec';
+import { getFieldDef, resolveAudioUnitFields, resolveFieldDef } from '../../util/spec';
 import { serializeValue } from '@umwelt-data/umwelt-utils/data';
 import { selectionTest } from '../../util/selection';
 import { getBinnedDomain, getDomain } from '../../util/domain';
@@ -12,6 +12,7 @@ import { useSonificationState } from './SonificationStateContext';
 import { encodeProperty } from '../../util/encoding';
 import { useAudioScales } from './AudioScalesContext';
 import { derivedDataset, derivedFieldName, derivedFieldNameBinStartEnd } from '../../util/transforms';
+import { audioUnitFieldBins } from '../../util/ticks';
 import { fmtCompoundValue } from '../../util/description';
 import { describeField, makeCommaSeparatedString } from '@umwelt-data/umwelt-utils/description';
 import { useUmweltSelection } from '../UmweltSelectionContext';
@@ -141,14 +142,16 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
   // derived state
   const getResolvedFields = createMemo(() => {
-    return props.spec.fields.map((fieldDef) => {
-      const encFieldDef = Object.values(props.audioUnitSpec.encoding).find((f) => f.field === fieldDef.name) || props.audioUnitSpec.traversal.find((f) => f.field === fieldDef.name);
-      return resolveFieldDef(fieldDef, encFieldDef);
-    });
+    return resolveAudioUnitFields(props.spec, props.audioUnitSpec);
+  });
+  const getSelectedData = createMemo(() => {
+    return sonificationState.selection ? selectionTest(props.data, sonificationState.selection) : props.data;
+  });
+  const getFieldBins = createMemo(() => {
+    return audioUnitFieldBins(props.spec, props.data, getSelectedData(), getResolvedFields());
   });
   const getDerivedData = createMemo(() => {
-    const data = sonificationState.selection ? selectionTest(props.data, sonificationState.selection) : props.data;
-    const derived = derivedDataset(data, getResolvedFields()); // TODO global selection
+    const derived = derivedDataset(getSelectedData(), getResolvedFields(), getFieldBins()); // TODO global selection
     return derived;
   });
   const getFieldDomains = createMemo(() => {
@@ -177,7 +180,10 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     if (resolvedFieldDef.bin && !resolvedFieldDef.aggregate) {
       const [startField, endField] = derivedFieldNameBinStartEnd(resolvedFieldDef);
       const startValue = domain[idx];
-      const endValue = getDerivedData().find((d) => d[startField] === startValue)![endField];
+      // an out-of-range index or an empty domain (e.g. a selection that matches
+      // no data) has no backing row; degrade gracefully rather than throw, which
+      // would abort the whole reactive flush and strand the other views' updates
+      const endValue = getDerivedData().find((d) => d[startField] === startValue)?.[endField] ?? null;
       return [startValue, endValue];
     } else {
       return domain[idx];

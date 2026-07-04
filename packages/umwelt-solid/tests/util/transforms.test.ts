@@ -404,3 +404,30 @@ test('handles multiple time units and aggregations', async () => {
 
   expect(transformedData).toEqual(expectedData);
 });
+
+test('untransformed fields survive an aggregate as groupby columns', () => {
+  // regression: a count encoding traversed by a plain nominal field used to
+  // aggregate with an empty groupby, collapsing the data to a single row
+  // with no trace of the traversal field
+  const dataset = [
+    { weather: 'rain', temp_max: 10 },
+    { weather: 'rain', temp_max: 12 },
+    { weather: 'sun', temp_max: 20 },
+  ];
+
+  const fieldDefs: FieldDef[] = [
+    { active: true, name: 'temp_max', type: 'quantitative', aggregate: 'count', encodings: [] },
+    { active: true, name: 'weather', type: 'nominal', encodings: [] },
+  ];
+
+  const transforms = fieldsToTransforms(fieldDefs.map((f) => resolveFieldDef(f)));
+  const transformedData = applyTransforms(dataset, transforms);
+
+  expect(transformedData).toHaveLength(2);
+  expect(transformedData).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ weather: 'rain', [aggregatedFieldName('temp_max', 'count')]: 2 }),
+      expect.objectContaining({ weather: 'sun', [aggregatedFieldName('temp_max', 'count')]: 1 }),
+    ])
+  );
+});

@@ -1,15 +1,16 @@
 import { createContext, useContext, ParentProps } from 'solid-js';
-import { AudioEncoding, AudioPropName, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
+import { AudioPropName, AudioUnitSpec, ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { useUmweltSpec } from '../UmweltSpecContext';
 import { getDomain } from '../../util/domain';
 import { scaleOrdinal, scaleLinear, scaleTime } from 'd3-scale';
-import { getFieldDef, resolveFieldDef } from '../../util/spec';
-import { computeGuideTicks } from '@umwelt-data/umwelt-utils/vega';
+import { getFieldDef, resolveAudioUnitFields, resolveFieldDef } from '../../util/spec';
+import { derivedDataset } from '../../util/transforms';
+import { audioUnitFieldBins, chartAxisTicks } from '../../util/ticks';
 
 export type AudioScalesProviderProps = ParentProps<{
   spec: UmweltSpec;
   data: UmweltDataset;
-  encoding: AudioEncoding;
+  audioUnitSpec: AudioUnitSpec;
 }>;
 
 export interface AudioScales {
@@ -38,7 +39,7 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
   };
 
   const createAudioScale = (property: AudioPropName) => {
-    const encodingFieldDef = props.encoding[property];
+    const encodingFieldDef = props.audioUnitSpec.encoding[property];
 
     if (!encodingFieldDef) {
       return () => DEFAULT_VALUES[property];
@@ -56,14 +57,20 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
 
     let domain = resolvedFieldDef.scale?.domain;
     if (!domain) {
+      // count and sum produce values in different units than the raw field, so
+      // their domains must come from the unit's aggregated data; other
+      // aggregates (mean, min, ...) stay within the raw field's extents
+      const derivedUnits = resolvedFieldDef.aggregate === 'count' || resolvedFieldDef.aggregate === 'sum';
+      const resolvedFields = resolveAudioUnitFields(props.spec, props.audioUnitSpec);
+      const domainData = derivedUnits ? derivedDataset(props.data, resolvedFields, audioUnitFieldBins(props.spec, props.data, props.data, resolvedFields)) : props.data;
       switch (fieldDef.type) {
         case 'ordinal':
         case 'nominal':
-          domain = getDomain(resolvedFieldDef, props.data, false);
+          domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
           break;
         case 'quantitative':
         case 'temporal':
-          domain = getDomain(resolvedFieldDef, props.data, false);
+          domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
           domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
           break;
         default:
@@ -92,21 +99,7 @@ export function AudioScalesProvider(props: AudioScalesProviderProps) {
   };
 
   const getAxisTicks = (resolvedFieldDef: ResolvedFieldDef): UmweltValue[] => {
-    const fieldDef = getFieldDef(props.spec, resolvedFieldDef.field);
-    if (!fieldDef) {
-      console.warn(`Field ${resolvedFieldDef.field} not found in spec`);
-      return [];
-    }
-
-    const xyEncodings = fieldDef.encodings.filter((e) => e.property === 'x' || e.property === 'y');
-    const channel = xyEncodings[0]?.property as 'x' | 'y' | undefined;
-    if (!channel) return [];
-
-    const ticks = computeGuideTicks(props.data as Record<string, any>[], {
-      field: resolvedFieldDef.field,
-      type: fieldDef.type as 'quantitative' | 'ordinal' | 'nominal' | 'temporal',
-    });
-    return (ticks as UmweltValue[]) ?? [];
+    return chartAxisTicks(props.spec, props.data, resolvedFieldDef.field) ?? [];
   };
 
   const scales = {

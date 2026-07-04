@@ -62,7 +62,7 @@ export function AudioUnit(props: AudioUnitProps) {
 
   return (
     <EnumeratedItem>
-      <AudioScalesProvider spec={props.spec} data={props.data} encoding={props.audioUnitSpec.encoding}>
+      <AudioScalesProvider spec={props.spec} data={props.data} audioUnitSpec={props.audioUnitSpec}>
         <AudioUnitStateProvider spec={props.spec} data={props.data} audioUnitSpec={props.audioUnitSpec}>
           <AudioUnitDescription />
           <AudioUnitEncodings />

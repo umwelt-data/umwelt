@@ -62,13 +62,45 @@ export const derivedFieldNameBinStartEnd = (field: ResolvedFieldDef): [string, s
   return name;
 };
 
-export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[]): UmweltDataset => {
-  const transforms = fieldsToTransforms(fields);
-  const transformedData = applyTransforms(data, transforms);
+export const derivedDataset = (data: UmweltDataset, fields: ResolvedFieldDef[], binsByField?: Record<string, [number, number][]>): UmweltDataset => {
+  // fields with precomputed bins (aligned to the chart's axis ticks, matching
+  // the olli tree) get their bin columns assigned here instead of through the
+  // vega bin transform, whose equal-width maxbins binning would disagree
+  const prebinned = new Set(fields.filter((f) => f.bin && binsByField?.[f.field]?.length).map((f) => f.field));
+  let inputData = data;
+  if (prebinned.size) {
+    inputData = data.map((row) => {
+      const out = { ...row };
+      for (const field of prebinned) {
+        const [startName, endName] = binnedFieldNames(field);
+        const bin = assignBin(row[field], binsByField![field]);
+        out[startName] = bin ? bin[0] : null;
+        out[endName] = bin ? bin[1] : null;
+      }
+      return out;
+    });
+  }
+  const transforms = fieldsToTransforms(fields, prebinned);
+  const transformedData = applyTransforms(inputData, transforms);
   return transformedData;
 };
 
-export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[] => {
+// bins are inclusive-left; the last bin is also inclusive-right, mirroring
+// olli's bin predicates
+const assignBin = (raw: unknown, bins: [number, number][]): [number, number] | undefined => {
+  if (raw == null) return undefined;
+  const value = Number(raw);
+  if (isNaN(value)) return undefined;
+  for (let i = 0; i < bins.length; i++) {
+    const [start, end] = bins[i];
+    if (value >= start && (value < end || (i === bins.length - 1 && value <= end))) {
+      return bins[i];
+    }
+  }
+  return undefined;
+};
+
+export const fieldsToTransforms = (fields: ResolvedFieldDef[], prebinnedFields?: Set<string>): UmweltTransform[] => {
   const timeUnitTransforms: TimeUnitTransform[] = [];
   const binTransforms: BinTransform[] = [];
   const aggregateTransforms: AggregateTransform[] = [];
@@ -85,6 +117,11 @@ export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[
       if (bin) {
         binnedFieldNames(fieldName).forEach((f) => groupbyFields.add(f));
       }
+      if (!timeUnit && !bin) {
+        // untransformed fields group by their raw values; without this,
+        // an aggregate elsewhere in the unit collapses them out of the data
+        groupbyFields.add(fieldName);
+      }
     }
   }
 
@@ -92,7 +129,7 @@ export const fieldsToTransforms = (fields: ResolvedFieldDef[]): UmweltTransform[
   for (const field of fields) {
     const { field: fieldName, timeUnit, bin, aggregate } = field;
 
-    if (bin) {
+    if (bin && !prebinnedFields?.has(fieldName)) {
       const binOutputFields = binnedFieldNames(fieldName);
       binTransforms.push({
         bin: true,

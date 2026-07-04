@@ -126,6 +126,9 @@ export interface FieldDef {
 export interface VisualEncodingFieldDef {
   field: FieldName;
   //
+  /** overrides the field's measure type for this visual channel only
+   * (e.g. render a temporal field as a nominal color scale) */
+  type?: MeasureType;
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: UmweltTimeUnit | typeof NONE;
   aggregate?: UmweltAggregateOp | typeof NONE;
