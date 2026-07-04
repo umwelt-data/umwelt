@@ -1,6 +1,7 @@
 {
   "name": "umwelt-monorepo",
   "private": true,
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
     "build": "pnpm -r build"
   }
