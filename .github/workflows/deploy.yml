@@ -24,19 +24,20 @@ jobs:
           fetch-depth: 0
 
       - name: Setup pnpm
+        # Version comes from the "packageManager" field in package.json.
         uses: pnpm/action-setup@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build umwelt-solid package
         run: pnpm --filter umwelt-solid build

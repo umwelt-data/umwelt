@@ -10,6 +10,19 @@ export default defineConfig({
   lang: 'en-US',
   appearance: false,
 
+  vite: {
+    // vega-canvas probes for the native `canvas` module with a top-level
+    // `await import('canvas')` (it gracefully no-ops when absent). We never ship
+    // canvas: the gallery renders umwelt-js client-side only. Externalize it so
+    // neither the client nor SSR bundle tries to resolve it, and target esnext
+    // so the leftover top-level await is allowed (matches the editor build).
+    build: {
+      target: 'esnext',
+      rollupOptions: { external: ['canvas'] },
+    },
+    ssr: { external: ['canvas'] },
+  },
+
   ignoreDeadLinks: [
     // Dynamic gallery routes are generated at build time from [id].paths.ts;
     // the link checker can't see them.
