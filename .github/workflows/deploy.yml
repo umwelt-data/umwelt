@@ -41,10 +41,8 @@ jobs:
       - name: Build umwelt-solid package
         run: pnpm --filter umwelt-solid build
 
-      - name: Build umwelt-js package
-        run: pnpm --filter umwelt-js build
-
       - name: Build VitePress docs
+        # docs:build rebuilds umwelt-js first, so the gallery never bundles a stale dist
         run: pnpm --filter umwelt-docs docs:build
 
       - name: Prepare combined output

@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "docs:dev": "vitepress dev .",
-    "docs:build": "vitepress build .",
+    "docs:dev": "pnpm --filter umwelt-js build && vitepress dev .",
+    "docs:build": "pnpm --filter umwelt-js build && vitepress build .",
     "docs:preview": "vitepress preview ."
   },
   "devDependencies": {

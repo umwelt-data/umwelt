@@ -1,5 +1,11 @@
 import type { GalleryExample } from './types.js';
+import { scatterplot } from './scatterplot.js';
+import { connectedScatterplot } from './connected-scatterplot.js';
+import { bubblePlot } from './bubble-plot.js';
 import { multiSeriesLine } from './multi-series-line.js';
+import { layeredChart } from './layered-chart.js';
+import { concatChart } from './concat-chart.js';
+import { trellisPlot } from './trellis-plot.js';
 
 /**
  * All gallery examples, in display order.
@@ -7,7 +13,15 @@ import { multiSeriesLine } from './multi-series-line.js';
  * Remember to also add the example to `groups.ts` so it appears in the
  * sidebar and index page.
  */
-export const examples: GalleryExample[] = [multiSeriesLine];
+export const examples: GalleryExample[] = [
+  scatterplot,
+  connectedScatterplot,
+  bubblePlot,
+  multiSeriesLine,
+  layeredChart,
+  concatChart,
+  trellisPlot,
+];
 
 export function findExample(id: string): GalleryExample | undefined {
   return examples.find((e) => e.id === id);
