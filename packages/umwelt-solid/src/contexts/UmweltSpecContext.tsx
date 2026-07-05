@@ -1,8 +1,13 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
-import { createStore } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, isAudioProp, isVisualProp, isExportableUmweltURLDataSource } from '../types';
+import { createStore, produce } from 'solid-js/store';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, TextNode, TextPredicateNode, DATA_STRUCTURE_KEY, isAudioProp, isVisualProp, isExportableUmweltURLDataSource } from '../types';
+import type { FieldPredicate, LogicalAnd } from '@umwelt-data/umwelt-utils/predicate';
+
+// A text edit targets one structure, keyed by the visual unit it describes (or
+// DATA_STRUCTURE_KEY for the whole dataset when there's no visualization).
+export type TextTarget = string;
 import { detectKey, elaborateFields } from '../util/inference';
-import { decodeSpecFromString, elaborateExportableSpec } from '../util/spec';
+import { decodeSpecFromString, elaborateExportableSpec, newTextNodeId, seedChartOverride, seedDataStructure } from '../util/spec';
 import { Mark } from 'vega-lite/build/src/mark';
 import { cleanData, DEFAULT_DATASET_NAME, typeCoerceData, resolveDataSource } from '../util/datasets';
 import { useUmweltDatastore } from './UmweltDatastoreContext';
@@ -11,6 +16,48 @@ import { getDefaultSpec } from '../util/heuristics';
 export type UmweltSpecProviderProps = ParentProps<{}>;
 
 const CURRENT_SPEC_STORAGE_KEY = 'umweltCurrentSpec';
+
+// --- In-place helpers for editing a TextNode tree --------------------------
+// These mutate a `produce` draft. Editing in place (rather than rebuilding the
+// path immutably) preserves node identities, so Solid's fine-grained reactivity
+// updates only the changed leaf — the DOM node isn't recreated and a focused input
+// keeps focus while you type.
+
+// Find a node by id, returning the live (mutable) reference.
+function findTextNode(nodes: TextNode[], nodeId: string): TextNode | undefined {
+  for (const node of nodes) {
+    if (node.id === nodeId) return node;
+    const found = findTextNode(node.children, nodeId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+// The sibling array a node lives in, and its index — for splice-based ops.
+function findSiblings(nodes: TextNode[], nodeId: string): { arr: TextNode[]; index: number } | undefined {
+  const index = nodes.findIndex((n) => n.id === nodeId);
+  if (index !== -1) return { arr: nodes, index };
+  for (const node of nodes) {
+    const found = findSiblings(node.children, nodeId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function newTextGroupNode(): TextNode {
+  return { id: newTextNodeId(), nodeType: 'group', groupby: [{ field: '' }], children: [] };
+}
+
+function newTextPredicateNode(): TextNode {
+  return { id: newTextNodeId(), nodeType: 'predicate', predicate: { and: [] }, name: '', children: [] };
+}
+
+// The authored predicate is always an AND of field conditions; returns the live
+// `and` array so produce mutations (push/splice) land on the draft.
+function predicateClauses(node: TextPredicateNode): FieldPredicate[] {
+  const pred = node.predicate as LogicalAnd<FieldPredicate>;
+  return Array.isArray(pred?.and) ? (pred.and as FieldPredicate[]) : [];
+}
 
 export type UmweltSpecInternalActions = {
   persistSpec: () => void;
@@ -35,12 +82,33 @@ export type UmweltSpecActions = {
   renameUnit: (oldName: string, newName: string) => void;
   setComposition: (modality: 'visual' | 'audio', composition: ViewComposition) => void;
   reorderTraversal: (unit: string, field: string, newIndex: number) => void;
+  // text modality — a TextTarget is a structure key (visual unit name, or
+  // DATA_STRUCTURE_KEY for the whole dataset when there is no visualization)
+  resetTextStructure: (target: TextTarget) => void; // drop a structure → faithful inference
+  addTextNode: (target: TextTarget, parentId: string | undefined, kind: 'group' | 'predicate') => void;
+  removeTextNode: (target: TextTarget, nodeId: string) => void;
+  reorderTextNode: (target: TextTarget, parentId: string | undefined, nodeId: string, newIndex: number) => void;
+  // group nodes (groupby is an ordered list of fields; >1 = crossed grouping)
+  setTextNodeField: (target: TextTarget, nodeId: string, index: number, field: string) => void;
+  addTextNodeGroupField: (target: TextTarget, nodeId: string) => void;
+  removeTextNodeGroupField: (target: TextTarget, nodeId: string, index: number) => void;
+  setTextNodeType: (target: TextTarget, nodeId: string, index: number, type: MeasureType | 'undefined') => void;
+  setTextNodeBin: (target: TextTarget, nodeId: string, index: number, bin: boolean) => void;
+  setTextNodeTimeUnit: (target: TextTarget, nodeId: string, index: number, timeUnit: UmweltTimeUnit | 'undefined') => void;
+  // predicate nodes (a named subset; predicate is an AND of field conditions)
+  setTextNodeName: (target: TextTarget, nodeId: string, name: string) => void;
+  setTextNodeReasoning: (target: TextTarget, nodeId: string, reasoning: string) => void;
+  addTextPredicateClause: (target: TextTarget, nodeId: string) => void;
+  removeTextPredicateClause: (target: TextTarget, nodeId: string, index: number) => void;
+  setTextPredicateClause: (target: TextTarget, nodeId: string, index: number, clause: FieldPredicate) => void;
   setFieldAggregate: (field: string, aggregate: UmweltAggregateOp | 'undefined') => void;
   setFieldBin: (field: string, bin: boolean) => void;
   setFieldTimeUnit: (field: string, timeUnit: UmweltTimeUnit | 'undefined') => void;
+  setEncodingType: (unit: string, property: EncodingPropName, type: MeasureType | 'undefined') => void;
   setEncodingAggregate: (unit: string, property: EncodingPropName, aggregate: UmweltAggregateOp | 'undefined') => void;
   setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => void;
   setEncodingTimeUnit: (unit: string, property: EncodingPropName, timeUnit: UmweltTimeUnit | 'undefined') => void;
+  setTraversalType: (unit: string, field: string, type: MeasureType | 'undefined') => void;
   setTraversalBin: (unit: string, field: string, bin: boolean) => void;
   setTraversalTimeUnit: (unit: string, field: string, timeUnit: UmweltTimeUnit | 'undefined') => void;
 };
@@ -71,6 +139,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       key: [],
       visual: { units: [], composition: 'layer' },
       audio: { units: [], composition: 'concat' },
+      text: { structures: {} },
     };
   };
 
@@ -88,6 +157,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
     if (persisted) {
       try {
         const persistedSpec: UmweltSpec = JSON.parse(persisted);
+        // default the text modality; a stale pre-reshape shape is discarded, not migrated
+        if (!persistedSpec.text || !('structures' in persistedSpec.text)) {
+          persistedSpec.text = { structures: {} };
+        }
         if (persistedSpec.data?.name && datastore()[persistedSpec.data.name]?.data?.length) {
           return persistedSpec;
         }
@@ -200,6 +273,31 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
     },
   };
 
+  // The seed shown in the editor for a not-yet-owned structure (deterministic ids,
+  // so a first edit targets the same nodes the editor displayed).
+  const seedFor = (target: TextTarget): TextNode[] => {
+    const visUnit = spec.visual.units.find((u) => u.name === target);
+    return visUnit ? seedChartOverride(visUnit, spec) : seedDataStructure(spec);
+  };
+  // Ensure a target's structure exists (seeded-then-owned): the first edit
+  // materializes the seed so subsequent in-place edits have a concrete tree.
+  const ensureTextOwned = (target: TextTarget) => {
+    if (!spec.text.structures[target]) setSpec('text', 'structures', target, seedFor(target));
+  };
+  // Mutate a target's structure in place via produce (preserves node identities →
+  // fine-grained updates → focused inputs keep focus), then persist.
+  const editTextStructure = (target: TextTarget, mut: (structure: TextNode[]) => void) => {
+    ensureTextOwned(target);
+    setSpec('text', 'structures', target, produce(mut));
+    internalActions.persistSpec();
+  };
+  const editTextNode = (target: TextTarget, nodeId: string, mut: (node: TextNode) => void) => {
+    editTextStructure(target, (structure) => {
+      const node = findTextNode(structure, nodeId);
+      if (node) mut(node);
+    });
+  };
+
   const actions: UmweltSpecActions = {
     initializeData: async (name: string) => {
       // an explicit load of a local dataset overrides any session dataset shadowing its name
@@ -229,6 +327,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
             units: [],
             composition: 'concat',
           });
+          setSpec('text', { structures: {} });
           // type and clean data
           const typedData = typeCoerceData(data, spec.fields);
           const cleanedData = cleanData(typedData, spec.fields);
@@ -406,6 +505,83 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       setSpec(modality, 'composition', composition);
       internalActions.persistSpec();
     },
+    // --- Text modality -----------------------------------------------------
+    // Drop a structure so its view reverts to olli's faithful inference.
+    resetTextStructure: (target: TextTarget) => {
+      setSpec('text', 'structures', (structures) => {
+        const { [target]: _, ...rest } = structures;
+        return rest;
+      });
+      internalActions.persistSpec();
+    },
+    addTextNode: (target: TextTarget, parentId: string | undefined, kind: 'group' | 'predicate') => {
+      const node = kind === 'predicate' ? newTextPredicateNode() : newTextGroupNode();
+      editTextStructure(target, (structure) => {
+        const siblings = parentId === undefined ? structure : findTextNode(structure, parentId)?.children;
+        siblings?.push(node);
+      });
+    },
+    removeTextNode: (target: TextTarget, nodeId: string) => {
+      editTextStructure(target, (structure) => {
+        const found = findSiblings(structure, nodeId);
+        found?.arr.splice(found.index, 1);
+      });
+    },
+    reorderTextNode: (target: TextTarget, _parentId: string | undefined, nodeId: string, newIndex: number) => {
+      editTextStructure(target, (structure) => {
+        const found = findSiblings(structure, nodeId);
+        if (!found || newIndex < 0 || newIndex >= found.arr.length) return;
+        const [moved] = found.arr.splice(found.index, 1);
+        found.arr.splice(newIndex, 0, moved);
+      });
+    },
+    // group nodes ----------------------------------------------------------
+    setTextNodeField: (target: TextTarget, nodeId: string, index: number, field: string) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && (node.groupby[index].field = field));
+    },
+    addTextNodeGroupField: (target: TextTarget, nodeId: string) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && node.groupby.push({ field: '' }));
+    },
+    removeTextNodeGroupField: (target: TextTarget, nodeId: string, index: number) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && node.groupby.length > 1 && node.groupby.splice(index, 1));
+    },
+    setTextNodeType: (target: TextTarget, nodeId: string, index: number, inputType: MeasureType | 'undefined') => {
+      const type = inputType === 'undefined' ? undefined : inputType;
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && (node.groupby[index].type = type));
+    },
+    setTextNodeBin: (target: TextTarget, nodeId: string, index: number, bin: boolean) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && (node.groupby[index].bin = bin));
+    },
+    setTextNodeTimeUnit: (target: TextTarget, nodeId: string, index: number, inputTimeUnit: UmweltTimeUnit | 'undefined') => {
+      const timeUnit = inputTimeUnit === 'undefined' ? undefined : inputTimeUnit;
+      editTextNode(target, nodeId, (node) => node.nodeType === 'group' && (node.groupby[index].timeUnit = timeUnit));
+    },
+    // predicate nodes ------------------------------------------------------
+    setTextNodeName: (target: TextTarget, nodeId: string, name: string) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'predicate' && (node.name = name));
+    },
+    setTextNodeReasoning: (target: TextTarget, nodeId: string, reasoning: string) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'predicate' && (node.reasoning = reasoning || undefined));
+    },
+    addTextPredicateClause: (target: TextTarget, nodeId: string) => {
+      const firstField = spec.fields.find((f) => f.active)?.name ?? '';
+      const clause: FieldPredicate = { field: firstField, equal: '' };
+      editTextNode(target, nodeId, (node) => node.nodeType === 'predicate' && predicateClauses(node).push(clause));
+    },
+    removeTextPredicateClause: (target: TextTarget, nodeId: string, index: number) => {
+      editTextNode(target, nodeId, (node) => node.nodeType === 'predicate' && predicateClauses(node).splice(index, 1));
+    },
+    setTextPredicateClause: (target: TextTarget, nodeId: string, index: number, clause: FieldPredicate) => {
+      editTextNode(target, nodeId, (node) => {
+        if (node.nodeType !== 'predicate') return;
+        // replace the clause's CONTENTS in place (keeping its object identity) so the
+        // condition row isn't recreated and its focused value input keeps focus
+        const draft = predicateClauses(node)[index] as unknown as Record<string, unknown> | undefined;
+        if (!draft) return;
+        for (const k of Object.keys(draft)) delete draft[k];
+        Object.assign(draft, clause);
+      });
+    },
     reorderTraversal: (unit, field, newIndex) => {
       const unitDef = spec.audio.units.find((u) => u.name === unit);
       if (unitDef) {
@@ -461,6 +637,34 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         );
         internalActions.persistSpec();
       }
+    },
+    // per-channel measure-type override
+    setEncodingType: (unit: string, property: EncodingPropName, inputType: MeasureType | 'undefined') => {
+      const type = inputType === 'undefined' ? undefined : inputType;
+      if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
+        setSpec(
+          'visual',
+          'units',
+          spec.visual.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as VisualEncodingFieldDef), type } } } : u))
+        );
+        internalActions.persistSpec();
+      } else if (isAudioProp(property) && spec.audio.units.find((u) => u.name === unit)) {
+        setSpec(
+          'audio',
+          'units',
+          spec.audio.units.map((u) => (u.name === unit ? { ...u, encoding: { ...u.encoding, [property]: { ...(u.encoding[property] as AudioEncodingFieldDef), type } } } : u))
+        );
+        internalActions.persistSpec();
+      }
+    },
+    setTraversalType: (unit: string, field: string, inputType: MeasureType | 'undefined') => {
+      const type = inputType === 'undefined' ? undefined : inputType;
+      setSpec(
+        'audio',
+        'units',
+        spec.audio.units.map((u) => (u.name === unit ? { ...u, traversal: u.traversal.map((t) => (t.field === field ? { ...t, type } : t)) } : u))
+      );
+      internalActions.persistSpec();
     },
     setEncodingBin: (unit: string, property: EncodingPropName, bin: boolean) => {
       if (isVisualProp(property) && spec.visual.units.find((u) => u.name === unit)) {
@@ -535,6 +739,7 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       setSpec('key', elaborated.key);
       setSpec('visual', elaborated.visual);
       setSpec('audio', elaborated.audio);
+      setSpec('text', elaborated.text);
       internalActions.persistSpec();
     });
     return true;

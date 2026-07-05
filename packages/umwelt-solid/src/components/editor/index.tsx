@@ -4,6 +4,7 @@ import { Data } from './data';
 import { Fields } from './fields';
 import { Visual } from './visual';
 import { Audio } from './audio';
+import { Text } from './text';
 import { ExportSpec } from '../export';
 
 import styles from '../../App.module.scss';
@@ -11,7 +12,7 @@ import { Dynamic } from 'solid-js/web';
 import { createStoredSignal } from '../../util/solid';
 import { useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
 
-type EditorTab = 'data' | 'fields' | 'visual' | 'audio' | 'export';
+type EditorTab = 'data' | 'fields' | 'visual' | 'audio' | 'text' | 'export';
 
 export function UmweltEditor() {
   const [spec] = useUmweltSpec();
@@ -30,6 +31,7 @@ export function UmweltEditor() {
     fields: Fields,
     visual: Visual,
     audio: Audio,
+    text: Text,
     export: ExportSpec,
   };
 
@@ -48,6 +50,9 @@ export function UmweltEditor() {
           </button>
           <button role="tab" id="tab-audio" aria-controls="tabpanel-audio" aria-selected={currentTab() === 'audio'} onClick={() => setCurrentTab('audio')} disabled={!(data().length && spec.fields.length)}>
             Audio
+          </button>
+          <button role="tab" id="tab-text" aria-controls="tabpanel-text" aria-selected={currentTab() === 'text'} onClick={() => setCurrentTab('text')} disabled={!(data().length && spec.fields.length)}>
+            Text
           </button>
           <button role="tab" id="tab-export" aria-controls="tabpanel-export" aria-selected={currentTab() === 'export'} onClick={() => setCurrentTab('export')} disabled={!(data().length && spec.fields.length)}>
             Export
