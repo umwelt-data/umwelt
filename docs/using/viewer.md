@@ -26,6 +26,8 @@ Each audio unit appears with a plain-language summary of what it plays (for the 
 - **Traversal controls** — one control per traversal field. Nominal fields get a dropdown (pick which company is playing); ordered fields get a slider (scrub through dates). During playback these advance automatically; while paused, they let you jump to any position and listen from there.
 - **Play / Pause** — starts and stops playback. From anywhere on the page (outside a text input), the `p` key does the same.
 
+When the audio spec uses `layer` composition, the units are combined into a single entity: one Play / Pause and one shared set of traversal controls drive every layer at once, and each layer sounds on its own timbre so you can pick them apart.
+
 Below the units are engine-wide settings:
 
 - **Playback rate** — from 0.1× to 4× speed.
