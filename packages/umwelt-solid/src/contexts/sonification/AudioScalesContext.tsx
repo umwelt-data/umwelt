@@ -25,88 +25,98 @@ export interface AudioScaleActions {
 
 const AudioScalesContext = createContext<[AudioScales, AudioScaleActions]>();
 
-export function AudioScalesProvider(props: AudioScalesProviderProps) {
-  const DEFAULT_RANGES: Record<AudioPropName, [number, number]> = {
-    pitch: [48, 84], // in MIDI. Three octaves from C3 to C6
-    duration: [0.25, 1], // in seconds
-    volume: [-20, 0], // in decibels
-  };
+const DEFAULT_RANGES: Record<AudioPropName, [number, number]> = {
+  pitch: [48, 84], // in MIDI. Three octaves from C3 to C6
+  duration: [0.25, 1], // in seconds
+  volume: [-20, 0], // in decibels
+};
 
-  const DEFAULT_VALUES: Record<AudioPropName, any> = {
-    pitch: 60, // MIDI C4 middle C. We encode in MIDI because linear interpolations in Hz are not perceptually linear
-    duration: 0.2, // seconds
-    volume: -10, // dB
-  };
+const DEFAULT_VALUES: Record<AudioPropName, any> = {
+  pitch: 60, // MIDI C4 middle C. We encode in MIDI because linear interpolations in Hz are not perceptually linear
+  duration: 0.2, // seconds
+  volume: -10, // dB
+};
 
-  const createAudioScale = (property: AudioPropName) => {
-    const encodingFieldDef = props.audioUnitSpec.encoding[property];
+function createAudioScale(spec: UmweltSpec, data: UmweltDataset, audioUnitSpec: AudioUnitSpec, property: AudioPropName) {
+  const encodingFieldDef = audioUnitSpec.encoding[property];
 
-    if (!encodingFieldDef) {
-      return () => DEFAULT_VALUES[property];
-    }
+  if (!encodingFieldDef) {
+    return () => DEFAULT_VALUES[property];
+  }
 
-    const fieldDef = getFieldDef(props.spec, encodingFieldDef.field);
+  const fieldDef = getFieldDef(spec, encodingFieldDef.field);
 
-    if (!fieldDef) {
-      // throw new Error(`Field ${encodingFieldDef.field} not found in spec`);
-      console.warn(`Field ${encodingFieldDef.field} not found in spec`);
-      return () => DEFAULT_VALUES[property];
-    }
+  if (!fieldDef) {
+    // throw new Error(`Field ${encodingFieldDef.field} not found in spec`);
+    console.warn(`Field ${encodingFieldDef.field} not found in spec`);
+    return () => DEFAULT_VALUES[property];
+  }
 
-    const resolvedFieldDef = resolveFieldDef(fieldDef, encodingFieldDef);
+  const resolvedFieldDef = resolveFieldDef(fieldDef, encodingFieldDef);
 
-    let domain = resolvedFieldDef.scale?.domain;
-    if (!domain) {
-      // count and sum produce values in different units than the raw field, so
-      // their domains must come from the unit's aggregated data; other
-      // aggregates (mean, min, ...) stay within the raw field's extents
-      const derivedUnits = resolvedFieldDef.aggregate === 'count' || resolvedFieldDef.aggregate === 'sum';
-      const resolvedFields = resolveAudioUnitFields(props.spec, props.audioUnitSpec);
-      const domainData = derivedUnits ? derivedDataset(props.data, resolvedFields, audioUnitFieldBins(props.spec, props.data, props.data, resolvedFields)) : props.data;
-      switch (fieldDef.type) {
-        case 'ordinal':
-        case 'nominal':
-          domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
-          break;
-        case 'quantitative':
-        case 'temporal':
-          domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
-          domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
-          break;
-        default:
-          throw new Error(`Unsupported field type ${resolvedFieldDef.type}`);
-      }
-    }
-    const range = (resolvedFieldDef.scale?.range as number[]) || DEFAULT_RANGES[property]; // TODO support non-number ranges
-
-    switch (resolvedFieldDef.type) {
+  let domain = resolvedFieldDef.scale?.domain;
+  if (!domain) {
+    // count and sum produce values in different units than the raw field, so
+    // their domains must come from the unit's aggregated data; other
+    // aggregates (mean, min, ...) stay within the raw field's extents
+    const derivedUnits = resolvedFieldDef.aggregate === 'count' || resolvedFieldDef.aggregate === 'sum';
+    const resolvedFields = resolveAudioUnitFields(spec, audioUnitSpec);
+    const domainData = derivedUnits ? derivedDataset(data, resolvedFields, audioUnitFieldBins(spec, data, data, resolvedFields)) : data;
+    switch (fieldDef.type) {
       case 'ordinal':
       case 'nominal':
-        return scaleOrdinal<number>()
-          .domain(domain as string[])
-          .range(range);
+        domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
+        break;
       case 'quantitative':
-        return scaleLinear()
-          .domain(domain as number[])
-          .range(range);
       case 'temporal':
-        return scaleTime()
-          .domain(domain as Date[])
-          .range(range);
+        domain = getDomain(resolvedFieldDef, domainData, derivedUnits);
+        domain = [domain[0], domain[domain.length - 1]]; // scaleLinear expects extents
+        break;
       default:
         throw new Error(`Unsupported field type ${resolvedFieldDef.type}`);
     }
-  };
+  }
+  const range = (resolvedFieldDef.scale?.range as number[]) || DEFAULT_RANGES[property]; // TODO support non-number ranges
 
+  switch (resolvedFieldDef.type) {
+    case 'ordinal':
+    case 'nominal':
+      return scaleOrdinal<number>()
+        .domain(domain as string[])
+        .range(range);
+    case 'quantitative':
+      return scaleLinear()
+        .domain(domain as number[])
+        .range(range);
+    case 'temporal':
+      return scaleTime()
+        .domain(domain as Date[])
+        .range(range);
+    default:
+      throw new Error(`Unsupported field type ${resolvedFieldDef.type}`);
+  }
+}
+
+/** Build the pitch/duration/volume scales for a single audio unit. */
+export function buildAudioScales(spec: UmweltSpec, data: UmweltDataset, audioUnitSpec: AudioUnitSpec): AudioScales {
+  return {
+    pitch: createAudioScale(spec, data, audioUnitSpec, 'pitch'),
+    duration: createAudioScale(spec, data, audioUnitSpec, 'duration'),
+    volume: createAudioScale(spec, data, audioUnitSpec, 'volume'),
+  };
+}
+
+/** Axis ticks for a resolved field, mirroring the chart axis (used for spoken announcements). */
+export function audioAxisTicks(spec: UmweltSpec, data: UmweltDataset, field: string): UmweltValue[] {
+  return chartAxisTicks(spec, data, field) ?? [];
+}
+
+export function AudioScalesProvider(props: AudioScalesProviderProps) {
   const getAxisTicks = (resolvedFieldDef: ResolvedFieldDef): UmweltValue[] => {
-    return chartAxisTicks(props.spec, props.data, resolvedFieldDef.field) ?? [];
+    return audioAxisTicks(props.spec, props.data, resolvedFieldDef.field);
   };
 
-  const scales = {
-    pitch: createAudioScale('pitch'),
-    duration: createAudioScale('duration'),
-    volume: createAudioScale('volume'),
-  };
+  const scales = buildAudioScales(props.spec, props.data, props.audioUnitSpec);
 
   const scaleActions = {
     getAxisTicks,
