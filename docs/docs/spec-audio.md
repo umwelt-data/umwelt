@@ -60,7 +60,7 @@ With more than one unit, `composition` controls how they relate in the viewer.
 - **`concat`** (the default) — units are independent tracks. Each keeps its own traversal, scales, and playback controls, and only one plays at a time.
 - **`layer`** — units play *simultaneously* under a single shared traversal and one set of controls, like overlaid series on a shared axis. Layered units share the same traversal field(s); their domains are unioned so one cursor sweeps them together, and a layer falls silent at any step it has no datum for. Each layer sounds on its own timbre so they stay distinguishable, while its encoding scales (`pitch`, `duration`, `volume`) remain independent.
 
-Layered units stay aligned as long as their step durations match (the default when `duration` is unencoded); a layer that encodes `duration` differently from its siblings may drift out of sync over the sequence.
+  Layers stay locked to one shared clock: each traversal step is a slot in which every layer sounds together, and the slot lasts as long as the *longest* layer's `duration` at that step. So a layer's `duration` encoding sets how long its tone sustains within the slot — never how far the cursor advances — and the layers never drift apart.
 
 ## Next
 

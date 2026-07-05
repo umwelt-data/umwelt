@@ -29,7 +29,7 @@ In the Viewer, each traversal field becomes an interactive control that both sho
 Press **Add audio unit** to create additional sonifications — for example, one unit per measure of interest. With more than one unit, each gets an editable name and a **Composition** control:
 
 - **`concat`** plays the units as separate sequences — each gets its own playback controls in the viewer, and you play them one at a time.
-- **`layer`** plays the units at the same time under one shared traversal, like overlaying series on a shared axis. The layered units share a single set of playback and traversal controls, and each is given a distinct timbre so you can tell them apart. Layers should share the same traversal field(s); a layer goes quiet wherever it has no data for the current step.
+- **`layer`** plays the units at the same time under one shared traversal, like overlaying series on a shared axis. The layered units share a single set of playback and traversal controls, and each is given a distinct timbre so you can tell them apart. Layers should share the same traversal field(s); a layer goes quiet wherever it has no data for the current step. Every layer stays locked to the same cursor — if layers encode `duration` differently, each step waits for the longest tone so they never drift apart.
 
 ## Next
 

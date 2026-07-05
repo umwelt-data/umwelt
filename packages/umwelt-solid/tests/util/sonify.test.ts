@@ -5,7 +5,7 @@ import { getDomain } from '../../src/util/domain';
 import { derivedDataset } from '../../src/util/transforms';
 import { audioUnitFieldBins } from '../../src/util/ticks';
 import { buildAudioScales, audioAxisTicks } from '../../src/contexts/sonification/AudioScalesContext';
-import { computeSonifierNotes, SonifyContext } from '../../src/util/sonify';
+import { computeLayerGrid, computeSonifierNotes, SonifierNote, SonifyContext } from '../../src/util/sonify';
 
 // Rebuild the SonifyContext the concat AudioUnitStateProvider builds (no Solid,
 // no Tone) so we can characterize the note sequence the runtime schedules.
@@ -78,6 +78,37 @@ test('computeSonifierNotes characterizes a concat unit note sequence', () => {
     { state: { Origin: 1 }, pitch: 84, duration: 0.2, volume: -15, time: 0.2, pauseAfter: 0, ramp: false, rest: false, speakBefore: 'Japan' },
     { state: { Origin: 2 }, pitch: 51.6, duration: 0.2, volume: -15, time: 0.4, pauseAfter: 0.25, ramp: false, rest: false, speakBefore: 'USA' },
   ]);
+});
+
+// A step-i note for a layer; only the fields computeLayerGrid reads matter here.
+const note = (i: number, duration: number, extra: Partial<SonifierNote> = {}): SonifierNote => ({
+  state: { Origin: i },
+  pitch: 60,
+  volume: -15,
+  duration,
+  time: 0, // ignored by the grid
+  ...extra,
+});
+
+test('computeLayerGrid advances each slot by the longest layer so layers stay locked', () => {
+  const grid = computeLayerGrid([
+    { voiceId: 'a', notes: [note(0, 0.2), note(1, 0.2), note(2, 0.2, { pauseAfter: 0.25 })] },
+    { voiceId: 'b', notes: [note(0, 0.5), note(1, 0.1), note(2, 0.3, { pauseAfter: 0.25 })] },
+  ]);
+
+  // slot advance = max layer duration; times accumulate on ONE shared clock.
+  // The last step's pauseAfter affects only the end, not any slot's start.
+  expect(grid.map((s) => s.slotDuration)).toEqual([0.5, 0.2, 0.3]);
+  expect(grid.map((s) => Math.round(s.time * 1000) / 1000)).toEqual([0, 0.5, 0.7]);
+  // pauseAfter is shared (read from the first layer) and folded into the advance
+  expect(grid.map((s) => s.pauseAfter)).toEqual([0, 0, 0.25]);
+
+  // both layers sound at the SAME slot time (no per-layer drift), each keeping
+  // its own duration as the tone length within the slot
+  grid.forEach((step) => {
+    expect(step.notes.map((n) => n.voiceId)).toEqual(['a', 'b']);
+  });
+  expect(grid[0].notes.map((n) => n.note.duration)).toEqual([0.2, 0.5]);
 });
 
 test('computeSonifierNotes emits a rest (silent, no pitch) for a shared-domain value the unit lacks', () => {

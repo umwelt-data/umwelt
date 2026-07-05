@@ -31,9 +31,9 @@ import { useSonificationState } from './SonificationStateContext';
 import { AudioUnitStateContext, AudioUnitState, AudioUnitStateActions } from './AudioUnitStateContext';
 import { audioAxisTicks, buildAudioScales } from './AudioScalesContext';
 import {
-  SonifierNote,
   SonifyContext,
   TraversalState,
+  computeLayerGrid,
   computeSonifierNotes,
   describeEncodings as describeEncodingsPure,
   describePlaybackOrder as describePlaybackOrderPure,
@@ -47,10 +47,6 @@ export type AudioLayerGroupProviderProps = ParentProps<{
   units: AudioUnitSpec[];
   groupName: string;
 }>;
-
-const getNoteFromState = (notes: SonifierNote[], state: TraversalState): SonifierNote | undefined => {
-  return notes.find((note) => Object.entries(state).every(([field, index]) => note.state[field] === index));
-};
 
 export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
   const [_, umweltSelectionActions] = useUmweltSelection();
@@ -140,7 +136,11 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
     }));
   });
 
-  const primaryNotes = () => notesByUnit()[0]?.notes ?? [];
+  // Shared playback grid: one slot per traversal step, every layer sounding
+  // together, the slot advancing by the longest layer's duration (see
+  // computeLayerGrid). This keeps all layers locked on one clock.
+  const grid = createMemo(() => computeLayerGrid(notesByUnit().map((u) => ({ voiceId: u.voiceId, notes: u.notes }))));
+  const gridStepForState = (state: TraversalState) => grid().find((step) => Object.entries(state).every(([field, index]) => step.state[field] === index));
 
   const getPredicateForState = createMemo(() => getPredicateForStatePure(primaryCtx(), audioUnitState.traversalState));
   const getFieldDomains = () => sharedFieldDomains();
@@ -188,12 +188,18 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
     return props.units;
   });
 
-  const playStateAcrossUnits = (state: TraversalState) => {
-    notesByUnit().forEach(({ voiceId, oscType, notes }) => {
-      audioEngineActions.ensureVoice(voiceId, oscType);
-      const note = getNoteFromState(notes, state);
-      if (note) audioEngineActions.playNote(note, voiceId);
+  const ensureVoices = () => notesByUnit().forEach(({ voiceId, oscType }) => audioEngineActions.ensureVoice(voiceId, oscType));
+  // Sound every layer's note for a slot on its own voice. `ramp` follows the
+  // slot (all layers share the innermost traversal, so they ramp together).
+  const triggerStep = (step: ReturnType<typeof grid>[number]) => {
+    step.notes.forEach(({ voiceId, note }) => {
+      if (step.ramp) audioEngineActions.startOrRampSynth(note, voiceId);
+      else audioEngineActions.playNote(note, voiceId);
     });
+  };
+  // Discrete preview (single blip per layer), used when scrubbing.
+  const previewStep = (step: ReturnType<typeof grid>[number]) => {
+    step.notes.forEach(({ voiceId, note }) => audioEngineActions.playNote(note, voiceId));
   };
 
   const actions: AudioUnitStateActions = {
@@ -205,10 +211,13 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
         actions.setupTransportSequence();
       }
       umweltSelectionActions.setSelection({ source: 'sonification', predicate: getPredicateForState() });
-      // preview: seek to the primary note time and sound every layer at this step
-      const primaryNote = getNoteFromState(primaryNotes(), audioUnitState.traversalState);
-      if (primaryNote) audioEngine.transport.seconds = primaryNote.time;
-      playStateAcrossUnits(audioUnitState.traversalState);
+      // preview: seek to this slot on the shared grid and sound every layer
+      ensureVoices();
+      const step = gridStepForState(audioUnitState.traversalState);
+      if (step) {
+        audioEngine.transport.seconds = step.time;
+        previewStep(step);
+      }
     },
     getTraversalIndex: (field) => audioUnitState.traversalState[field],
     getFieldDomains,
@@ -218,65 +227,50 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
       audioEngine.transport.cancel();
       audioEngine.transport.bpm.value = DEFAULT_TONE_BPM;
 
-      const units = notesByUnit();
+      ensureVoices();
+      const steps = grid();
 
-      // Longest voice end drives when the whole group stops, so a longer
-      // secondary layer isn't cut off.
-      let globalEnd = 0;
-      units.forEach(({ notes }) => {
-        const last = notes[notes.length - 1];
-        if (last) globalEnd = Math.max(globalEnd, last.time + last.duration);
-      });
+      steps.forEach((step) => {
+        // position the playhead at the current cursor
+        if (Object.entries(step.state).every(([f, i]) => audioUnitState.traversalState[f] === i)) {
+          audioEngine.transport.seconds = step.time;
+        }
 
-      units.forEach(({ voiceId, oscType, notes }, unitIdx) => {
-        audioEngineActions.ensureVoice(voiceId, oscType);
-        const isPrimary = unitIdx === 0;
+        audioEngine.transport.schedule(() => {
+          if (!audioEngine.isPlaying) return;
 
-        notes.forEach((note) => {
-          // position the playhead at the current cursor (primary timeline)
-          if (isPrimary && Object.entries(note.state).every(([f, i]) => audioUnitState.traversalState[f] === i)) {
-            audioEngine.transport.seconds = note.time;
-          }
+          setAudioUnitState((prev) => ({ ...prev, traversalState: step.state }));
 
-          audioEngine.transport.schedule(() => {
-            if (!audioEngine.isPlaying) return;
-
-            if (isPrimary) {
-              setAudioUnitState((prev) => ({ ...prev, traversalState: note.state }));
-            }
-
-            if (isPrimary && note.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
-              // pause the whole transport (all voices) for the announcement,
-              // then resume, replaying every layer's note for this step
-              audioEngine.transport.pause();
-              audioEngineActions.releaseSynth();
-              speechSynthesis.cancel();
-              const utterance = new SpeechSynthesisUtterance(note.speakBefore);
-              utterance.voice = speechVoice() ?? null;
-              utterance.rate = audioEngine.speechRate / 25;
-              utterance.onend = () => {
-                if (audioEngine.isPlaying) {
-                  playStateAcrossUnits(note.state);
-                  audioEngine.transport.start();
-                }
-              };
-              speechSynthesis.speak(utterance);
-            } else {
-              if (note.ramp) {
-                audioEngineActions.startOrRampSynth(note, voiceId);
-              } else {
-                audioEngineActions.playNote(note, voiceId);
+          if (step.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
+            // pause the whole transport (all voices) for the announcement, then
+            // resume, replaying every layer's note for this slot
+            audioEngine.transport.pause();
+            audioEngineActions.releaseSynth();
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(step.speakBefore);
+            utterance.voice = speechVoice() ?? null;
+            utterance.rate = audioEngine.speechRate / 25;
+            utterance.onend = () => {
+              if (audioEngine.isPlaying) {
+                triggerStep(step);
+                audioEngine.transport.start();
               }
-            }
-          }, note.time);
-
-          if (note.pauseAfter) {
-            audioEngine.transport.schedule(() => audioEngineActions.releaseSynth(voiceId), note.time + note.duration);
+            };
+            speechSynthesis.speak(utterance);
+          } else {
+            triggerStep(step);
           }
-        });
+        }, step.time);
+
+        if (step.pauseAfter) {
+          audioEngine.transport.schedule(() => audioEngineActions.releaseSynth(), step.time + step.slotDuration);
+        }
       });
 
-      audioEngine.transport.schedule(() => audioEngineActions.stopTransport(), globalEnd);
+      const last = steps[steps.length - 1];
+      if (last) {
+        audioEngine.transport.schedule(() => audioEngineActions.stopTransport(), last.time + last.slotDuration);
+      }
       audioEngine.transport.bpm.value = DEFAULT_TONE_BPM * audioEngine.playbackRate;
     },
     resetTraversalIfEnd: () => {

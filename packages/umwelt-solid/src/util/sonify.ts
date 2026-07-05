@@ -247,6 +247,57 @@ export function computeSonifierNotes(ctx: SonifyContext): SonifierNote[] {
   return notes;
 }
 
+// --- Layer playback grid ----------------------------------------------------
+//
+// Layer composition plays every unit simultaneously on ONE shared clock. Rather
+// than each layer advancing by its own note durations (which desyncs layers with
+// differently-encoded durations), the shared traversal defines uniform *slots*:
+// at slot i every layer sounds its step-i note at the same time, and the slot
+// advances by the LONGEST layer's duration at that step. A layer's own duration
+// still sets how long its tone sustains *within* the slot, but never how far the
+// cursor advances — so "same datum at the same time" holds by construction.
+
+export interface LayerGridStep {
+  state: TraversalState; // shared traversal state at this slot
+  time: number; // shared slot start time, in seconds
+  slotDuration: number; // max layer duration at this slot (drives advance)
+  pauseAfter: number; // shared section-break pause after this slot
+  speakBefore?: string; // axis-tick announcement for this slot
+  ramp?: boolean; // whether layers ramp into this slot
+  notes: { voiceId: string; note: SonifierNote }[]; // each layer's note at this slot
+}
+
+/**
+ * Build the shared playback grid from per-layer note lists. Every layer must
+ * enumerate the same shared traversal states, so `notes[i]` aligns across layers
+ * (they are produced from the same shared `fieldDomains`).
+ */
+export function computeLayerGrid(layers: { voiceId: string; notes: SonifierNote[] }[]): LayerGridStep[] {
+  if (!layers.length) return [];
+  const stepCount = layers[0].notes.length;
+  const grid: LayerGridStep[] = [];
+  let time = 0;
+  for (let i = 0; i < stepCount; i++) {
+    const notes = layers.map((l) => ({ voiceId: l.voiceId, note: l.notes[i] }));
+    const slotDuration = Math.max(...notes.map((n) => n.note.duration));
+    // pauseAfter/state/speakBefore/ramp are shared across layers (they derive
+    // from the shared traversal), so read them off the first layer.
+    const primary = layers[0].notes[i];
+    const pauseAfter = primary.pauseAfter ?? 0;
+    grid.push({
+      state: primary.state,
+      time,
+      slotDuration,
+      pauseAfter,
+      speakBefore: primary.speakBefore,
+      ramp: primary.ramp,
+      notes,
+    });
+    time += slotDuration + pauseAfter;
+  }
+  return grid;
+}
+
 export function describeEncodings(ctx: SonifyContext): string {
   return makeCommaSeparatedString(
     Object.entries(ctx.audioUnitSpec.encoding)
