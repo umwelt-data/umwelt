@@ -28,6 +28,15 @@ interface Voice {
 
 const RAMP_TIME = 0.1; // seconds
 
+// Tone's transport is a single process-global clock, so only one embedded viewer
+// can meaningfully sound at a time. The engine that currently owns playback
+// registers here; a newly-starting engine deactivates it first. This keeps the
+// stopped viewer's `isPlaying` / Play button state truthful instead of leaving it
+// stuck showing "Pause" after another embed silently commandeered the transport.
+// (The 'p' shortcut is scoped to the focused viewer separately; see
+// SonificationKeyHandlers.)
+let activePlayback: { deactivate: () => void } | null = null;
+
 export type AudioEngineProviderProps = ParentProps<{}>;
 
 export type AudioEngineActions = {
@@ -117,8 +126,13 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
       voices.clear();
 
-      Tone.getTransport().cancel();
-      Tone.getTransport().stop();
+      // Only tear down the shared transport if this engine owns playback —
+      // otherwise unmounting an idle embed would stop a sibling that's playing.
+      if (activePlayback === playbackToken) {
+        activePlayback = null;
+        Tone.getTransport().cancel();
+        Tone.getTransport().stop();
+      }
     });
   });
 
@@ -141,6 +155,17 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
     // synchronize playback rate to transport bpm
     audioEngineState.transport.bpm.value = DEFAULT_TONE_BPM * audioEngineState.playbackRate;
   });
+
+  // Tear down this engine's playback (UI state + sound) without touching the
+  // cross-embed registry. Shared by stopTransport and by the coordinator when
+  // another embed takes over the transport.
+  const deactivate = () => {
+    setAudioEngineState((prev) => ({ ...prev, isPlaying: false }));
+    speechSynthesis.cancel();
+    Tone.getTransport().pause();
+    actions.releaseSynth();
+  };
+  const playbackToken = { deactivate };
 
   const actions: AudioEngineActions = {
     startAudioContext: async () => {
@@ -185,18 +210,22 @@ export function AudioEngineProvider(props: AudioEngineProviderProps) {
       });
     },
     startTransport: async () => {
+      // Exclusive playback: stop whichever other embed currently owns the shared
+      // transport before claiming it, so its button state stays truthful.
+      if (activePlayback && activePlayback !== playbackToken) {
+        activePlayback.deactivate();
+      }
+      activePlayback = playbackToken;
       setAudioEngineState((prev) => {
         return { ...prev, isPlaying: true };
       });
       Tone.getTransport().start();
     },
     stopTransport: () => {
-      setAudioEngineState((prev) => {
-        return { ...prev, isPlaying: false };
-      });
-      speechSynthesis.cancel();
-      Tone.getTransport().pause();
-      actions.releaseSynth();
+      deactivate();
+      if (activePlayback === playbackToken) {
+        activePlayback = null;
+      }
     },
     playNote: (note: SonifierNote, voiceId: string = DEFAULT_VOICE) => {
       const voice = ensureVoice(voiceId);

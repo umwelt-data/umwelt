@@ -76,5 +76,5 @@ export function TextualStructure(props: VisualizationProps) {
     olliHandle()?.destroy();
   });
 
-  return <div ref={setOlliContainerRef} id="olli-container"></div>;
+  return <div ref={setOlliContainerRef} class="uw-olli-container"></div>;
 }

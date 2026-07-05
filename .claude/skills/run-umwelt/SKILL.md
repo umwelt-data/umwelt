@@ -68,7 +68,7 @@ cd packages/umwelt-solid && pnpm build        # vite production build
 - **`504 (Outdated Optimize Dep)` + blank page**: vite's dep cache is stale.
   Kill the server first, then `rm -rf packages/umwelt-solid/node_modules/.vite`,
   then restart. Deleting the cache while the server runs makes it worse.
-- **Olli tree keyboard nav**: focus `#olli-container [role=treeitem][tabindex="0"]`
+- **Olli tree keyboard nav**: focus `.uw-olli-container [role=treeitem][tabindex="0"]`
   — only the focused treeitem is focusable; the `ul[role=tree]` is not, and
   `focus()` on it silently leaves focus on `<body>`.
 - **Example datasets are radios**, `input[name="example_datasets"][value="stocks.csv"]`,
@@ -88,7 +88,7 @@ cd packages/umwelt-solid && pnpm build        # vite production build
 
 ## Troubleshooting
 
-- `TimeoutError: Waiting for selector '#vl-container canvas'` on first load →
+- `TimeoutError: Waiting for selector '.uw-vl-container canvas'` on first load →
   the 504/stale-cache gotcha above, or the dev server isn't running.
 - Driver exits 1 with `[console.error] Failed to load resource ... 504` →
   same stale-cache fix.

@@ -41,19 +41,19 @@ const shot = async (name) => {
 };
 
 // The app auto-loads stocks.csv (fetched from vega-datasets on github) and
-// renders chart (#vl-container canvas) + olli tree (#olli-container).
+// renders chart (.uw-vl-container canvas) + olli tree (.uw-olli-container).
 const load = async () => {
   await page.goto(APP_URL, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#vl-container canvas', { timeout: 45000 });
+  await page.waitForSelector('.uw-vl-container canvas', { timeout: 45000 });
   await sleep(1500);
-  console.log('chart canvas:', !!(await page.$('#vl-container canvas')));
-  console.log('olli tree:', !!(await page.$('#olli-container [role=tree]')));
+  console.log('chart canvas:', !!(await page.$('.uw-vl-container canvas')));
+  console.log('olli tree:', !!(await page.$('.uw-olli-container [role=tree]')));
 };
 
 // Only the currently-focused treeitem has tabindex="0"; the ul[role=tree]
 // itself is not focusable.
 const focusTree = () =>
-  page.evaluate(() => document.querySelector('#olli-container [role=treeitem][tabindex="0"]')?.focus());
+  page.evaluate(() => document.querySelector('.uw-olli-container [role=treeitem][tabindex="0"]')?.focus());
 
 const navTree = async (keys) => {
   await focusTree();
@@ -71,7 +71,7 @@ const navTree = async (keys) => {
 // Brush updates are gated on mouseenter and debounced 250ms — move onto the
 // canvas first, then drag, then wait.
 const brush = async () => {
-  const canvas = await page.$('#vl-container canvas');
+  const canvas = await page.$('.uw-vl-container canvas');
   if (!canvas) return console.log('brush: no canvas');
   const box = await canvas.boundingBox();
   await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.3, { steps: 5 });
@@ -82,7 +82,7 @@ const brush = async () => {
   await sleep(800);
   console.log(
     'olli root after brush:',
-    await page.evaluate(() => document.querySelector('#olli-container')?.textContent?.slice(0, 160)),
+    await page.evaluate(() => document.querySelector('.uw-olli-container')?.textContent?.slice(0, 160)),
   );
 };
 
@@ -106,8 +106,8 @@ const switchDataset = async (name) => {
   console.log(
     name,
     await page.evaluate(() => ({
-      canvas: !!document.querySelector('#vl-container canvas'),
-      olli: document.querySelector('#olli-container')?.textContent?.slice(0, 100),
+      canvas: !!document.querySelector('.uw-vl-container canvas'),
+      olli: document.querySelector('.uw-olli-container')?.textContent?.slice(0, 100),
     })),
   );
 };
@@ -145,7 +145,7 @@ const SCATTER_SPEC = {
 
 const readCoordination = () =>
   page.evaluate(() => ({
-    olli: document.querySelector('#olli-container')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    olli: document.querySelector('.uw-olli-container')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
     // sonification playback descriptions carry the traversal domain extent
     son: [...document.querySelectorAll('.uw-viewer p')]
       .map((p) => p.textContent.replace(/\s+/g, ' ').trim())
@@ -156,7 +156,7 @@ const regress = async () => {
   const { default: LZString } = await import('../../../packages/umwelt-solid/node_modules/lz-string/libs/lz-string.js');
   const url = `${APP_URL}#spec=${LZString.compressToEncodedURIComponent(JSON.stringify(SCATTER_SPEC))}`;
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#vl-container canvas', { timeout: 45000 });
+  await page.waitForSelector('.uw-vl-container canvas', { timeout: 45000 });
   await sleep(2500);
 
   const before = await readCoordination();

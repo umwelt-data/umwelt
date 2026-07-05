@@ -10,6 +10,8 @@ import { UmweltDataset, UmweltSpec } from '../../../types';
 export type SonificationProps = {
   spec: UmweltSpec;
   data: UmweltDataset;
+  /** Element to scope keyboard shortcuts to (this viewer's root); see SonificationKeyHandlers. */
+  keyEventTarget?: () => HTMLElement | null | undefined;
 };
 
 export function Sonification(props: SonificationProps) {
@@ -20,7 +22,7 @@ export function Sonification(props: SonificationProps) {
   return (
     <SonificationStateProvider>
       <AudioEngineProvider>
-        <SonificationKeyHandlers />
+        <SonificationKeyHandlers target={props.keyEventTarget} />
         <Show when={isLayered()} fallback={<For each={props.spec.audio.units}>{(audioUnitSpec) => <AudioUnit spec={props.spec} data={props.data} audioUnitSpec={audioUnitSpec} />}</For>}>
           <AudioLayerGroup spec={props.spec} data={props.data} units={props.spec.audio.units} />
         </Show>

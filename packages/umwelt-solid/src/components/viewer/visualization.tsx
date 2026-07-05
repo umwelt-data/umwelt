@@ -16,6 +16,7 @@ export function Visualization(props: VisualizationProps) {
   const [umweltSelection, umweltSelectionActions] = useUmweltSelection();
   const [isMouseOver, setIsMouseOver] = createSignal(false);
   const [vegaView, setVegaView] = createSignal<View | null>(null);
+  const [vlContainerRef, setVlContainerRef] = createSignal<HTMLDivElement | null>(null);
 
   const onSelectionStore = debounce((store: VlSelectionStore) => {
     if (isMouseOver()) {
@@ -44,10 +45,11 @@ export function Visualization(props: VisualizationProps) {
 
   createEffect(() => {
     const vlSpec = umweltToVegaLiteSpec(props.spec, props.data);
+    const container = vlContainerRef();
 
-    if (vlSpec) {
+    if (vlSpec && container) {
       try {
-        const view = renderVegaLite(vlSpec, '#vl-container');
+        const view = renderVegaLite(vlSpec, container);
 
         view.addDataListener('brush_store', (_: any, value: VlSelectionStore) => {
           onSelectionStore(value);
@@ -61,13 +63,15 @@ export function Visualization(props: VisualizationProps) {
     onCleanup(() => {
       vegaView()?.finalize();
       setVegaView(null);
-      document.getElementById('vl-container')!.innerHTML = '';
+      const el = vlContainerRef();
+      if (el) el.innerHTML = '';
     });
   });
 
   return (
     <div
-      id="vl-container"
+      ref={setVlContainerRef}
+      class="uw-vl-container"
       onMouseEnter={() => setIsMouseOver(true)}
       onMouseLeave={() => setIsMouseOver(false)}
     ></div>
