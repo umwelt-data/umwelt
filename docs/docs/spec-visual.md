@@ -49,7 +49,7 @@ Each encoding value is a field reference: `{ "field": "price" }`. The field's `t
 
 ## Overriding transforms per encoding
 
-An encoding may override the field's transforms locally with `aggregate`, `bin`, `timeUnit`, `scale`, or `sort` properties of its own. The sentinel string `"None"` explicitly removes a field-level transform for this encoding only:
+An encoding may override the field's transforms locally with `type`, `aggregate`, `bin`, `timeUnit`, `scale`, or `sort` properties of its own. `type` recasts the field's measure type for this channel only — for example, rendering a temporal field as a nominal color scale. The sentinel string `"None"` explicitly removes a field-level transform for this encoding only:
 
 ```json
 {

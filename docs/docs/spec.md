@@ -11,6 +11,7 @@ An UmweltSpec is a declarative description of a multimodal data representation. 
 | `key` | array of strings | Field names whose values jointly identify each data point. See [The key](/docs/spec-fields#the-key). |
 | `visual` | object | Visual units and, optionally, how to compose them. See [Visual Units](/docs/spec-visual). |
 | `audio` | object | Audio units and, optionally, how to compose them. See [Audio Units](/docs/spec-audio). |
+| `text` | object | Optional authored structure for the description tree, per view. Omitted when the default inferred structure is used. See [Text Structure](/docs/spec-text). |
 
 ## Example
 
@@ -71,3 +72,4 @@ A spec must have a resolvable `data` source and a non-empty `fields` array; othe
 - [Fields & the Key](/docs/spec-fields)
 - [Visual Units](/docs/spec-visual)
 - [Audio Units](/docs/spec-audio)
+- [Text Structure](/docs/spec-text)

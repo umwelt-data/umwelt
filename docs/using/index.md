@@ -6,7 +6,7 @@ The editor runs entirely in your browser at [umwelt-data.github.io/umwelt/editor
 
 ## The layout
 
-The page has two halves. The **Editor** contains five tabs — Data, Fields, Visual, Audio, and Export — where you define what to represent and how. The **Viewer** shows the live result: the visualization, the description, and the sonification, updating as you edit.
+The page has two halves. The **Editor** contains six tabs — Data, Fields, Visual, Audio, Text, and Export — where you define what to represent and how. The **Viewer** shows the live result: the visualization, the description, and the sonification, updating as you edit.
 
 ## Load a dataset
 
@@ -32,6 +32,7 @@ From here, everything is editable:
 
 - The **Visual** tab controls marks and visual encodings — see [Designing Visualizations](/using/visual).
 - The **Audio** tab controls audio encodings and playback order — see [Designing Sonifications](/using/audio).
+- The **Text** tab shapes the description tree — see [Designing Text Descriptions](/using/text).
 - The **Export** tab gives you a shareable link and the underlying spec — see [Sharing & Export](/using/sharing).
 
 ## Screen reader notes

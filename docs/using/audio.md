@@ -30,4 +30,5 @@ Press **Add audio unit** to create additional sonifications — for example, one
 
 ## Next
 
+- [Designing Text Descriptions](/using/text) — shaping the navigable description tree.
 - [Exploring the Viewer](/using/viewer) — playback controls, speed, and speech settings.
