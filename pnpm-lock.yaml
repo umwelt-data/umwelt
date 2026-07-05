@@ -51,8 +51,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.1.3
-        version: 3.1.3(vega-lite@5.23.0(vega@6.2.0))
+        specifier: ^3.1.4
+        version: 3.1.4(vega-lite@5.23.0(vega@6.2.0))
       solid-js:
         specifier: ^1.7.12
         version: 1.9.14
@@ -130,8 +130,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.7
       olli:
-        specifier: ^3.1.3
-        version: 3.1.3(vega-lite@5.23.0(vega@6.2.0))
+        specifier: ^3.1.4
+        version: 3.1.4(vega-lite@5.23.0(vega@6.2.0))
       solid-element:
         specifier: ^1.9.1
         version: 1.9.2(solid-js@1.9.14)
@@ -2219,8 +2219,8 @@ packages:
   nwsapi@2.2.24:
     resolution: {integrity: sha512-7YRhZ3jS45LwmSCT4b2sVFHt/WuovaktDU07QrtOBY2PXskss5a9jfmR9jptyumwXST+rFjrmppMY1KT/yn35A==}
 
-  olli@3.1.3:
-    resolution: {integrity: sha512-IjDa3svsb+kU3xfogBUctVQX0fTetDltGOhjkWpCvhMmQPnytmGnnmANbVLmNohlt7XiZXp1s1vMhcW9sB5SlA==}
+  olli@3.1.4:
+    resolution: {integrity: sha512-Bqyr+CRSj6RlLHN1pZqfxltruZiiysc+YRVJ6Hxkb+wckTFbJ6WeAqc5mKJA54boWDMNaeI7b4TQ4t2EeSOzsA==}
     peerDependencies:
       '@observablehq/plot': '>=0.6.0'
       vega-lite: ^6.4.3
@@ -4957,7 +4957,7 @@ snapshots:
 
   nwsapi@2.2.24: {}
 
-  olli@3.1.3(vega-lite@5.23.0(vega@6.2.0)):
+  olli@3.1.4(vega-lite@5.23.0(vega@6.2.0)):
     dependencies:
       '@umwelt-data/umwelt-utils': 0.2.2
       papaparse: 5.5.4

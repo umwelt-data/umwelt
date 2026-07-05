@@ -1,7 +1,7 @@
 import { test, expect } from 'vitest';
-import { compressedSpec, decodeSpecFromString, elaborateExportableSpec, exportableSpec, resolveAudioUnitFields, umweltToOlliSpec } from '../../src/util/spec';
+import { compressedSpec, decodeSpecFromString, elaborateExportableSpec, exportableSpec, resolveAudioUnitFields, seedChartOverride, umweltToOlliSpec } from '../../src/util/spec';
 import { EXAMPLE_DATASETS, resolveDataSource, typeCoerceData } from '../../src/util/datasets';
-import { UmweltSpec, TextNode, DATA_STRUCTURE_KEY, isExportableUmweltValuesDataSource } from '../../src/types';
+import { UmweltSpec, TextNode, VisualUnitSpec, FieldDef, DATA_STRUCTURE_KEY, isExportableUmweltValuesDataSource } from '../../src/types';
 import { UmweltDatastore } from '../../src/contexts/UmweltDatastoreContext';
 import { isMultiSpec } from 'olli';
 
@@ -256,4 +256,79 @@ test('resolveAudioUnitFields resolves per usage and excludes unused fields', () 
   );
   // 'date', 'notes', and 'region' are not referenced by the unit
   expect(resolved).toHaveLength(2);
+});
+
+// --- seedChartOverride: parity with olli's inferStructure -------------------
+
+// Reduce a seed to the field-grouping shape it encodes, dropping the editor ids
+// so tests read the structure olli inferred, not the id-assignment mechanics.
+type SeedShape = { groupby: string[]; children: SeedShape[] };
+function shapeOf(nodes: TextNode[]): SeedShape[] {
+  return nodes.map((n) => ({
+    groupby: n.nodeType === 'group' ? n.groupby.map((r) => r.field) : [],
+    children: shapeOf(n.children),
+  }));
+}
+
+const field = (name: string, type: FieldDef['type']): FieldDef => ({ active: true, name, type, encodings: [] });
+
+const seedSpec = (fields: FieldDef[], unit: VisualUnitSpec): UmweltSpec => ({
+  data: { name: 'd.json' },
+  fields,
+  key: [],
+  visual: { composition: 'layer', units: [unit] },
+  audio: { composition: 'concat', units: [] },
+  text: { structures: {} },
+});
+
+test('seedChartOverride groups a scatterplot by both quantitative axes', () => {
+  const spec = seedSpec(
+    [field('mpg', 'quantitative'), field('hp', 'quantitative')],
+    { name: 'u', mark: 'point', encoding: { x: { field: 'mpg' }, y: { field: 'hp' } } }
+  );
+  // scatterplots were the case the old hand-rolled replica once seeded empty
+  expect(shapeOf(seedChartOverride(spec.visual.units[0], spec))).toEqual([
+    { groupby: ['mpg'], children: [] },
+    { groupby: ['hp'], children: [] },
+  ]);
+});
+
+test('seedChartOverride drops the unbinned quantitative measure axis for a bar chart', () => {
+  const spec = seedSpec(
+    [field('category', 'nominal'), field('amount', 'quantitative')],
+    { name: 'u', mark: 'bar', encoding: { x: { field: 'category' }, y: { field: 'amount' } } }
+  );
+  expect(shapeOf(seedChartOverride(spec.visual.units[0], spec))).toEqual([{ groupby: ['category'], children: [] }]);
+});
+
+test('seedChartOverride nests a facet over its guides', () => {
+  const spec = seedSpec(
+    [field('region', 'nominal'), field('a', 'quantitative'), field('b', 'quantitative')],
+    { name: 'u', mark: 'point', encoding: { facet: { field: 'region' }, x: { field: 'a' }, y: { field: 'b' } } }
+  );
+  expect(shapeOf(seedChartOverride(spec.visual.units[0], spec))).toEqual([
+    {
+      groupby: ['region'],
+      children: [
+        { groupby: ['a'], children: [] },
+        { groupby: ['b'], children: [] },
+      ],
+    },
+  ]);
+});
+
+test('seedChartOverride nests a multi-series line under its color series', () => {
+  const spec = seedSpec(
+    [field('date', 'temporal'), field('price', 'quantitative'), field('symbol', 'nominal')],
+    { name: 'u', mark: 'line', encoding: { x: { field: 'date' }, y: { field: 'price' }, color: { field: 'symbol' } } }
+  );
+  expect(shapeOf(seedChartOverride(spec.visual.units[0], spec))).toEqual([
+    {
+      groupby: ['symbol'],
+      children: [
+        { groupby: ['date'], children: [] },
+        { groupby: ['price'], children: [] },
+      ],
+    },
+  ]);
 });

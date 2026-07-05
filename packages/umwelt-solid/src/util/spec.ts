@@ -1,4 +1,4 @@
-import { type OlliVisSpec, type OlliNode, type OlliTimeUnit, type UnitOlliVisSpec, isMultiSpec } from 'olli';
+import { type OlliVisSpec, type OlliNode, type OlliTimeUnit, type UnitOlliVisSpec, type OlliAxis, type OlliLegend, type OlliGuide, type OlliFieldDef, type OlliMark, inferStructure, isMultiSpec } from 'olli';
 import { VegaLiteAdapter } from 'olli/adapters';
 import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec, TextNode, TextFieldRef, VisualUnitSpec, MeasureType, DATA_STRUCTURE_KEY } from '../types';
 import { getDomain } from './domain';
@@ -475,59 +475,84 @@ function assignSeedIds(nodes: TextNode[], prefix: string): TextNode[] {
   return nodes.map((n, i) => ({ ...n, id: `${prefix}_${i}`, children: assignSeedIds(n.children, `${prefix}_${i}`) }));
 }
 
-// Seed a chart-description structure that mirrors what olli currently infers from a
-// visual unit's encodings (a replica of olli's inferStructure): one sibling grouping
-// per guide, with facet / line-color introducing a nesting level. Used to populate a
-// view's editable override the moment the user takes it over.
-// TODO(drift): olli >3.1.3 now exports `inferStructure`. Once umwelt is on that
-// release, replace this hand-rolled replica by building a minimal UnitOlliVisSpec
-// (axes/legends/guides/facet/mark/fields from the encodings — all available
-// synchronously) and calling `inferStructure`, lifting its OlliNode[] to
-// TextNode[]. That removes the drift between this seed and what olli actually
-// infers (see the scatterplot case handled below, which this replica once missed).
+// Seed a chart-description structure identical to what olli infers from a visual
+// unit's encodings, by rebuilding the same minimal UnitOlliVisSpec olli sees at
+// render time (mark / axes / legends / facet / fields — all derivable synchronously
+// from the encodings) and running olli's own `inferStructure`, then lifting the
+// resulting OlliNode tree to editor TextNodes. Sharing olli's exact inference means
+// the seed can never drift from what olli actually produces (as a hand-rolled replica
+// once did, e.g. for scatterplots and geo charts). Used to populate a view's editable
+// override the moment the user takes it over.
 export function seedChartOverride(unit: VisualUnitSpec, spec: UmweltSpec): TextNode[] {
-  return assignSeedIds(buildSeed(unit, spec), 'seed');
+  const inferred = inferStructure(unitToInferSpec(unit, spec));
+  const nodes = Array.isArray(inferred) ? inferred : [inferred];
+  return assignSeedIds(nodes.map(olliNodeToSeed), 'seed');
 }
 
-function buildSeed(unit: VisualUnitSpec, spec: UmweltSpec): TextNode[] {
+// Build the minimal UnitOlliVisSpec that mirrors what umwelt's render path feeds olli
+// for this unit — enough for `inferStructure`, which reads only mark, axes, legends,
+// guides, facet, and fields (never `data`, so we pass none). Each active field's def
+// carries its measure type / bin, with this unit's per-channel overrides applied, so
+// olli's mark-specific branches (e.g. bar dropping the unbinned quantitative measure
+// axis) resolve exactly as they would at render time.
+function unitToInferSpec(unit: VisualUnitSpec, spec: UmweltSpec): UnitOlliVisSpec {
   const enc = unit.encoding;
-  const fieldOf = (ch: string): string | undefined => (enc as any)[ch]?.field;
-  const typeOf = (field: string | undefined) => getFieldDef(spec, field)?.type;
-  const binnedOf = (field: string | undefined) => !!getFieldDef(spec, field)?.bin;
 
-  const group = (field: string, children: TextNode[] = []): TextNode => ({
+  const fields = new Map<string, OlliFieldDef>();
+  for (const f of spec.fields.filter((f) => f.active)) {
+    const base = getFieldDef(spec, f.name);
+    fields.set(f.name, { field: f.name, type: base?.type, bin: !!base?.bin, ...(base?.timeUnit ? { timeUnit: base.timeUnit as OlliTimeUnit } : {}) });
+  }
+  // Layer this unit's per-channel type/bin/timeUnit overrides onto the field defs,
+  // matching the encoding-level defs olli's adapter would produce at render time.
+  for (const e of Object.values(enc)) {
+    if (!e?.field) continue;
+    const def = fields.get(e.field) ?? { field: e.field };
+    if (e.type) def.type = e.type;
+    if (e.bin !== undefined) def.bin = e.bin;
+    if (e.timeUnit && e.timeUnit !== NONE) def.timeUnit = e.timeUnit as OlliTimeUnit;
+    fields.set(e.field, def);
+  }
+
+  const axes: OlliAxis[] = [];
+  for (const ch of ['x', 'y'] as const) {
+    const field = enc[ch]?.field;
+    if (field) axes.push({ field, axisType: ch, channel: ch });
+  }
+  const legends: OlliLegend[] = [];
+  for (const ch of ['color', 'size', 'opacity'] as const) {
+    const field = enc[ch]?.field;
+    if (field) legends.push({ field, channel: ch });
+  }
+  // shape is not one of olli's legend channels; carry it as a generic guide, which
+  // inferStructure groups by just like any other non-color secondary channel.
+  const guides: OlliGuide[] = [];
+  if (enc.shape?.field) guides.push({ field: enc.shape.field, channel: 'shape' });
+
+  const facet = enc.facet?.field;
+
+  return {
+    data: [],
+    mark: unit.mark as OlliMark,
+    fields: [...fields.values()],
+    ...(axes.length ? { axes } : {}),
+    ...(legends.length ? { legends } : {}),
+    ...(guides.length ? { guides } : {}),
+    ...(facet ? { facet } : {}),
+  };
+}
+
+// Lift an inferred olli node to a seed TextNode. inferStructure only yields group
+// nodes; ids are filled in afterward by assignSeedIds.
+function olliNodeToSeed(node: OlliNode): TextNode {
+  const groupby = 'groupby' in node ? node.groupby : [];
+  const children = ('children' in node ? node.children : undefined) ?? [];
+  return {
     id: '', // replaced by assignSeedIds
     nodeType: 'group',
-    groupby: [{ field }],
-    children,
-  });
-
-  const axisFields = ['x', 'y'].map(fieldOf).filter((f): f is string => !!f);
-  const legendFields = ['color', 'size', 'opacity', 'shape'].map(fieldOf).filter((f): f is string => !!f);
-  const facetField = fieldOf('facet');
-
-  const dedupe = (fields: string[]) => Array.from(new Set(fields));
-  const guideNodes = (fields: string[]) => dedupe(fields).map((f) => group(f));
-
-  if (facetField) {
-    return [group(facetField, guideNodes([...axisFields, ...legendFields]))];
-  }
-  // multi-series line: nest the series (color) over the axes
-  if (unit.mark === 'line' && legendFields.length) {
-    const [series, ...restLegends] = legendFields;
-    return [group(series, guideNodes([...axisFields, ...restLegends]))];
-  }
-  // bar: drop the (unbinned) quantitative measure axis; group by the rest
-  if (unit.mark === 'bar') {
-    const kept = [...axisFields, ...legendFields].filter((f) => !(typeOf(f) === 'quantitative' && !binnedOf(f)));
-    if (kept.length) return guideNodes(kept);
-  }
-  // otherwise (incl. scatterplots), group by every guide — matching olli's
-  // inferStructure, which groups quantitative axes too (olli bins them). An earlier
-  // filter here excluded unbinned quantitative guides and seeded scatterplots empty.
-  const guides = [...axisFields, ...legendFields];
-  if (guides.length) return guideNodes(guides);
-  return [];
+    groupby: (Array.isArray(groupby) ? groupby : [groupby]).map((field) => ({ field })),
+    children: children.map(olliNodeToSeed),
+  };
 }
 
 // Seed for the no-visualization case: one sibling grouping per active field,
