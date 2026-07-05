@@ -139,6 +139,8 @@ export interface VisualEncodingFieldDef {
 export interface AudioEncodingFieldDef {
   field: FieldName;
   //
+  /** overrides the field's measure type for this audio channel only */
+  type?: MeasureType;
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: UmweltTimeUnit | typeof NONE;
   aggregate?: UmweltAggregateOp | typeof NONE;
@@ -153,6 +155,8 @@ export type ResolvedFieldDef = Omit<FieldDef, 'active' | 'name' | 'encodings'> &
 export interface AudioTraversalFieldDef {
   field: FieldName;
   //
+  /** overrides the field's measure type for this traversal only */
+  type?: MeasureType;
   scale?: ScaleDomain & ScaleRange;
   timeUnit?: UmweltTimeUnit | typeof NONE;
   bin?: boolean;
@@ -194,13 +198,78 @@ export interface AudioSpec {
   composition: ViewComposition;
 }
 
+// --- Text modality ---------------------------------------------------------
+//
+// The text modality authors an accessible, navigable *structure* over the data
+// (rendered by olli). It deliberately does NOT reuse the encoding-channel model:
+// olli is about structure, not encodings. Instead a text unit holds a tree of
+// TextNodes that umwelt lowers to olli's `OlliNode` structure at render time.
+//
+// We mirror olli's node shapes (group / predicate) rather than storing `OlliNode`
+// directly, so that (a) group nodes can carry per-node transforms via umwelt's
+// own field refs — olli's `groupby: string` cannot — and (b) the exported spec
+// stays umwelt-owned and insulated from olli's type changes.
+
+export type TextNodeId = string;
+
+// A field reference inside a group node, carrying per-usage discretization
+// (aggregate does not apply to grouping). `type` overrides the field's measure
+// type for this grouping only — the main lever on how olli buckets it (ordinal
+// → one branch per value; quantitative/temporal → range bins) — mirroring
+// VisualEncodingFieldDef.type. When two refs to the same field carry different
+// signatures, the lowering emits a distinct derived column per signature so olli
+// (which resolves field defs by name) can honor each independently.
+export interface TextFieldRef {
+  field: FieldName;
+  type?: MeasureType;
+  timeUnit?: UmweltTimeUnit | typeof NONE;
+  bin?: boolean;
+}
+
+// Group the data by one or more discretized fields (multiple = crossed grouping,
+// lowering to olli's `groupby: string[]`).
+export interface TextGroupNode {
+  id: TextNodeId;
+  nodeType: 'group';
+  groupby: TextFieldRef[];
+  children: TextNode[];
+}
+
+// A named, editorially-motivated subset that no field grouping can express
+// (e.g. "cars after 1975"). Lowers to olli's OlliPredicateNode.
+export interface TextPredicateNode {
+  id: TextNodeId;
+  nodeType: 'predicate';
+  predicate: UmweltPredicate;
+  name?: string;
+  reasoning?: string;
+  children: TextNode[];
+}
+
+export type TextNode = TextGroupNode | TextPredicateNode;
+
+export function isTextGroupNode(node: TextNode): node is TextGroupNode {
+  return node.nodeType === 'group';
+}
+
+// The text modality is one editable structure per view, keyed by visual unit name
+// (or DATA_STRUCTURE_KEY when there is no visualization). Seeded-then-owned:
+// presence of a key means the user owns that structure; absence means the view
+// uses olli's faithful inferred structure (shown in the editor as an editable
+// seed). Rendered as that view's olli unit, so the chart's own groupings read in
+// visualization language while user-added groupings on other fields read plainly —
+// no separate "additional" concept needed.
+export interface TextSpec {
+  structures: Record<string, TextNode[]>;
+}
+
 export interface UmweltSpec {
   data: UmweltDataSource;
   fields: FieldDef[];
   key: FieldName[];
   visual: VisualSpec;
   audio: AudioSpec;
-  // text: OlliNode | OlliNode[] | boolean;
+  text: TextSpec;
 }
 
 export type ExportableFieldDef = Omit<FieldDef, 'encodings' | 'active'>;
@@ -216,9 +285,18 @@ export interface ExportableAudioSpec {
   composition?: ViewComposition;
 }
 
-export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data' | 'visual' | 'audio'> {
+// text is exported only when it carries authored structure
+export interface ExportableTextSpec {
+  structures: Record<string, TextNode[]>;
+}
+
+// key for the text structure of the whole dataset when there is no visualization
+export const DATA_STRUCTURE_KEY = '';
+
+export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data' | 'visual' | 'audio' | 'text'> {
   data: ExportableUmweltDataSource;
   fields: ExportableFieldDef[];
   visual: ExportableVisualSpec;
   audio: ExportableAudioSpec;
+  text?: ExportableTextSpec;
 }

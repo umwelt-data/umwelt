@@ -24,6 +24,7 @@ const carsLikeSpec = (mark: 'point' | 'bar' = 'point'): UmweltSpec => ({
     composition: 'layer',
   },
   audio: { units: [], composition: 'concat' },
+  text: { structures: {} },
 });
 
 const data = [
