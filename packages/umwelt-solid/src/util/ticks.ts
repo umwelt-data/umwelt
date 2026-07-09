@@ -2,6 +2,8 @@ import { GuideTicksConfig, computeGuideTicks } from '@umwelt-data/umwelt-utils/v
 import { getBins } from '@umwelt-data/umwelt-utils/data';
 import { ResolvedFieldDef, UmweltDataset, UmweltSpec, UmweltValue } from '../types';
 import { getFieldDef, resolveFieldDef } from './spec';
+import { applyTransforms, timeUnitFieldName } from './transforms';
+import type { TimeUnit } from 'vega-lite/build/src/timeunit';
 
 /**
  * Ticks for the chart axis that displays `field`, mirroring how olli's
@@ -31,6 +33,18 @@ export function chartAxisTicks(spec: UmweltSpec, data: UmweltDataset, field: str
     // vega-lite sorts discrete scales ascending unless told otherwise
     sort: resolved.sort === undefined ? 'ascending' : (resolved.sort as GuideTicksConfig['sort']),
   };
+  // A timeUnit'd temporal axis is compiled by vega-lite over the bucketed
+  // column, and olli computes its ticks from that compiled data — so run the
+  // same timeUnit transform here and tick over the bucketed field. Ticking the
+  // raw field instead would put the ticks in a different date space than the
+  // month/year/... bucketed values everything downstream compares against.
+  if (resolved.type === 'temporal' && resolved.timeUnit && !resolved.bin && !resolved.aggregate) {
+    // resolveFieldDef filters NONE out, so a present timeUnit is a real one
+    const timeUnit = resolved.timeUnit as TimeUnit;
+    const bucketedField = timeUnitFieldName(field, timeUnit);
+    const bucketedData = applyTransforms(data, [{ timeUnit, field, as: bucketedField }]);
+    return computeGuideTicks(bucketedData as Record<string, any>[], { ...config, field: bucketedField }) as UmweltValue[] | undefined;
+  }
   return computeGuideTicks(data as Record<string, any>[], config) as UmweltValue[] | undefined;
 }
 

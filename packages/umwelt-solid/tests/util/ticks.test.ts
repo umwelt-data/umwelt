@@ -49,6 +49,54 @@ test('chartAxisTicks returns undefined for fields without an x/y encoding', () =
   expect(chartAxisTicks(spec, data, 'Origin')).toBeUndefined();
 });
 
+test('chartAxisTicks for a timeUnit axis ticks the bucketed dates, not the raw extent', () => {
+  const spec: UmweltSpec = {
+    data: { name: 'weather.csv' },
+    key: ['date'],
+    fields: [
+      { name: 'date', type: 'temporal', timeUnit: 'month', active: true, encodings: [{ unit: 'vis_unit_0', property: 'x' }] },
+      { name: 'temp', type: 'quantitative', active: true, encodings: [{ unit: 'vis_unit_0', property: 'y' }] },
+    ],
+    visual: {
+      units: [
+        {
+          name: 'vis_unit_0',
+          mark: 'line',
+          encoding: {
+            x: { field: 'date', timeUnit: 'month' },
+            y: { field: 'temp', aggregate: 'mean' },
+          },
+        },
+      ],
+      composition: 'layer',
+    },
+    audio: { units: [], composition: 'concat' },
+    text: { structures: {} },
+  };
+  const rows: { date: Date; temp: number }[] = [];
+  for (let y = 2012; y <= 2015; y++) {
+    for (let m = 0; m < 12; m++) {
+      rows.push({ date: new Date(y, m, 15), temp: m });
+    }
+  }
+
+  const ticks = chartAxisTicks(spec, rows, 'date') as Date[];
+  expect(ticks.length).toBeGreaterThan(1);
+
+  // the ticks must live in the same month-bucketed date space as the derived
+  // traversal values (one reference year), not span the raw 2012–2015 extent —
+  // otherwise announcements comparing derived values against ticks never fire
+  const derived = derivedDataset(rows, [{ field: 'date', type: 'temporal', timeUnit: 'month' }] as any);
+  const bucketed = derived.map((d) => (d.month_date as Date).getTime());
+  const lo = Math.min(...bucketed);
+  const hi = Math.max(...bucketed);
+  const monthMs = 32 * 24 * 3600 * 1000; // nice() may extend one step past the domain
+  for (const t of ticks) {
+    expect(t.getTime()).toBeGreaterThanOrEqual(lo - monthMs);
+    expect(t.getTime()).toBeLessThanOrEqual(hi + monthMs);
+  }
+});
+
 test('audioUnitFieldBins keeps one bin for a constant field so the traversal stays playable', () => {
   const spec = carsLikeSpec();
   const constant = [{ Horsepower: 100 }, { Horsepower: 100 }];
