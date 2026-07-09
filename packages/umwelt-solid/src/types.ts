@@ -289,25 +289,39 @@ export interface UmweltSpec {
 
 export type ExportableFieldDef = Omit<FieldDef, 'encodings' | 'active'>;
 
+// Auto-generated unit names follow `${prefix}${index}`. When a unit still carries
+// the default name for its position (or a modality has a single unit), the name is
+// redundant and omitted from the export, then reconstructed on import from the
+// unit's index. Keep these the single source of truth for both minting new units
+// (UmweltSpecContext) and the export/import round-trip (util/spec).
+export const DEFAULT_VISUAL_UNIT_PREFIX = 'vis_unit_';
+export const DEFAULT_AUDIO_UNIT_PREFIX = 'audio_unit_';
+export const defaultVisualUnitName = (index: number) => `${DEFAULT_VISUAL_UNIT_PREFIX}${index}`;
+export const defaultAudioUnitName = (index: number) => `${DEFAULT_AUDIO_UNIT_PREFIX}${index}`;
+
+// The exported unit omits `name` when it can be reconstructed on import (see above).
+export type ExportableVisualUnitSpec = Omit<VisualUnitSpec, 'name'> & { name?: string };
+export type ExportableAudioUnitSpec = Omit<AudioUnitSpec, 'name'> & { name?: string };
+
 // composition is only meaningful with multiple units, so it's optional here
 export interface ExportableVisualSpec {
-  units: VisualUnitSpec[];
+  units: ExportableVisualUnitSpec[];
   composition?: ViewComposition;
 }
 
 export interface ExportableAudioSpec {
-  units: AudioUnitSpec[];
+  units: ExportableAudioUnitSpec[];
   composition?: ViewComposition;
 }
 
 // A modality with exactly one unit exports as the bare unit rather than a
 // `{ units: [unit] }` wrapper (composition is meaningless for a lone unit).
 // The wrapper form is distinguished on import by its `units` array.
-export function isExportableVisualSpec(visual: ExportableVisualSpec | VisualUnitSpec): visual is ExportableVisualSpec {
+export function isExportableVisualSpec(visual: ExportableVisualSpec | ExportableVisualUnitSpec): visual is ExportableVisualSpec {
   return 'units' in visual;
 }
 
-export function isExportableAudioSpec(audio: ExportableAudioSpec | AudioUnitSpec): audio is ExportableAudioSpec {
+export function isExportableAudioSpec(audio: ExportableAudioSpec | ExportableAudioUnitSpec): audio is ExportableAudioSpec {
   return 'units' in audio;
 }
 
@@ -322,7 +336,7 @@ export const DATA_STRUCTURE_KEY = '';
 export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data' | 'visual' | 'audio' | 'text'> {
   data: ExportableUmweltDataSource;
   fields: ExportableFieldDef[];
-  visual: ExportableVisualSpec | VisualUnitSpec;
-  audio: ExportableAudioSpec | AudioUnitSpec;
+  visual: ExportableVisualSpec | ExportableVisualUnitSpec;
+  audio: ExportableAudioSpec | ExportableAudioUnitSpec;
   text?: ExportableTextSpec;
 }

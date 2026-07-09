@@ -24,7 +24,6 @@ export const overlaidVoices: GalleryExample = {
     visual: {
       units: [
         {
-          name: 'vis_unit_0',
           mark: 'line',
           encoding: {
             x: { field: 'date', timeUnit: 'month' },
@@ -32,7 +31,6 @@ export const overlaidVoices: GalleryExample = {
           },
         },
         {
-          name: 'vis_unit_1',
           mark: 'line',
           encoding: {
             x: { field: 'date', timeUnit: 'month' },
@@ -45,7 +43,6 @@ export const overlaidVoices: GalleryExample = {
     audio: {
       units: [
         {
-          name: 'audio_unit_0',
           instrument: 'reed',
           encoding: {
             pitch: { field: 'temp_max', aggregate: 'mean' },
@@ -53,7 +50,6 @@ export const overlaidVoices: GalleryExample = {
           traversal: [{ field: 'date', timeUnit: 'month' }],
         },
         {
-          name: 'audio_unit_1',
           instrument: 'bell',
           encoding: {
             pitch: { field: 'temp_min', aggregate: 'mean' },

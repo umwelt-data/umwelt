@@ -38,7 +38,6 @@ npm install umwelt-js
         visual: {
           units: [
             {
-              name: 'vis_unit_0',
               mark: 'line',
               encoding: {
                 x: { field: 'date' },
@@ -51,7 +50,6 @@ npm install umwelt-js
         audio: {
           units: [
             {
-              name: 'audio_unit_0',
               encoding: { pitch: { field: 'price' } },
               traversal: [{ field: 'symbol' }, { field: 'date' }],
             },

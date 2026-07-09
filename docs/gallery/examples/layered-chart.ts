@@ -23,7 +23,6 @@ export const layeredChart: GalleryExample = {
     visual: {
       units: [
         {
-          name: 'vis_unit_0',
           mark: 'point',
           encoding: {
             x: { field: 'date', timeUnit: 'year' },
@@ -32,7 +31,6 @@ export const layeredChart: GalleryExample = {
           },
         },
         {
-          name: 'vis_unit_1',
           mark: 'line',
           encoding: {
             x: { field: 'date' },
@@ -45,14 +43,12 @@ export const layeredChart: GalleryExample = {
     audio: {
       units: [
         {
-          name: 'audio_unit_0',
           encoding: {
             pitch: { field: 'price' },
           },
           traversal: [{ field: 'symbol' }, { field: 'date' }],
         },
         {
-          name: 'audio_unit_1',
           encoding: {
             pitch: { field: 'price', aggregate: 'mean' },
           },

@@ -8,14 +8,14 @@ import { isMultiSpec } from 'olli';
 const makeSpec = (dataName: string): UmweltSpec => ({
   data: { name: dataName },
   fields: [
-    { active: true, name: 'date', type: 'temporal', encodings: [{ unit: 'unit0', property: 'x' }] },
+    { active: true, name: 'date', type: 'temporal', encodings: [{ unit: 'vis_unit_0', property: 'x' }] },
     {
       active: true,
       name: 'sales',
       type: 'quantitative',
       encodings: [
-        { unit: 'unit0', property: 'y' },
-        { unit: 'audio0', property: 'pitch' },
+        { unit: 'vis_unit_0', property: 'y' },
+        { unit: 'audio_unit_0', property: 'pitch' },
       ],
     },
     { active: false, name: 'notes', type: 'nominal', encodings: [] },
@@ -23,11 +23,11 @@ const makeSpec = (dataName: string): UmweltSpec => ({
   key: ['date'],
   visual: {
     composition: 'layer',
-    units: [{ name: 'unit0', mark: 'line', encoding: { x: { field: 'date' }, y: { field: 'sales' } } }],
+    units: [{ name: 'vis_unit_0', mark: 'line', encoding: { x: { field: 'date' }, y: { field: 'sales' } } }],
   },
   audio: {
     composition: 'concat',
-    units: [{ name: 'audio0', encoding: { pitch: { field: 'sales' } }, traversal: [{ field: 'date' }] }],
+    units: [{ name: 'audio_unit_0', encoding: { pitch: { field: 'sales' } }, traversal: [{ field: 'date' }] }],
   },
   text: { structures: {} },
 });
@@ -63,8 +63,13 @@ test('a single-unit modality exports as the bare unit and is re-wrapped on elabo
   // the lone unit is hoisted to the top level (no units[] array, no composition)
   expect('units' in exported.visual).toBe(false);
   expect('units' in exported.audio).toBe(false);
-  expect(exported.visual).toEqual(spec.visual.units[0]);
-  expect(exported.audio).toEqual(spec.audio.units[0]);
+  // a lone unit's name is redundant, so it is dropped and reconstructed on import
+  expect('name' in exported.visual).toBe(false);
+  expect('name' in exported.audio).toBe(false);
+  const { name: _vn, ...visualNoName } = spec.visual.units[0];
+  const { name: _an, ...audioNoName } = spec.audio.units[0];
+  expect(exported.visual).toEqual(visualNoName);
+  expect(exported.audio).toEqual(audioNoName);
   const elaborated = elaborateExportableSpec(exported);
   expect(elaborated.visual).toEqual(spec.visual);
   expect(elaborated.audio).toEqual(spec.audio);
@@ -82,6 +87,46 @@ test('a single-unit modality exports as the bare unit and is re-wrapped on elabo
   };
   const exportedMulti = exportableSpec(multiUnit, datastore).visual;
   expect(isExportableVisualSpec(exportedMulti) && exportedMulti.composition).toEqual('concat');
+});
+
+test('multi-unit names are dropped when default and kept when custom, round-tripping either way', () => {
+  const datastore: UmweltDatastore = { 'mydata.json': { data: sampleData } };
+  const spec: UmweltSpec = {
+    ...makeSpec('mydata.json'),
+    visual: {
+      composition: 'concat',
+      units: [
+        // index 0 carries its default name → dropped; a renamed unit → kept
+        { name: 'vis_unit_0', mark: 'line', encoding: { x: { field: 'date' }, y: { field: 'sales' } } },
+        { name: 'my_view', mark: 'point', encoding: { x: { field: 'date' }, y: { field: 'sales' } } },
+      ],
+    },
+  };
+  const exported = exportableSpec(spec, datastore);
+  const units = isExportableVisualSpec(exported.visual) ? exported.visual.units : [];
+  expect('name' in units[0]).toBe(false);
+  expect(units[1].name).toBe('my_view');
+
+  // reconstructs the dropped default name from its index, keeps the custom one
+  const elaborated = elaborateExportableSpec(exported);
+  expect(elaborated.visual.units.map((u) => u.name)).toEqual(['vis_unit_0', 'my_view']);
+});
+
+test('a custom lone-unit name is retained so it survives adding a second unit later', () => {
+  const datastore: UmweltDatastore = { 'mydata.json': { data: sampleData } };
+  const spec: UmweltSpec = {
+    ...makeSpec('mydata.json'),
+    visual: { composition: 'layer', units: [{ name: 'custom', mark: 'line', encoding: { x: { field: 'date' } } }] },
+    text: { structures: { custom: textStructure } },
+  };
+  const exported = exportableSpec(spec, datastore);
+  // a non-default name is kept even on a lone (unwrapped) unit
+  expect((exported.visual as any).name).toBe('custom');
+  expect(Object.keys(exported.text!.structures)).toEqual(['custom']);
+
+  const elaborated = elaborateExportableSpec(exported);
+  expect(elaborated.visual.units[0].name).toBe('custom');
+  expect(elaborated.text.structures.custom).toBeDefined();
 });
 
 test('data key serializes last so embedded values do not bury the spec', () => {
@@ -113,10 +158,10 @@ test('empty text is not serialized; authored text is', () => {
 
 test('authored text round-trips through elaboration with regenerated node ids', () => {
   const datastore: UmweltDatastore = { 'mydata.json': { data: sampleData } };
-  const authored: UmweltSpec = { ...makeSpec('mydata.json'), text: { structures: { unit0: textStructure } } };
+  const authored: UmweltSpec = { ...makeSpec('mydata.json'), text: { structures: { vis_unit_0: textStructure } } };
 
   const elaborated = elaborateExportableSpec(exportableSpec(authored, datastore));
-  const outStructure = elaborated.text.structures.unit0;
+  const outStructure = elaborated.text.structures.vis_unit_0;
   // shape preserved
   expect(outStructure[0].nodeType).toBe('group');
   expect(outStructure[0].children[0].nodeType).toBe('predicate');
@@ -168,8 +213,8 @@ test('authored data structure with no visualization lowers to a plain unit', asy
 });
 
 test("an authored chart-view structure overrides that view's tree but keeps chart context", async () => {
-  // makeSpec's single visual unit is named 'unit0' and is a line chart
-  const spec: UmweltSpec = { ...makeSpec('mydata.json'), text: { structures: { unit0: textStructure } } };
+  // makeSpec's single visual unit is named 'vis_unit_0' and is a line chart
+  const spec: UmweltSpec = { ...makeSpec('mydata.json'), text: { structures: { vis_unit_0: textStructure } } };
   const olli = await umweltToOlliSpec(spec, sampleData);
   const unit = isMultiSpec(olli) ? olli.units[0] : olli;
   // authored structure applied...

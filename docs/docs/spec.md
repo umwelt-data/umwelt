@@ -32,7 +32,6 @@ The multi-series line chart from the [gallery](/gallery/multi-series-line): stoc
   "visual": {
     "units": [
       {
-        "name": "vis_unit_0",
         "mark": "line",
         "encoding": {
           "x": { "field": "date" },
@@ -45,7 +44,6 @@ The multi-series line chart from the [gallery](/gallery/multi-series-line): stoc
   "audio": {
     "units": [
       {
-        "name": "audio_unit_0",
         "encoding": { "pitch": { "field": "price" } },
         "traversal": [{ "field": "symbol" }, { "field": "date" }]
       }
@@ -62,7 +60,7 @@ Specs are written in a terse *exportable* form; Umwelt elaborates them on load:
 
 - `visual.composition` and `audio.composition` are optional and only meaningful with multiple units. They default to `layer` (visual) and `concat` (audio).
 - If `data.name` is omitted, a name is derived from the URL's filename.
-- Unit `name`s are how encodings and compositions refer to units; the `vis_unit_0` / `audio_unit_0` convention comes from the editor, but any unique strings work.
+- Unit `name`s are how encodings and compositions refer to units. They're optional: omit a name and Umwelt assigns `vis_unit_<index>` / `audio_unit_<index>` by position (the same convention the editor uses). Give a unit any unique name to refer to it explicitly.
 
 A spec must have a resolvable `data` source and a non-empty `fields` array; otherwise the viewer renders nothing.
 

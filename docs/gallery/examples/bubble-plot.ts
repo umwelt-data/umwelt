@@ -21,7 +21,6 @@ export const bubblePlot: GalleryExample = {
     ],
     key: ['Entity', 'Year'],
     visual: {
-      name: 'vis_unit_0',
       mark: 'point',
       encoding: {
         x: { field: 'Year' },
@@ -31,7 +30,6 @@ export const bubblePlot: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'Deaths' },
       },

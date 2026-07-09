@@ -24,7 +24,6 @@ export const concatChart: GalleryExample = {
     visual: {
       units: [
         {
-          name: 'vis_unit_0',
           mark: 'point',
           encoding: {
             x: { field: 'date', timeUnit: 'month' },
@@ -34,7 +33,6 @@ export const concatChart: GalleryExample = {
           },
         },
         {
-          name: 'vis_unit_1',
           mark: 'bar',
           encoding: {
             y: { field: 'weather' },
@@ -48,14 +46,12 @@ export const concatChart: GalleryExample = {
     audio: {
       units: [
         {
-          name: 'audio_unit_0',
           encoding: {
             pitch: { field: 'temp_max', aggregate: 'mean' },
           },
           traversal: [{ field: 'date', timeUnit: 'month' }],
         },
         {
-          name: 'audio_unit_1',
           encoding: {
             pitch: { field: 'temp_max', aggregate: 'count' },
           },

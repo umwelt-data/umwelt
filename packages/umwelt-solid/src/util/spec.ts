@@ -1,6 +1,6 @@
 import { type OlliVisSpec, type OlliNode, type OlliTimeUnit, type UnitOlliVisSpec, type OlliAxis, type OlliLegend, type OlliGuide, type OlliFieldDef, type OlliMark, inferStructure, isMultiSpec } from 'olli';
 import { VegaLiteAdapter } from 'olli/adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, isInstrumentName, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec, TextNode, TextFieldRef, VisualUnitSpec, MeasureType, DATA_STRUCTURE_KEY, isExportableVisualSpec, isExportableAudioSpec } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, isInstrumentName, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec, TextNode, TextFieldRef, VisualUnitSpec, MeasureType, DATA_STRUCTURE_KEY, isExportableVisualSpec, isExportableAudioSpec, ExportableVisualUnitSpec, ExportableAudioUnitSpec, defaultVisualUnitName, defaultAudioUnitName } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { withExternalStateParam } from '@umwelt-data/umwelt-utils/vl-bridge';
@@ -105,9 +105,10 @@ function sanitizeAudioUnitInstrument(unit: AudioUnitSpec): AudioUnitSpec {
 export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
   // Normalize the exported union back to units + composition: a lone unit
   // exports unwrapped, so re-wrap it here (see exportableSpec).
-  const visualUnits = isExportableVisualSpec(spec.visual) ? spec.visual.units : [spec.visual];
+  // Reconstruct any name omitted on export from the unit's index (see exportableSpec).
+  const visualUnits: VisualUnitSpec[] = (isExportableVisualSpec(spec.visual) ? spec.visual.units : [spec.visual]).map((unit, i) => ({ ...unit, name: unit.name ?? defaultVisualUnitName(i) }));
   const visualComposition = isExportableVisualSpec(spec.visual) ? spec.visual.composition : undefined;
-  const audioUnits = isExportableAudioSpec(spec.audio) ? spec.audio.units : [spec.audio];
+  const audioUnits: AudioUnitSpec[] = (isExportableAudioSpec(spec.audio) ? spec.audio.units : [spec.audio]).map((unit, i) => ({ ...unit, name: unit.name ?? defaultAudioUnitName(i) }));
   const audioComposition = isExportableAudioSpec(spec.audio) ? spec.audio.composition : undefined;
 
   // add encoding refs back to fields
@@ -592,12 +593,37 @@ export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): Ex
       return rest;
     });
 
+  // Drop a unit's name only when it still carries the auto-generated default for
+  // its position, since that is reconstructed on import from the unit's index.
+  // A custom name is always kept — including on a lone unit, so it survives if the
+  // user later adds a second unit in the editor.
+  const stripVisualName = (unit: VisualUnitSpec, i: number): ExportableVisualUnitSpec => {
+    if (unit.name === defaultVisualUnitName(i)) {
+      const { name: _name, ...rest } = unit;
+      return rest;
+    }
+    return unit;
+  };
+  const stripAudioName = (unit: AudioUnitSpec, i: number): ExportableAudioUnitSpec => {
+    if (unit.name === defaultAudioUnitName(i)) {
+      const { name: _name, ...rest } = unit;
+      return rest;
+    }
+    return unit;
+  };
+  const exportableVisualUnits = visual.units.map(stripVisualName);
+  const exportableAudioUnits = audio.units.map(stripAudioName);
+
   // A lone unit exports unwrapped (bare unit, no units[] array and no
   // composition, which is meaningless for one unit). Multiple units keep the
   // full wrapper with composition; an empty modality keeps the array form since
   // there's no unit to hoist.
-  const exportableVisual = visual.units.length === 1 ? visual.units[0] : visual.units.length > 1 ? visual : { units: visual.units };
-  const exportableAudio = audio.units.length === 1 ? audio.units[0] : audio.units.length > 1 ? audio : { units: audio.units };
+  const exportableVisual = exportableVisualUnits.length === 1 ? exportableVisualUnits[0] : exportableVisualUnits.length > 1 ? { ...visual, units: exportableVisualUnits } : { units: exportableVisualUnits };
+  const exportableAudio = exportableAudioUnits.length === 1 ? exportableAudioUnits[0] : exportableAudioUnits.length > 1 ? { ...audio, units: exportableAudioUnits } : { units: exportableAudioUnits };
+
+  // A dropped name is reconstructed on import as the default for its index — the
+  // same value it had — so text structures (keyed by visual unit name) need no
+  // re-keying to stay valid across the round-trip.
   // serialize text only when some structure is authored
   const exportableText = Object.keys(text.structures).length > 0 ? { structures: text.structures } : undefined;
 

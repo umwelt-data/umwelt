@@ -21,7 +21,6 @@ export const seasonalCycle: GalleryExample = {
     ],
     key: ['date'],
     visual: {
-      name: 'vis_unit_0',
       mark: 'line',
       encoding: {
         x: { field: 'date', timeUnit: 'yearmonth' },
@@ -29,7 +28,6 @@ export const seasonalCycle: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'temp_max', aggregate: 'mean' },
       },

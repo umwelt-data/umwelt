@@ -17,13 +17,12 @@ The spec's `visual` property holds the visualization side of the representation:
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `name` | string | Unique identifier; how field encodings and the editor refer to this unit. |
+| `name` | string (optional) | Unique identifier; how field encodings and the editor refer to this unit. Omit it and Umwelt assigns `vis_unit_<index>` by position. |
 | `mark` | string | `point`, `line`, `bar`, or `area`. |
 | `encoding` | object | A map from visual property to encoding field definition. |
 
 ```json
 {
-  "name": "vis_unit_0",
   "mark": "line",
   "encoding": {
     "x": { "field": "date" },

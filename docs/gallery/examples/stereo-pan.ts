@@ -21,7 +21,6 @@ export const stereoPan: GalleryExample = {
     ],
     key: [],
     visual: {
-      name: 'vis_unit_0',
       mark: 'bar',
       encoding: {
         x: { field: 'age' },
@@ -29,7 +28,6 @@ export const stereoPan: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'people', aggregate: 'mean' },
         pan: { field: 'age' },

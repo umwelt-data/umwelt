@@ -21,7 +21,6 @@ export const multiSeriesLine: GalleryExample = {
     ],
     key: ['symbol', 'date'],
     visual: {
-      name: 'vis_unit_0',
       mark: 'line',
       encoding: {
         x: { field: 'date' },
@@ -30,7 +29,6 @@ export const multiSeriesLine: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'price' },
       },

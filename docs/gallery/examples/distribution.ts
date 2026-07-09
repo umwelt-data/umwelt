@@ -18,7 +18,6 @@ export const distribution: GalleryExample = {
     fields: [{ name: 'Horsepower', type: 'quantitative' }],
     key: [],
     visual: {
-      name: 'vis_unit_0',
       mark: 'bar',
       encoding: {
         x: { field: 'Horsepower', bin: true },
@@ -26,7 +25,6 @@ export const distribution: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'Horsepower', aggregate: 'count' },
       },

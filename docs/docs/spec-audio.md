@@ -17,14 +17,13 @@ The spec's `audio` property holds the sonification side of the representation:
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `name` | string | Unique identifier for the unit. |
+| `name` | string (optional) | Unique identifier for the unit. Omit it and Umwelt assigns `audio_unit_<index>` by position. |
 | `instrument` | string | Optional timbre preset for the unit (see [Instrument](#instrument)). |
 | `encoding` | object | A map from audio property to encoding field definition. |
 | `traversal` | array | Ordered field references defining playback order. |
 
 ```json
 {
-  "name": "audio_unit_0",
   "instrument": "pure",
   "encoding": { "pitch": { "field": "price" } },
   "traversal": [{ "field": "symbol" }, { "field": "date" }]

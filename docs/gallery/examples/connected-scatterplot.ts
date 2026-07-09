@@ -21,7 +21,6 @@ export const connectedScatterplot: GalleryExample = {
     ],
     key: ['year'],
     visual: {
-      name: 'vis_unit_0',
       mark: 'line',
       encoding: {
         x: { field: 'miles' },
@@ -32,14 +31,12 @@ export const connectedScatterplot: GalleryExample = {
     audio: {
       units: [
         {
-          name: 'audio_unit_0',
           encoding: {
             pitch: { field: 'miles' },
           },
           traversal: [{ field: 'year' }],
         },
         {
-          name: 'audio_unit_1',
           encoding: {
             pitch: { field: 'gas' },
           },

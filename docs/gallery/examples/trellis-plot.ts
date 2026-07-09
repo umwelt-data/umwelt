@@ -22,7 +22,6 @@ export const trellisPlot: GalleryExample = {
     ],
     key: ['site', 'variety', 'year'],
     visual: {
-      name: 'vis_unit_0',
       mark: 'point',
       encoding: {
         y: { field: 'variety' },
@@ -32,7 +31,6 @@ export const trellisPlot: GalleryExample = {
       },
     },
     audio: {
-      name: 'audio_unit_0',
       encoding: {
         pitch: { field: 'yield' },
       },

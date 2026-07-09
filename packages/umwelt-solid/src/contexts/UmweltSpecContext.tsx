@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, InstrumentName, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, TextNode, TextPredicateNode, DATA_STRUCTURE_KEY, isAudioProp, isVisualProp, isExportableUmweltURLDataSource } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, InstrumentName, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, TextNode, TextPredicateNode, DATA_STRUCTURE_KEY, isAudioProp, isVisualProp, isExportableUmweltURLDataSource, defaultVisualUnitName, defaultAudioUnitName } from '../types';
 import type { FieldPredicate, LogicalAnd } from '@umwelt-data/umwelt-utils/predicate';
 
 // A text edit targets one structure, keyed by the visual unit it describes (or
@@ -456,10 +456,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       internalActions.persistSpec();
     },
     addVisualUnit: () => {
-      let name = `vis_unit_${visualUnitCount()}`;
+      let name = defaultVisualUnitName(visualUnitCount());
       while (spec.visual.units.find((u) => u.name === name)) {
         setVisualUnitCount(visualUnitCount() + 1);
-        name = `vis_unit_${visualUnitCount()}`;
+        name = defaultVisualUnitName(visualUnitCount());
       }
       setSpec('visual', 'units', [...spec.visual.units, { name, mark: 'point', encoding: {} }]);
       internalActions.persistSpec();
@@ -475,10 +475,10 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
       }
     },
     addAudioUnit: () => {
-      let name = `audio_unit_${audioUnitCount()}`;
+      let name = defaultAudioUnitName(audioUnitCount());
       while (spec.audio.units.find((u) => u.name === name)) {
         setAudioUnitCount(audioUnitCount() + 1);
-        name = `audio_unit_${audioUnitCount()}`;
+        name = defaultAudioUnitName(audioUnitCount());
       }
       setSpec('audio', 'units', [...spec.audio.units, { name, encoding: {}, traversal: [] }]);
       internalActions.persistSpec();

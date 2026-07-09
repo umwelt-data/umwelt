@@ -21,7 +21,6 @@ export const scatterplot: GalleryExample = {
     ],
     key: [],
     visual: {
-      name: 'vis_unit_0',
       mark: 'point',
       encoding: {
         x: { field: 'Miles_per_Gallon' },
@@ -32,14 +31,12 @@ export const scatterplot: GalleryExample = {
     audio: {
       units: [
         {
-          name: 'audio_unit_0',
           encoding: {
             pitch: { field: 'Miles_per_Gallon', aggregate: 'mean' },
           },
           traversal: [{ field: 'Horsepower', bin: true }],
         },
         {
-          name: 'audio_unit_1',
           encoding: {
             pitch: { field: 'Horsepower', aggregate: 'mean' },
           },
