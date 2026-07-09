@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, createMemo } from 'solid-js';
 import { AudioUnitSpec, UmweltDataset, UmweltSpec } from '../../../types';
 import { TraversalFieldControl } from './traversalFieldControl';
 import { AudioLayerGroupProvider } from '../../../contexts/sonification/AudioLayerGroupContext';
@@ -28,7 +28,10 @@ function AudioLayerGroupDescription() {
 }
 
 export function AudioLayerGroup(props: AudioLayerGroupProps) {
-  const activeUnits = () => props.units.filter((u) => Object.keys(u.encoding).length > 0);
+  // memo, not a plain function: the provider reschedules the transport when the
+  // units array's identity changes, so it must be stable across unrelated
+  // reactive updates (a fresh .filter() array on every read defeats that guard)
+  const activeUnits = createMemo(() => props.units.filter((u) => Object.keys(u.encoding).length > 0));
 
   if (activeUnits().length === 0) {
     return null;

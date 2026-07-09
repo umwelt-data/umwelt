@@ -17,7 +17,7 @@
 // (independent per-note durations — layers with differently-encoded durations may
 // drift, which is accepted).
 
-import { createContext, ParentProps, createMemo, createEffect, createSignal, onCleanup } from 'solid-js';
+import { createContext, ParentProps, createMemo, createEffect, createSignal, onCleanup, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioUnitSpec, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { getFieldDef, resolveAudioUnitFields, resolveFieldDef } from '../../util/spec';
@@ -225,7 +225,12 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
     getFieldDomains,
     getDerivedData: () => primaryCtx().derivedData,
     getDomainValue,
-    setupTransportSequence: () => {
+    // untrack: this is an imperative scheduling action, not a derivation. Effects
+    // that call it must not subscribe to the signals it reads (traversal state,
+    // grid, ...) — otherwise every step callback's state update re-runs the
+    // effect mid-playback, rewinding the transport onto the slot that just fired
+    // and re-triggering its announcement and notes.
+    setupTransportSequence: () => untrack(() => {
       audioEngine.transport.cancel();
       audioEngine.transport.bpm.value = DEFAULT_TONE_BPM;
 
@@ -274,7 +279,7 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
         audioEngine.transport.schedule(() => audioEngineActions.stopTransport(), last.time + last.slotDuration);
       }
       audioEngine.transport.bpm.value = DEFAULT_TONE_BPM * audioEngine.playbackRate;
-    },
+    }),
     resetTraversalIfEnd: () => {
       const domains = sharedFieldDomains();
       const traversalEnd = sharedTraversal().every((td) => audioUnitState.traversalState[td.field] === domains[td.field].length - 1);

@@ -1,4 +1,4 @@
-import { createContext, useContext, ParentProps, createMemo, createEffect, createSignal, onCleanup } from 'solid-js';
+import { createContext, useContext, ParentProps, createMemo, createEffect, createSignal, onCleanup, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { AudioUnitSpec, UmweltDataset, UmweltSpec, UmweltValue } from '../../types';
 import { getFieldDef, resolveAudioUnitFields, resolveFieldDef } from '../../util/spec';
@@ -212,7 +212,11 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     getTraversalIndex: (field) => {
       return audioUnitState.traversalState[field];
     },
-    setupTransportSequence: () => {
+    // untrack: imperative scheduling action, not a derivation — effects that call
+    // it must not subscribe to the signals it reads (traversal state, notes, ...),
+    // or every step callback's state update re-runs the effect mid-playback.
+    // (See the same guard in AudioLayerGroupContext, where this actually bit.)
+    setupTransportSequence: () => untrack(() => {
       // Clear previous sequence
       audioEngine.transport.cancel();
 
@@ -281,7 +285,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       });
 
       audioEngine.transport.bpm.value = DEFAULT_TONE_BPM * audioEngine.playbackRate;
-    },
+    }),
     getFieldDomains,
     getDerivedData,
     resetTraversalIfEnd: () => {
