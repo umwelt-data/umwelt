@@ -58,7 +58,7 @@ export const INSTRUMENTS: Record<InstrumentName, InstrumentDef> = {
         modulation: { type: 'sine' },
         modulationEnvelope: { attack: 0.005, decay: 0, sustain: 1, release: 0.1 },
       }),
-    gainTrim: -3,
+    gainTrim: -2,
   },
   // reedy AM tone: amplitude-modulation roughness, medium attack
   reed: {
@@ -70,12 +70,14 @@ export const INSTRUMENTS: Record<InstrumentName, InstrumentDef> = {
         modulation: { type: 'square' },
         modulationEnvelope: { attack: 0.06, decay: 0, sustain: 1, release: 0.05 },
       }),
-    gainTrim: -6,
+    // AM output reads quieter by ear than the amplitude suggests; lifted from -6,
+    // and again to 0 as it still read a touch under bell/strings.
+    gainTrim: 0,
   },
   // detuned-unison pad: chorus/beating flux, slow attack
   strings: {
     create: () => new Tone.Synth({ oscillator: { type: 'fatsawtooth', count: 3, spread: 20 } as any, envelope: { attack: 0.15, decay: 0, sustain: 1, release: 0.2 } }),
-    gainTrim: -8,
+    gainTrim: -7,
   },
 };
 

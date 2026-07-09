@@ -11,6 +11,7 @@ import styles from '../../App.module.scss';
 import { Dynamic } from 'solid-js/web';
 import { createStoredSignal } from '../../util/solid';
 import { useUmweltDatastore } from '../../contexts/UmweltDatastoreContext';
+import { AudioEngineProvider } from '../../contexts/sonification/AudioEngineContext';
 
 type EditorTab = 'data' | 'fields' | 'visual' | 'audio' | 'text' | 'export';
 
@@ -36,6 +37,7 @@ export function UmweltEditor() {
   };
 
   return (
+    <AudioEngineProvider>
     <div class={styles.Editor}>
       <div class="uw-editor" role="region" aria-label="Umwelt Editor">
         <div role="tablist">
@@ -62,5 +64,6 @@ export function UmweltEditor() {
         <Dynamic component={tabs[currentTab()]} />
       </div>
     </div>
+    </AudioEngineProvider>
   );
 }

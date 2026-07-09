@@ -1,10 +1,20 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
 import { AudioPropName, AudioUnitSpec, audioPropNames, instrumentNames, isAudioProp, isInstrumentName } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
 import { TraversalDefinition } from './traversalDefinition';
 import ReorderableList from '../ui/ReorderableList';
-import { EnumeratedItem, InputRow } from '../ui/styled';
+import { EncodingRow, EnumeratedItem, InputRow } from '../ui/styled';
+import { instrumentForIndex, useAudioEngine } from '../../contexts/sonification/AudioEngineContext';
+
+// An isolated voice for editor previews so it never collides with the viewer's
+// playback voices. Preview plays notes immediately (not on the transport), so it
+// stays clear of the cross-embed playback coordination entirely.
+const PREVIEW_VOICE = 'editor-preview';
+// A short ascending motif that lets the ear catch the timbre's attack and decay.
+const PREVIEW_MOTIF = [60, 64, 67]; // midi
+const PREVIEW_NOTE_DURATION = 0.35; // seconds
+const PREVIEW_NOTE_SPACING = 300; // ms between note onsets
 
 export type AudioUnitProps = {
   unitSpec: AudioUnitSpec;
@@ -12,6 +22,35 @@ export type AudioUnitProps = {
 
 export function AudioUnit(props: AudioUnitProps) {
   const [spec, specActions] = useUmweltSpec();
+  const [, audioActions] = useAudioEngine();
+  const [isPreviewing, setIsPreviewing] = createSignal(false);
+
+  // The timbre that would actually sound for this unit: an explicit instrument
+  // wins; otherwise mirror playback's default (auto-by-layer, else `pure`).
+  const effectiveInstrument = () => {
+    if (props.unitSpec.instrument) return props.unitSpec.instrument;
+    if (isLayered()) {
+      const index = spec.audio.units.findIndex((u) => u.name === props.unitSpec.name);
+      return instrumentForIndex(Math.max(0, index));
+    }
+    return 'pure' as const;
+  };
+
+  const previewInstrument = async () => {
+    if (isPreviewing()) return;
+    setIsPreviewing(true);
+    await audioActions.startAudioContext();
+    audioActions.ensureVoice(PREVIEW_VOICE, effectiveInstrument());
+    PREVIEW_MOTIF.forEach((pitch, i) => {
+      setTimeout(() => {
+        audioActions.playNote({ duration: PREVIEW_NOTE_DURATION, pitch, volume: -6, pan: 0, time: 0, state: {} }, PREVIEW_VOICE);
+      }, i * PREVIEW_NOTE_SPACING);
+    });
+    setTimeout(
+      () => setIsPreviewing(false),
+      (PREVIEW_MOTIF.length - 1) * PREVIEW_NOTE_SPACING + PREVIEW_NOTE_DURATION * 1000
+    );
+  };
 
   const getEncodings = () => {
     return Object.entries(props.unitSpec.encoding).sort((a, b) => {
@@ -50,24 +89,29 @@ export function AudioUnit(props: AudioUnitProps) {
       <InputRow>
         <label>
           Instrument
-          <select
-            value={props.unitSpec.instrument ?? ''}
-            onChange={(e) => {
-              const v = e.currentTarget.value;
-              specActions.changeInstrument(props.unitSpec.name, isInstrumentName(v) ? v : undefined);
-            }}
-          >
-            <option value="" selected={!props.unitSpec.instrument}>
-              {defaultInstrumentLabel()}
-            </option>
-            <For each={instrumentNames}>
-              {(name) => (
-                <option value={name} selected={name === props.unitSpec.instrument}>
-                  {name}
-                </option>
-              )}
-            </For>
-          </select>
+          <EncodingRow>
+            <select
+              value={props.unitSpec.instrument ?? ''}
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                specActions.changeInstrument(props.unitSpec.name, isInstrumentName(v) ? v : undefined);
+              }}
+            >
+              <option value="" selected={!props.unitSpec.instrument}>
+                {defaultInstrumentLabel()}
+              </option>
+              <For each={instrumentNames}>
+                {(name) => (
+                  <option value={name} selected={name === props.unitSpec.instrument}>
+                    {name}
+                  </option>
+                )}
+              </For>
+            </select>
+            <button type="button" onClick={previewInstrument} disabled={isPreviewing()} aria-label={`Preview ${effectiveInstrument()} instrument`}>
+              {isPreviewing() ? 'Playing…' : 'Preview'}
+            </button>
+          </EncodingRow>
         </label>
       </InputRow>
       <div>
