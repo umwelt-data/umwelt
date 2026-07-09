@@ -28,6 +28,20 @@ const editorUrl = computed(() => {
     <header class="ex-header">
       <h1>{{ example.title }}</h1>
       <p v-if="example.description" class="ex-description">{{ example.description }}</p>
+      <dl class="ex-tags">
+        <div class="ex-tag">
+          <dt>Visual</dt>
+          <dd>{{ example.tags.visual }}</dd>
+        </div>
+        <div class="ex-tag">
+          <dt>Sound</dt>
+          <dd>{{ example.tags.audio }}</dd>
+        </div>
+        <div class="ex-tag">
+          <dt>Text</dt>
+          <dd>{{ example.tags.text }}</dd>
+        </div>
+      </dl>
       <p>
         <a :href="editorUrl" target="_blank" rel="noreferrer">Open this example in the editor</a>
       </p>
@@ -54,5 +68,33 @@ const editorUrl = computed(() => {
 .ex-description {
   color: var(--vp-c-text-2);
   margin-top: 0.25rem;
+}
+.ex-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-soft);
+}
+.ex-tag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.ex-tag dt {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vp-c-text-3);
+}
+.ex-tag dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--vp-c-text-1);
 }
 </style>

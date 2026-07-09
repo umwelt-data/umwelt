@@ -4,6 +4,11 @@ export const concatChart: GalleryExample = {
   id: 'concat-chart',
   title: 'Concatenated chart',
   description: 'Seattle weather as two concatenated views: daily maximum temperatures by month, and a bar chart counting days by weather type. Each view has a matching sonification.',
+  tags: {
+    visual: 'Concatenated views',
+    audio: 'Monthly temperature, then weather-type counts',
+    text: 'One structure per view',
+  },
   spec: {
     data: {
       name: 'seattle-weather.csv',

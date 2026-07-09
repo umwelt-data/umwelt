@@ -1,11 +1,15 @@
 import type { GalleryExample } from './types.js';
+import { distribution } from './distribution.js';
+import { stereoPan } from './stereo-pan.js';
+import { seasonalCycle } from './seasonal-cycle.js';
 import { scatterplot } from './scatterplot.js';
 import { connectedScatterplot } from './connected-scatterplot.js';
+import { overlaidVoices } from './overlaid-voices.js';
 import { bubblePlot } from './bubble-plot.js';
 import { multiSeriesLine } from './multi-series-line.js';
+import { trellisPlot } from './trellis-plot.js';
 import { layeredChart } from './layered-chart.js';
 import { concatChart } from './concat-chart.js';
-import { trellisPlot } from './trellis-plot.js';
 
 /**
  * All gallery examples, in display order.
@@ -14,13 +18,17 @@ import { trellisPlot } from './trellis-plot.js';
  * sidebar and index page.
  */
 export const examples: GalleryExample[] = [
+  distribution,
+  stereoPan,
+  seasonalCycle,
   scatterplot,
   connectedScatterplot,
+  overlaidVoices,
   bubblePlot,
   multiSeriesLine,
+  trellisPlot,
   layeredChart,
   concatChart,
-  trellisPlot,
 ];
 
 export function findExample(id: string): GalleryExample | undefined {

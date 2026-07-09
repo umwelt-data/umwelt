@@ -4,6 +4,11 @@ export const trellisPlot: GalleryExample = {
   id: 'trellis-plot',
   title: 'Trellis plot',
   description: 'The classic barley trellis: yield by variety, faceted into one panel per site. The sonification nests site, variety, and year, playing yield as pitch.',
+  tags: {
+    visual: 'Trellis (faceted) plot',
+    audio: 'Pitch nested site → variety → year',
+    text: 'Nested by site, variety, year',
+  },
   spec: {
     data: {
       name: 'barley.json',
@@ -17,29 +22,21 @@ export const trellisPlot: GalleryExample = {
     ],
     key: ['site', 'variety', 'year'],
     visual: {
-      units: [
-        {
-          name: 'vis_unit_0',
-          mark: 'point',
-          encoding: {
-            y: { field: 'variety' },
-            x: { field: 'yield' },
-            color: { field: 'year', type: 'nominal' },
-            facet: { field: 'site' },
-          },
-        },
-      ],
+      name: 'vis_unit_0',
+      mark: 'point',
+      encoding: {
+        y: { field: 'variety' },
+        x: { field: 'yield' },
+        color: { field: 'year', type: 'nominal' },
+        facet: { field: 'site' },
+      },
     },
     audio: {
-      units: [
-        {
-          name: 'audio_unit_0',
-          encoding: {
-            pitch: { field: 'yield' },
-          },
-          traversal: [{ field: 'site' }, { field: 'variety' }, { field: 'year' }],
-        },
-      ],
+      name: 'audio_unit_0',
+      encoding: {
+        pitch: { field: 'yield' },
+      },
+      traversal: [{ field: 'site' }, { field: 'variety' }, { field: 'year' }],
     },
   },
 };

@@ -4,6 +4,11 @@ export const scatterplot: GalleryExample = {
   id: 'scatterplot',
   title: 'Scatterplot',
   description: 'Miles per gallon versus horsepower for cars, colored by origin. Two sonifications sweep the scatterplot along each axis: binned horsepower playing mean miles per gallon, and binned miles per gallon playing mean horsepower.',
+  tags: {
+    visual: 'Scatterplot',
+    audio: 'Two pitch sweeps across the binned axes',
+    text: 'Points grouped by origin',
+  },
   spec: {
     data: {
       name: 'cars.json',
@@ -16,17 +21,13 @@ export const scatterplot: GalleryExample = {
     ],
     key: [],
     visual: {
-      units: [
-        {
-          name: 'vis_unit_0',
-          mark: 'point',
-          encoding: {
-            x: { field: 'Miles_per_Gallon' },
-            y: { field: 'Horsepower' },
-            color: { field: 'Origin' },
-          },
-        },
-      ],
+      name: 'vis_unit_0',
+      mark: 'point',
+      encoding: {
+        x: { field: 'Miles_per_Gallon' },
+        y: { field: 'Horsepower' },
+        color: { field: 'Origin' },
+      },
     },
     audio: {
       units: [
