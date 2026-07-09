@@ -80,11 +80,32 @@ test('computeSonifierNotes characterizes a concat unit note sequence', () => {
   ]);
 });
 
+test('notes carry a default center pan when pan is unencoded', () => {
+  const ctx = buildConcatCtx(spec, data, spec.audio.units[0]);
+  expect(computeSonifierNotes(ctx).every((n) => n.pan === 0)).toBe(true);
+});
+
+test('notes carry scaled pan from a quantitative pan encoding', () => {
+  const panSpec: UmweltSpec = {
+    ...spec,
+    audio: {
+      units: [{ name: 'audio_unit_0', encoding: { pitch: { field: 'Weight', aggregate: 'mean' }, pan: { field: 'Weight', aggregate: 'mean' } }, traversal: [{ field: 'Origin' }] }],
+      composition: 'concat',
+    },
+  };
+  const ctx = buildConcatCtx(panSpec, data, panSpec.audio.units[0]);
+  // Weight domain is the raw extent [10, 60] -> pan range [-0.9, 0.9]; the per-group
+  // means (Europe 30, Japan 60, USA 15) map to (-0.18, 0.9, -0.72).
+  const pans = computeSonifierNotes(ctx).map((n) => Math.round(n.pan * 100) / 100);
+  expect(pans).toEqual([-0.18, 0.9, -0.72]);
+});
+
 // A step-i note for a layer; only the fields computeLayerGrid reads matter here.
 const note = (i: number, duration: number, extra: Partial<SonifierNote> = {}): SonifierNote => ({
   state: { Origin: i },
   pitch: 60,
   volume: -15,
+  pan: 0,
   duration,
   time: 0, // ignored by the grid
   ...extra,

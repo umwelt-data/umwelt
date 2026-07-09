@@ -79,6 +79,12 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
   const [audioUnitState, setAudioUnitState] = createStore(getInitialState());
 
+  // Each concat unit sounds on its own voice (keyed by unit name) carrying the
+  // unit's instrument, so units don't share synth state and per-unit instruments
+  // take effect. (The layer path keys voices the same way — see AudioLayerGroup.)
+  const voiceId = () => props.audioUnitSpec.name;
+  const instrument = () => props.audioUnitSpec.instrument ?? 'pure';
+
   // derived state
   const getResolvedFields = createMemo(() => {
     return resolveAudioUnitFields(props.spec, props.audioUnitSpec);
@@ -198,8 +204,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
       // play note
       const note = getNoteFromState(audioUnitState.traversalState);
       if (note) {
+        audioEngineActions.ensureVoice(voiceId(), instrument());
         audioEngine.transport.seconds = note.time;
-        audioEngineActions.playNote(note);
+        audioEngineActions.playNote(note, voiceId());
       }
     },
     getTraversalIndex: (field) => {
@@ -208,6 +215,8 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
     setupTransportSequence: () => {
       // Clear previous sequence
       audioEngine.transport.cancel();
+
+      audioEngineActions.ensureVoice(voiceId(), instrument());
 
       // timing is relative to bpm at time of scheduling, so set it to default
       // and then set it to the scaled value after scheduling
@@ -232,7 +241,7 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
 
             if (note.speakBefore && audioEngine.speakAxisTicks && !audioEngine.muted) {
               audioEngine.transport.pause();
-              audioEngineActions.releaseSynth();
+              audioEngineActions.releaseSynth(voiceId());
               speechSynthesis.cancel();
               const utterance = new SpeechSynthesisUtterance(note.speakBefore);
               utterance.voice = speechVoice() ?? null;
@@ -241,9 +250,9 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
                 if (audioEngine.isPlaying) {
                   // play note
                   if (note.ramp) {
-                    audioEngineActions.startOrRampSynth(note);
+                    audioEngineActions.startOrRampSynth(note, voiceId());
                   } else {
-                    audioEngineActions.playNote(note);
+                    audioEngineActions.playNote(note, voiceId());
                   }
                   audioEngine.transport.start();
                 }
@@ -251,16 +260,16 @@ export function AudioUnitStateProvider(props: AudioUnitStateProviderProps) {
               speechSynthesis.speak(utterance);
             } else {
               if (note.ramp) {
-                audioEngineActions.startOrRampSynth(note);
+                audioEngineActions.startOrRampSynth(note, voiceId());
               } else {
-                audioEngineActions.playNote(note);
+                audioEngineActions.playNote(note, voiceId());
               }
             }
           }
         }, note.time);
         if (note.pauseAfter) {
           audioEngine.transport.schedule(() => {
-            audioEngineActions.releaseSynth();
+            audioEngineActions.releaseSynth(voiceId());
           }, note.time + note.duration);
         }
         // if it's the last note, pause the transport

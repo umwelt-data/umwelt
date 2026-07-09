@@ -74,7 +74,7 @@ export type ExportableUmweltDataSource = ExportableUmweltValuesDataSource | Expo
 export type UmweltPredicate = LogicalComposition<FieldPredicate>;
 
 export const visualPropNames = ['x', 'y', 'color', 'shape', 'size', 'opacity', 'order', 'facet'] as const;
-export const audioPropNames = ['pitch', 'duration', 'volume'] as const;
+export const audioPropNames = ['pitch', 'duration', 'volume', 'pan'] as const;
 
 export type VisualPropName = (typeof visualPropNames)[number];
 export type AudioPropName = (typeof audioPropNames)[number];
@@ -82,6 +82,18 @@ export type EncodingPropName = VisualPropName | AudioPropName;
 
 export const markTypes = ['point', 'line', 'bar', 'area'];
 export type MarkType = (typeof markTypes)[number];
+
+// Instrument presets for an audio unit — the audio analog of a visual `mark`: a
+// timbre substrate carried by the whole unit, not a per-datum encoding. Ordered
+// so layer auto-assignment picks maximally-distinct timbres first (see
+// LAYER_INSTRUMENT_ORDER / instrumentForIndex). Every preset must sustain so it
+// works in both discrete and ramped playback.
+export const instrumentNames = ['pure', 'bright', 'hollow', 'bell', 'reed', 'strings'] as const;
+export type InstrumentName = (typeof instrumentNames)[number];
+
+export function isInstrumentName(name?: string): name is InstrumentName {
+  return instrumentNames.includes(name as InstrumentName);
+}
 
 export function isVisualProp(propName: string): propName is VisualPropName {
   return visualPropNames.includes(propName as VisualPropName);
@@ -181,6 +193,9 @@ export type AudioTraversal = AudioTraversalFieldDef[];
 
 export type AudioUnitSpec = {
   name: string;
+  // absent = the current default: `pure` for a lone unit, or an auto-assigned
+  // distinct timbre per layer (see AudioLayerGroupContext).
+  instrument?: InstrumentName;
   encoding: AudioEncoding;
   traversal: AudioTraversal;
 };

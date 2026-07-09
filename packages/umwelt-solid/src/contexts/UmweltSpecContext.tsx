@@ -1,6 +1,6 @@
 import { createContext, useContext, ParentProps, createSignal, batch } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
-import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, TextNode, TextPredicateNode, DATA_STRUCTURE_KEY, isAudioProp, isVisualProp, isExportableUmweltURLDataSource } from '../types';
+import { AudioEncodingFieldDef, EncodingPropName, EncodingRef, ExportableSpec, InstrumentName, MeasureType, UmweltAggregateOp, UmweltSpec, UmweltTimeUnit, ViewComposition, VisualEncodingFieldDef, TextNode, TextPredicateNode, DATA_STRUCTURE_KEY, isAudioProp, isVisualProp, isExportableUmweltURLDataSource } from '../types';
 import type { FieldPredicate, LogicalAnd } from '@umwelt-data/umwelt-utils/predicate';
 
 // A text edit targets one structure, keyed by the visual unit it describes (or
@@ -75,6 +75,7 @@ export type UmweltSpecActions = {
   addEncoding: (field: string, property: EncodingPropName, unit: string) => void;
   removeEncoding: (field: string, property: EncodingPropName, unit: string) => void;
   changeMark: (unit: string, mark: Mark) => void;
+  changeInstrument: (unit: string, instrument: InstrumentName | undefined) => void;
   addVisualUnit: () => void;
   removeVisualUnit: (unit: string) => void;
   addAudioUnit: () => void;
@@ -443,6 +444,14 @@ export function UmweltSpecProvider(props: UmweltSpecProviderProps) {
         'visual',
         'units',
         spec.visual.units.map((u) => (u.name === unit ? { ...u, mark } : u))
+      );
+      internalActions.persistSpec();
+    },
+    changeInstrument: (unit: string, instrument: InstrumentName | undefined) => {
+      setSpec(
+        'audio',
+        'units',
+        spec.audio.units.map((u) => (u.name === unit ? { ...u, instrument } : u))
       );
       internalActions.persistSpec();
     },

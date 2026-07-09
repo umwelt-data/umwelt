@@ -23,6 +23,7 @@ export interface EncodedNote {
   duration: number; // duration in seconds
   pitch: number | undefined; // midi, or undefined for noise/rest
   volume: number; // decibels
+  pan: number; // stereo position in [-1, 1]
 }
 
 // Field -> index into that field's (possibly shared) domain
@@ -117,6 +118,7 @@ function encodeDataAsNote(ctx: SonifyContext, data: UmweltDataset): EncodedNote 
     pitch: data.length ? encodeProperty('pitch', ctx.spec, encoding.pitch, ctx.scales.pitch, data) : undefined,
     volume: encodeProperty('volume', ctx.spec, encoding.volume, ctx.scales.volume, data),
     duration: encodeProperty('duration', ctx.spec, encoding.duration, ctx.scales.duration, data),
+    pan: encodeProperty('pan', ctx.spec, encoding.pan, ctx.scales.pan, data),
   };
 }
 

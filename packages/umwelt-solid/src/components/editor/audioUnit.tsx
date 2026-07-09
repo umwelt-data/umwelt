@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { useUmweltSpec } from '../../contexts/UmweltSpecContext';
-import { AudioPropName, AudioUnitSpec, audioPropNames, isAudioProp, markTypes, visualPropNames } from '../../types';
+import { AudioPropName, AudioUnitSpec, audioPropNames, instrumentNames, isAudioProp, isInstrumentName } from '../../types';
 import { EncodingDefinition } from './encodingDefinition';
 import { TraversalDefinition } from './traversalDefinition';
 import ReorderableList from '../ui/ReorderableList';
@@ -24,6 +24,11 @@ export function AudioUnit(props: AudioUnitProps) {
     });
   };
 
+  // What "default" resolves to, so the empty option reads truthfully: an
+  // unset instrument becomes an auto-assigned distinct timbre per layer, else `pure`.
+  const isLayered = () => spec.audio.units.length > 1 && spec.audio.composition === 'layer';
+  const defaultInstrumentLabel = () => (isLayered() ? 'default (auto by layer)' : 'default (pure)');
+
   return (
     <EnumeratedItem>
       {spec.audio.units.length > 1 ? (
@@ -42,6 +47,29 @@ export function AudioUnit(props: AudioUnitProps) {
           </InputRow>
         </div>
       ) : null}
+      <InputRow>
+        <label>
+          Instrument
+          <select
+            value={props.unitSpec.instrument ?? ''}
+            onChange={(e) => {
+              const v = e.currentTarget.value;
+              specActions.changeInstrument(props.unitSpec.name, isInstrumentName(v) ? v : undefined);
+            }}
+          >
+            <option value="" selected={!props.unitSpec.instrument}>
+              {defaultInstrumentLabel()}
+            </option>
+            <For each={instrumentNames}>
+              {(name) => (
+                <option value={name} selected={name === props.unitSpec.instrument}>
+                  {name}
+                </option>
+              )}
+            </For>
+          </select>
+        </label>
+      </InputRow>
       <div>
         <h4>Encodings</h4>
         <div>

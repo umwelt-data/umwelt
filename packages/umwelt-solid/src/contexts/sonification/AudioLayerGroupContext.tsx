@@ -26,7 +26,7 @@ import { getDomain } from '../../util/domain';
 import { derivedDataset } from '../../util/transforms';
 import { audioUnitFieldBins } from '../../util/ticks';
 import { useUmweltSelection } from '../UmweltSelectionContext';
-import { DEFAULT_TONE_BPM, oscTypeForIndex, useAudioEngine } from './AudioEngineContext';
+import { DEFAULT_TONE_BPM, instrumentForIndex, useAudioEngine } from './AudioEngineContext';
 import { useSonificationState } from './SonificationStateContext';
 import { AudioUnitStateContext, AudioUnitState, AudioUnitStateActions } from './AudioUnitStateContext';
 import { audioAxisTicks, buildAudioScales } from './AudioScalesContext';
@@ -125,13 +125,15 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
     return ctxForUnit(p.unit, p.derivedData, p.scales);
   });
 
-  // { voiceId, oscType, notes } per unit. All units enumerate the same shared
+  // { voiceId, instrument, notes } per unit. All units enumerate the same shared
   // traversal states, so notes align step-for-step (differing only in
-  // pitch/volume/duration and which steps are rests).
+  // pitch/volume/duration/pan and which steps are rests). Each layer sounds on a
+  // distinct timbre so simultaneous layers stay separable: the unit's explicit
+  // instrument if set, else an auto-assigned distinct one by layer index.
   const notesByUnit = createMemo(() => {
     return perUnit().map((u, idx) => ({
       voiceId: u.unit.name,
-      oscType: oscTypeForIndex(idx),
+      instrument: u.unit.instrument ?? instrumentForIndex(idx),
       notes: computeSonifierNotes(ctxForUnit(u.unit, u.derivedData, u.scales)),
     }));
   });
@@ -188,7 +190,7 @@ export function AudioLayerGroupProvider(props: AudioLayerGroupProviderProps) {
     return props.units;
   });
 
-  const ensureVoices = () => notesByUnit().forEach(({ voiceId, oscType }) => audioEngineActions.ensureVoice(voiceId, oscType));
+  const ensureVoices = () => notesByUnit().forEach(({ voiceId, instrument }) => audioEngineActions.ensureVoice(voiceId, instrument));
   // Sound every layer's note for a slot on its own voice. `ramp` follows the
   // slot (all layers share the innermost traversal, so they ramp together).
   const triggerStep = (step: ReturnType<typeof grid>[number]) => {

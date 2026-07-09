@@ -6,6 +6,7 @@ const DEFAULT_VALUES: Record<AudioPropName, any> = {
   pitch: 60, // MIDI C4 middle C. We encode in MIDI because linear interpolations in Hz are not perceptually linear
   duration: 0.2, // seconds
   volume: -15, // dB
+  pan: 0, // center
 };
 
 export function encodeProperty(prop: AudioPropName, spec: UmweltSpec, encodingFieldDef: EncodingFieldDef | undefined, scale: any, data: UmweltDataset): number {
