@@ -27,7 +27,6 @@ export function chartAxisTicks(spec: UmweltSpec, data: UmweltDataset, field: str
     field,
     type: resolved.type as GuideTicksConfig['type'],
     bin: !!resolved.bin,
-    timeUnit: resolved.timeUnit,
     scaleZero,
     scaleDomain,
     // vega-lite sorts discrete scales ascending unless told otherwise
