@@ -1,10 +1,12 @@
-import { createEffect, createSignal, onCleanup } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import { umweltToVegaLiteSpec } from '../../util/spec';
+import { compiledChartColumns } from '../../util/transforms';
 import { UmweltDataset, UmweltSpec } from '../../types';
 import { renderVegaLite } from '../../util/vega';
 import { debounce } from '@solid-primitives/scheduled';
 import { useUmweltSelection } from '../../contexts/UmweltSelectionContext';
 import { predicateToSelectionStore, selectionStoreToSelection, EXTERNAL_STATE_STORE, type VlSelectionStore } from '@umwelt-data/umwelt-utils/vl-bridge';
+import { predicateToChartFields } from '../../util/selection';
 import type { View } from 'vega';
 
 export type VisualizationProps = {
@@ -25,6 +27,14 @@ export function Visualization(props: VisualizationProps) {
     }
   }, 250);
 
+  // Transformed column names the chart's marks bind to (bin_maxbins_10_x, …),
+  // computed headlessly from the compiled spec. Recomputes only on spec/data
+  // change, so it is cheap to read on every incoming selection.
+  const chartColumns = createMemo(() => {
+    const vlSpec = umweltToVegaLiteSpec(props.spec, props.data);
+    return vlSpec ? compiledChartColumns(vlSpec) : [];
+  });
+
   createEffect(() => {
     const sel = umweltSelection();
     const view = vegaView();
@@ -38,7 +48,11 @@ export function Visualization(props: VisualizationProps) {
     if (!view) return;
 
     if (sel.source === 'sonification' || sel.source === 'text-navigation') {
-      const tuple = predicateToSelectionStore(sel.predicate);
+      // olli (text navigation) already emits compiled-column predicates; a
+      // sonification selection is in raw-field space and must be mapped onto the
+      // marks' transformed columns first.
+      const predicate = sel.source === 'sonification' ? predicateToChartFields(props.spec, sel.predicate, chartColumns()) : sel.predicate;
+      const tuple = predicateToSelectionStore(predicate);
       view.data(EXTERNAL_STATE_STORE, tuple ? [tuple] : []).run();
     }
   });

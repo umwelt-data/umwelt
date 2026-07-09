@@ -35,6 +35,33 @@ export function chartAxisTicks(spec: UmweltSpec, data: UmweltDataset, field: str
 }
 
 /**
+ * The resolved field def of `field`'s chart x/y encoding, or undefined if the
+ * field is not on a positional axis. Captures the transform (bin/timeUnit/
+ * aggregate) the chart marks were compiled with — the basis for both bin
+ * alignment and mapping a raw-field predicate onto the compiled mark columns.
+ */
+export function chartAxisEncodingFieldDef(spec: UmweltSpec, field: string): ResolvedFieldDef | undefined {
+  const fieldDef = getFieldDef(spec, field);
+  if (!fieldDef) return undefined;
+  const ref = fieldDef.encodings.find((e) => e.property === 'x' || e.property === 'y');
+  if (!ref) return undefined;
+  const unit = spec.visual.units.find((u) => u.name === ref.unit);
+  const encDef = unit?.encoding[ref.property as 'x' | 'y'];
+  if (!encDef) return undefined;
+  return resolveFieldDef(fieldDef, encDef);
+}
+
+/**
+ * True when `field` is displayed on a chart x/y axis that is itself binned.
+ * Such a field is bucketed by olli with vega-lite's bin transform (equal-width,
+ * default maxbins), not by axis ticks — so its audio bins must come from the
+ * same transform, never from tick alignment.
+ */
+export function isFieldBinnedOnChartAxis(spec: UmweltSpec, field: string): boolean {
+  return !!chartAxisEncodingFieldDef(spec, field)?.bin;
+}
+
+/**
  * Tick-aligned bins for every binned quantitative field an audio unit uses,
  * computed with the same getBins olli uses so sonification bins match the
  * olli tree. Axis ticks come from the full dataset (the chart's axis doesn't
@@ -45,6 +72,11 @@ export function audioUnitFieldBins(spec: UmweltSpec, fullData: UmweltDataset, cu
   const bins: Record<string, [number, number][]> = {};
   for (const def of resolvedFields) {
     if (def.bin && def.type === 'quantitative' && !(def.field in bins)) {
+      // A field already binned on its chart axis is bucketed by olli's vega-lite
+      // bin transform; leaving it out here lets derivedDataset apply that same
+      // transform, so audio and olli agree. Only fields binned in audio but shown
+      // on an unbinned axis need tick-aligned bins computed here.
+      if (isFieldBinnedOnChartAxis(spec, def.field)) continue;
       const fieldDef = { field: def.field, type: def.type };
       let fieldBins = getBins(fieldDef, currentData, chartAxisTicks(spec, fullData, def.field));
       if (fieldBins.length === 0) {

@@ -192,3 +192,24 @@ export function applyTransforms(dataset: UmweltDataset, transforms: UmweltTransf
   // the last output dataset is the furthest through the transform pipeline
   return (datasets[datasets.length - 1] ?? []) as UmweltDataset;
 }
+
+/**
+ * The set of field names present across a compiled vega-lite spec's output
+ * datasets, obtained by running its data pipeline headlessly — the same
+ * compile → evaluateVegaData → extractOutputDatasets path olli's VegaLiteAdapter
+ * uses. This surfaces the transformed columns a chart's marks bind to
+ * (`bin_maxbins_10_x`, `yearmonth_date`, `mean_y`, …) without needing a rendered
+ * view.
+ */
+export function compiledChartColumns(vlSpec: VlSpec): string[] {
+  const vgSpec = compile(vlSpec as any).spec;
+  const dataEntries = (vgSpec.data ?? []) as VegaDataEntry[];
+  const store = evaluateVegaData(dataEntries);
+  const datasets = extractOutputDatasets(dataEntries, store);
+  const cols = new Set<string>();
+  for (const ds of datasets) {
+    const row = (ds as UmweltDataset).find((r) => r && typeof r === 'object');
+    if (row) Object.keys(row).forEach((k) => cols.add(k));
+  }
+  return [...cols];
+}
