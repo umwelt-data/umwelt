@@ -1,7 +1,7 @@
 import { test, expect } from 'vitest';
 import { compressedSpec, decodeSpecFromString, elaborateExportableSpec, exportableSpec, resolveAudioUnitFields, seedChartOverride, umweltToOlliSpec } from '../../src/util/spec';
 import { EXAMPLE_DATASETS, resolveDataSource, typeCoerceData } from '../../src/util/datasets';
-import { UmweltSpec, TextNode, VisualUnitSpec, FieldDef, DATA_STRUCTURE_KEY, isExportableUmweltValuesDataSource } from '../../src/types';
+import { UmweltSpec, TextNode, VisualUnitSpec, FieldDef, DATA_STRUCTURE_KEY, isExportableUmweltValuesDataSource, isExportableVisualSpec } from '../../src/types';
 import { UmweltDatastore } from '../../src/contexts/UmweltDatastoreContext';
 import { isMultiSpec } from 'olli';
 
@@ -55,16 +55,19 @@ test('exportable spec round-trips through elaboration', () => {
   expect(elaborated.data).toEqual(spec.data);
 });
 
-test('composition is omitted for single-unit modalities and restored on elaboration', () => {
+test('a single-unit modality exports as the bare unit and is re-wrapped on elaboration', () => {
   const spec = makeSpec('mydata.json');
   const datastore: UmweltDatastore = { 'mydata.json': { data: sampleData } };
 
   const exported = exportableSpec(spec, datastore);
-  expect('composition' in exported.visual).toBe(false);
-  expect('composition' in exported.audio).toBe(false);
+  // the lone unit is hoisted to the top level (no units[] array, no composition)
+  expect('units' in exported.visual).toBe(false);
+  expect('units' in exported.audio).toBe(false);
+  expect(exported.visual).toEqual(spec.visual.units[0]);
+  expect(exported.audio).toEqual(spec.audio.units[0]);
   const elaborated = elaborateExportableSpec(exported);
-  expect(elaborated.visual.composition).toEqual('layer');
-  expect(elaborated.audio.composition).toEqual('concat');
+  expect(elaborated.visual).toEqual(spec.visual);
+  expect(elaborated.audio).toEqual(spec.audio);
 
   // multi-unit modalities keep their composition
   const multiUnit: UmweltSpec = {
@@ -77,7 +80,8 @@ test('composition is omitted for single-unit modalities and restored on elaborat
       ],
     },
   };
-  expect(exportableSpec(multiUnit, datastore).visual.composition).toEqual('concat');
+  const exportedMulti = exportableSpec(multiUnit, datastore).visual;
+  expect(isExportableVisualSpec(exportedMulti) && exportedMulti.composition).toEqual('concat');
 });
 
 test('data key serializes last so embedded values do not bury the spec', () => {

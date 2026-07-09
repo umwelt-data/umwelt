@@ -300,6 +300,17 @@ export interface ExportableAudioSpec {
   composition?: ViewComposition;
 }
 
+// A modality with exactly one unit exports as the bare unit rather than a
+// `{ units: [unit] }` wrapper (composition is meaningless for a lone unit).
+// The wrapper form is distinguished on import by its `units` array.
+export function isExportableVisualSpec(visual: ExportableVisualSpec | VisualUnitSpec): visual is ExportableVisualSpec {
+  return 'units' in visual;
+}
+
+export function isExportableAudioSpec(audio: ExportableAudioSpec | AudioUnitSpec): audio is ExportableAudioSpec {
+  return 'units' in audio;
+}
+
 // text is exported only when it carries authored structure
 export interface ExportableTextSpec {
   structures: Record<string, TextNode[]>;
@@ -311,7 +322,7 @@ export const DATA_STRUCTURE_KEY = '';
 export interface ExportableSpec extends Omit<UmweltSpec, 'fields' | 'data' | 'visual' | 'audio' | 'text'> {
   data: ExportableUmweltDataSource;
   fields: ExportableFieldDef[];
-  visual: ExportableVisualSpec;
-  audio: ExportableAudioSpec;
+  visual: ExportableVisualSpec | VisualUnitSpec;
+  audio: ExportableAudioSpec | AudioUnitSpec;
   text?: ExportableTextSpec;
 }

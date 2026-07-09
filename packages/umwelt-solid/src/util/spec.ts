@@ -1,6 +1,6 @@
 import { type OlliVisSpec, type OlliNode, type OlliTimeUnit, type UnitOlliVisSpec, type OlliAxis, type OlliLegend, type OlliGuide, type OlliFieldDef, type OlliMark, inferStructure, isMultiSpec } from 'olli';
 import { VegaLiteAdapter } from 'olli/adapters';
-import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec, TextNode, TextFieldRef, VisualUnitSpec, MeasureType, DATA_STRUCTURE_KEY } from '../types';
+import { UmweltSpec, VlSpec, UmweltDataset, NONE, ExportableSpec, EncodingFieldDef, FieldDef, ResolvedFieldDef, isVisualProp, isInstrumentName, ExportableFieldDef, EncodingRef, isExportableUmweltURLDataSource, ExportableUmweltDataSource, AudioUnitSpec, TextNode, TextFieldRef, VisualUnitSpec, MeasureType, DATA_STRUCTURE_KEY, isExportableVisualSpec, isExportableAudioSpec } from '../types';
 import { getDomain } from './domain';
 import cloneDeep from 'lodash.clonedeep';
 import { withExternalStateParam } from '@umwelt-data/umwelt-utils/vl-bridge';
@@ -90,18 +90,37 @@ export async function validateSpecAsync(spec: ExportableSpec, datastore: UmweltD
   return elaborated;
 }
 
+// Drop an unrecognized instrument name on import (forward compatibility: a spec
+// authored by a newer version, or a custom instrument we don't yet support,
+// falls back to the default rather than breaking playback).
+function sanitizeAudioUnitInstrument(unit: AudioUnitSpec): AudioUnitSpec {
+  if (unit.instrument !== undefined && !isInstrumentName(unit.instrument)) {
+    console.warn(`Unknown audio instrument "${unit.instrument}" on unit "${unit.name}"; falling back to the default.`);
+    const { instrument, ...rest } = unit;
+    return rest;
+  }
+  return unit;
+}
+
 export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
+  // Normalize the exported union back to units + composition: a lone unit
+  // exports unwrapped, so re-wrap it here (see exportableSpec).
+  const visualUnits = isExportableVisualSpec(spec.visual) ? spec.visual.units : [spec.visual];
+  const visualComposition = isExportableVisualSpec(spec.visual) ? spec.visual.composition : undefined;
+  const audioUnits = isExportableAudioSpec(spec.audio) ? spec.audio.units : [spec.audio];
+  const audioComposition = isExportableAudioSpec(spec.audio) ? spec.audio.composition : undefined;
+
   // add encoding refs back to fields
   const fields: FieldDef[] = spec.fields.map((field) => {
     const encodings: EncodingRef[] = [];
-    spec.visual.units.forEach((unit) => {
+    visualUnits.forEach((unit) => {
       Object.entries(unit.encoding).forEach(([channel, encoding]) => {
         if (isVisualProp(channel) && encoding.field === field.name) {
           encodings.push({ unit: unit.name, property: channel });
         }
       });
     });
-    spec.audio.units.forEach((unit) => {
+    audioUnits.forEach((unit) => {
       Object.entries(unit.encoding).forEach(([channel, encoding]) => {
         if (channel === 'pitch' && encoding.field === field.name) {
           encodings.push({ unit: unit.name, property: channel });
@@ -116,8 +135,8 @@ export function elaborateExportableSpec(spec: ExportableSpec): UmweltSpec {
       name: spec.data.name || (isExportableUmweltURLDataSource(spec.data) ? spec.data.url.split('/').pop() : DEFAULT_DATASET_NAME) || DEFAULT_DATASET_NAME,
     },
     fields,
-    visual: { units: spec.visual.units, composition: spec.visual.composition || 'layer' },
-    audio: { units: spec.audio.units, composition: spec.audio.composition || 'concat' },
+    visual: { units: visualUnits, composition: visualComposition || 'layer' },
+    audio: { units: audioUnits.map(sanitizeAudioUnitInstrument), composition: audioComposition || 'concat' },
     // regenerate node ids on import so a serialized id can never collide with one
     // this session's counter later mints
     text: {
@@ -573,9 +592,12 @@ export function exportableSpec(spec: UmweltSpec, datastore: UmweltDatastore): Ex
       return rest;
     });
 
-  // composition only matters with multiple units
-  const exportableVisual = visual.units.length > 1 ? visual : { units: visual.units };
-  const exportableAudio = audio.units.length > 1 ? audio : { units: audio.units };
+  // A lone unit exports unwrapped (bare unit, no units[] array and no
+  // composition, which is meaningless for one unit). Multiple units keep the
+  // full wrapper with composition; an empty modality keeps the array form since
+  // there's no unit to hoist.
+  const exportableVisual = visual.units.length === 1 ? visual.units[0] : visual.units.length > 1 ? visual : { units: visual.units };
+  const exportableAudio = audio.units.length === 1 ? audio.units[0] : audio.units.length > 1 ? audio : { units: audio.units };
   // serialize text only when some structure is authored
   const exportableText = Object.keys(text.structures).length > 0 ? { structures: text.structures } : undefined;
 
