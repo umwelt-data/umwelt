@@ -1,6 +1,6 @@
 {
   "name": "umwelt-js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Render the Umwelt viewer — a coordinated visualization, sonification, and accessible textual structure — from a spec, in any web app.",
   "keywords": [
     "umwelt",
