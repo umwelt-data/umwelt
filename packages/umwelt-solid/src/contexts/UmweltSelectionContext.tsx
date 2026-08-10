@@ -1,6 +1,5 @@
 import { createContext, useContext, ParentProps, Accessor, createSignal } from 'solid-js';
-import { UmweltDataset, UmweltPredicate } from '../types';
-import { createStoredSignal } from '../util/solid';
+import { UmweltPredicate } from '../types';
 
 export type UmweltSelectionProviderProps = ParentProps<{}>;
 
